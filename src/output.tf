@@ -10,6 +10,10 @@ output "aks_kubelet_identity_id" {
   value = azurerm_kubernetes_cluster.default.kubelet_identity[0]
 }
 
+output "aks_resource_group_id" {
+  value = azurerm_resource_group.default.id
+}
+
 output "aks_node_resource_group_id" {
   value = azurerm_kubernetes_cluster.default.node_resource_group
 }

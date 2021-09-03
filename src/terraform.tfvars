@@ -1,3 +1,5 @@
+platform_instance_name = "sandbox"
+
 cluster_name     = "primary"
 cluster_location = "centralus"
 cluster_version  = "1.20.7"

@@ -15,7 +15,7 @@ resource "random_string" "aks_id" {
 }
 
 resource "azurerm_resource_group" "default" {
-  name     = "${var.platform_instance_name}-${var.cluster_name}-aks"
+  name     = "${var.platform_instance_name}-aks"
   location = var.cluster_location
 }
 
@@ -34,7 +34,7 @@ resource "azurerm_kubernetes_cluster" "default" {
     node_count                   = 1
     min_count                    = 1
     max_count                    = 5
-    max_pods                     = 25
+    max_pods                     = 100
     type                         = "VirtualMachineScaleSets"
     os_disk_type                 = "Managed"
     os_disk_size_gb              = "100"
