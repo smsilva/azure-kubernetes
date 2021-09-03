@@ -1,0 +1,5 @@
+module "kubernetes" {
+  source = "../../src"
+
+
+}
