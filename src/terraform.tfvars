@@ -1,3 +1,6 @@
+stack_name    = "azure-kubernetes"
+stack_version = "1.0.0"
+
 platform_instance_name = "sandbox"
 
 cluster_name     = "primary"
