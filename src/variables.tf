@@ -11,12 +11,13 @@ variable "cluster_name" {
 variable "cluster_location" {
   description = "AKS Cluster Location"
   type        = string
+  default     = "centralus"
 }
 
 variable "admin_group_object_ids" {
   description = "AKS Admin Groups"
   type        = list(string)
-  default     = [
+  default = [
     "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1",
   ]
 }
