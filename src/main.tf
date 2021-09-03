@@ -20,8 +20,8 @@ resource "azurerm_resource_group" "default" {
 }
 
 resource "azurerm_kubernetes_cluster" "default" {
-  name                = azurerm_resource_group.default.name
-  dns_prefix          = azurerm_resource_group.default.name
+  name                = "${var.cluster_name}-${random_string.aks_id.result}"
+  dns_prefix          = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
   location            = azurerm_resource_group.default.location
   resource_group_name = azurerm_resource_group.default.name
 
