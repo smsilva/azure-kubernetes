@@ -7,5 +7,6 @@ module "kubernetes" {
 }
 
 output "kubernetes" {
-  value = module.kubernetes
+  value     = module.kubernetes
+  sensitive = true
 }
