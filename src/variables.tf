@@ -6,11 +6,13 @@ variable "platform_instance_name" {
 variable "cluster_name" {
   description = "AKS Cluster Name"
   type        = string
+  default     = "aks"
 }
 
 variable "cluster_location" {
   description = "AKS Cluster Location"
   type        = string
+  default     = "centralus"
 }
 
 variable "admin_group_object_ids" {

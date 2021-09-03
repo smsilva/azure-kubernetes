@@ -9,7 +9,7 @@ resource "random_string" "aks_id" {
   }
 
   length      = 3
-  min_numeric = 3
+  min_numeric = 1
   special     = false
   upper       = false
 }
