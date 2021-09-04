@@ -1,6 +1,10 @@
 data "azurerm_client_config" "default" {
 }
 
+provider "azurerm" {
+  features {}
+}
+
 locals {
   cluster_name        = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
   resource_group_name = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"

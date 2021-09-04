@@ -23,13 +23,3 @@ variable "cluster_version" {
   description = "AKS Version"
   type        = string
 }
-
-variable "stack_name" {
-  description = "Stack Name that will be used to name the artifact"
-  type        = string
-}
-
-variable "stack_version" {
-  description = "Stack Version that will be used to name the artifact"
-  type        = string
-}

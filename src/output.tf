@@ -26,7 +26,3 @@ output "aks_kubeconfig" {
   value     = azurerm_kubernetes_cluster.default.kube_admin_config_raw
   sensitive = true
 }
-
-output "stack_image" {
-  value = "${var.stack_name}:${var.stack_version}"
-}
