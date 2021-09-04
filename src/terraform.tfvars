@@ -1,7 +1,7 @@
 stack_name    = "azure-kubernetes"
 stack_version = "1.0.0"
 
-platform_instance_name = "wasp-sandbox-62w5ec"
+platform_instance_name = "sandbox"
 
 cluster_name     = "aks"
 cluster_location = "centralus"
