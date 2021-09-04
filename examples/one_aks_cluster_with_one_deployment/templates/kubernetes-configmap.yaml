@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: foundation
+  namespace: argocd
+data:
+  aks.id: "${aks_id}"
+  aks.location: "${aks_location}"
+  aks.vnet.id: "${aks_vnet_id}"
+  aks.subnet.id: "${aks_subnet_id}"
+  platform.instance.name: "${platform_instance_name}"

@@ -1,35 +1,31 @@
 variable "platform_instance_name" {
-  description = "Platform Instance Name"
   type        = string
+  description = "Platform Instance Name"
 }
 
 variable "cluster_name" {
-  description = "AKS Cluster Name"
   type        = string
+  description = "AKS Cluster Name"
+  default     = "aks"
 }
 
 variable "cluster_location" {
-  description = "AKS Cluster Location"
   type        = string
+  description = "AKS Cluster Location"
   default     = "centralus"
 }
 
-variable "admin_group_object_ids" {
-  description = "AKS Admin Groups"
+variable "cluster_admin_group_ids" {
   type        = list(string)
+  description = "AKS Admin Groups"
 }
 
 variable "cluster_version" {
+  type        = string
   description = "AKS Version"
-  type        = string
 }
 
-variable "stack_name" {
-  description = "Stack Name that will be used to name the artifact"
+variable "cluster_subnet_id" {
   type        = string
-}
-
-variable "stack_version" {
-  description = "Stack Version that will be used to name the artifact"
-  type        = string
+  description = "AKS Node Pool Subnet ID"
 }

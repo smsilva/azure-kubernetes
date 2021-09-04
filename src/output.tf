@@ -6,6 +6,10 @@ output "aks_id" {
   value = azurerm_kubernetes_cluster.default.id
 }
 
+output "instance" {
+  value = azurerm_kubernetes_cluster.default
+}
+
 output "aks_identity_principal_id" {
   value = azurerm_kubernetes_cluster.default.identity[0].principal_id
 }
@@ -25,8 +29,4 @@ output "aks_node_resource_group_id" {
 output "aks_kubeconfig" {
   value     = azurerm_kubernetes_cluster.default.kube_admin_config_raw
   sensitive = true
-}
-
-output "stack_image" {
-  value = "${var.stack_name}:${var.stack_version}"
 }
