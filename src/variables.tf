@@ -6,6 +6,7 @@ variable "platform_instance_name" {
 variable "cluster_name" {
   description = "AKS Cluster Name"
   type        = string
+  default     = "aks"
 }
 
 variable "cluster_location" {
