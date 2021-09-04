@@ -1,11 +1,11 @@
 stack_name    = "azure-kubernetes"
 stack_version = "1.0.0"
 
-platform_instance_name = "sandbox"
+platform_instance_name = "wasp-sandbox-62w5ec"
 
-cluster_name     = "primary"
+cluster_name     = "aks"
 cluster_location = "centralus"
-cluster_version  = "1.20.7"
+cluster_version  = "1.20.9"
 
 admin_group_object_ids = [
   "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1",

@@ -1,6 +1,12 @@
 data "azurerm_client_config" "default" {
 }
 
+locals {
+  cluster_name        = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
+  resource_group_name = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
+  cluster_dns_prefix  = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
+}
+
 resource "random_string" "aks_id" {
   keepers = {
     platform_instance_name = var.platform_instance_name
@@ -15,15 +21,16 @@ resource "random_string" "aks_id" {
 }
 
 resource "azurerm_resource_group" "default" {
-  name     = "${var.platform_instance_name}-aks"
+  name     = local.resource_group_name
   location = var.cluster_location
 }
 
 resource "azurerm_kubernetes_cluster" "default" {
-  name                = "${var.cluster_name}-${random_string.aks_id.result}"
-  dns_prefix          = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
+  name                = local.cluster_name
+  dns_prefix          = local.cluster_dns_prefix
   location            = azurerm_resource_group.default.location
   resource_group_name = azurerm_resource_group.default.name
+  node_resource_group = "${azurerm_resource_group.default.name}-nrg"
 
   default_node_pool {
     name                         = "systempool"
