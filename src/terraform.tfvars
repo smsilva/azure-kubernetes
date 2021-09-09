@@ -1,4 +1,4 @@
-platform_instance_name = "sandbox"
+platform_instance_name = "bees-sandbox-s7t"
 
 cluster_name     = "aks"
 cluster_location = "centralus"

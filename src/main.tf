@@ -6,9 +6,10 @@ provider "azurerm" {
 }
 
 locals {
-  cluster_name        = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
-  resource_group_name = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
-  cluster_dns_prefix  = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
+  cluster_name             = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
+  resource_group_name      = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
+  node_resource_group_name = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}-nrg"
+  cluster_dns_prefix       = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
 }
 
 resource "random_string" "aks_id" {
@@ -34,7 +35,7 @@ resource "azurerm_kubernetes_cluster" "default" {
   dns_prefix          = local.cluster_dns_prefix
   location            = azurerm_resource_group.default.location
   resource_group_name = azurerm_resource_group.default.name
-  node_resource_group = "${azurerm_resource_group.default.name}-nrg"
+  node_resource_group = local.node_resource_group_name
 
   default_node_pool {
     name                         = "systempool"
@@ -49,6 +50,7 @@ resource "azurerm_kubernetes_cluster" "default" {
     type                         = "VirtualMachineScaleSets"
     os_disk_type                 = "Managed"
     os_disk_size_gb              = "100"
+    vnet_subnet_id               = var.subnet_id
 
     upgrade_settings {
       max_surge = "33%"

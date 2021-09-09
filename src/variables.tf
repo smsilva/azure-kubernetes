@@ -1,26 +1,31 @@
 variable "platform_instance_name" {
-  description = "Platform Instance Name"
   type        = string
+  description = "Platform Instance Name"
 }
 
 variable "cluster_name" {
-  description = "AKS Cluster Name"
   type        = string
+  description = "AKS Cluster Name"
   default     = "aks"
 }
 
 variable "cluster_location" {
-  description = "AKS Cluster Location"
   type        = string
+  description = "AKS Cluster Location"
   default     = "centralus"
 }
 
 variable "admin_group_object_ids" {
-  description = "AKS Admin Groups"
   type        = list(string)
+  description = "AKS Admin Groups"
 }
 
 variable "cluster_version" {
-  description = "AKS Version"
   type        = string
+  description = "AKS Version"
+}
+
+variable "subnet_id" {
+  type        = string
+  description = "AKS Node Pool Subnet ID"
 }
