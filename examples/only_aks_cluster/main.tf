@@ -1,6 +1,7 @@
 locals {
   platform_instance_name = "crow-sandbox-iq1"
   location               = "centralus"
+  admin_group_ids        = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"]
 }
 
 resource "azurerm_virtual_network" "aks" {
@@ -20,15 +21,11 @@ resource "azurerm_subnet" "aks" {
 module "aks" {
   source = "../../src"
 
-  platform_instance_name = local.platform_instance_name
-  cluster_name           = "aks"
-  cluster_location       = "centralus"
-  cluster_version        = "1.20.9"
-  subnet_id              = azurerm_subnet.aks.id
-
-  admin_group_object_ids = [
-    "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1",
-  ]
+  platform_instance_name  = local.platform_instance_name
+  cluster_location        = "centralus"
+  cluster_version         = "1.20.9"
+  cluster_subnet_id       = azurerm_subnet.aks.id
+  cluster_admin_group_ids = local.admin_group_ids
 }
 
 output "aks_id" {

@@ -15,7 +15,7 @@ variable "cluster_location" {
   default     = "centralus"
 }
 
-variable "admin_group_object_ids" {
+variable "cluster_admin_group_ids" {
   type        = list(string)
   description = "AKS Admin Groups"
 }
@@ -25,7 +25,7 @@ variable "cluster_version" {
   description = "AKS Version"
 }
 
-variable "subnet_id" {
+variable "cluster_subnet_id" {
   type        = string
   description = "AKS Node Pool Subnet ID"
 }
