@@ -36,6 +36,7 @@ resource "azurerm_kubernetes_cluster" "default" {
   location            = azurerm_resource_group.default.location
   resource_group_name = azurerm_resource_group.default.name
   node_resource_group = local.node_resource_group_name
+  kubernetes_version  = var.cluster_version
 
   default_node_pool {
     name                         = "systempool"
@@ -50,7 +51,7 @@ resource "azurerm_kubernetes_cluster" "default" {
     type                         = "VirtualMachineScaleSets"
     os_disk_type                 = "Managed"
     os_disk_size_gb              = "100"
-    vnet_subnet_id               = var.subnet_id
+    vnet_subnet_id               = var.cluster_subnet_id
 
     upgrade_settings {
       max_surge = "33%"
@@ -72,7 +73,7 @@ resource "azurerm_kubernetes_cluster" "default" {
 
     azure_active_directory {
       managed                = true
-      admin_group_object_ids = var.admin_group_object_ids
+      admin_group_object_ids = var.cluster_admin_group_ids
     }
   }
 

@@ -23,7 +23,7 @@ module "aks" {
 
   platform_instance_name  = local.platform_instance_name
   cluster_location        = "centralus"
-  cluster_version         = "1.20.9"
+  cluster_version         = "1.21.2"
   cluster_subnet_id       = azurerm_subnet.aks.id
   cluster_admin_group_ids = local.admin_group_ids
 }
