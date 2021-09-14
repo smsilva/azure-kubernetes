@@ -21,9 +21,9 @@ docker push silviosilva/kubernetes-bootstrap:1.0
 ## Run
 
 ```shell
-mkdir deploy/
+mkdir -p deploy/
 
-terraform output -raw kubernetes_config_map_template | tee deploy/argocd-bootstrap.yaml
+terraform output -raw argocd_bootstrap_config_map | tee deploy/argocd_bootstrap_config_map.yaml
 
 docker run \
   -v "${PWD}/deploy:/opt/kubernetes/deploy/" \

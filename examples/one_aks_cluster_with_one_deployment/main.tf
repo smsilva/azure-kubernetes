@@ -5,7 +5,7 @@ locals {
   virtual_network_name    = "aks-vnet-private"
   virtual_network_cidrs   = ["10.0.0.0/8"]
   virtual_network_subnets = [{ cidr = "10.140.0.0/16", name = "aks" }]
-  kubernetes_config_map   = "${path.module}/templates/kubernetes-configmap.yaml"
+  kubernetes_config_map   = "${path.module}/templates/argocd-bootstrap.yaml"
 }
 
 module "vnet" {
@@ -28,7 +28,7 @@ module "aks" {
   cluster_admin_group_ids = local.admin_group_ids
 }
 
-data "template_file" "argocd_bootstrap_config_map" {
+data "template_file" "argocd_bootstrap" {
   template = file(local.kubernetes_config_map)
   vars = {
     platform_instance_name = local.platform_instance_name
@@ -39,24 +39,11 @@ data "template_file" "argocd_bootstrap_config_map" {
   }
 }
 
-output "argocd_bootstrap_config_map" {
-  value = data.template_file.argocd_bootstrap_config_map.rendered
-}
-
-output "aks_id" {
-  value = module.aks.aks_id
-}
-
-output "aks_kubelet_identity_client_id" {
-  value = module.aks.aks_kubelet_identity_client_id
+output "argocd_bootstrap" {
+  value = data.template_file.argocd_bootstrap.rendered
 }
 
 output "aks_kubeconfig" {
   value     = module.aks.aks_kubeconfig
-  sensitive = true
-}
-
-output "aks_instance" {
-  value     = module.aks.instance
   sensitive = true
 }
