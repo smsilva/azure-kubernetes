@@ -28,7 +28,7 @@ module "aks" {
   cluster_admin_group_ids = local.admin_group_ids
 }
 
-data "template_file" "kubernetes_config_map_template" {
+data "template_file" "argocd_bootstrap_config_map" {
   template = file(local.kubernetes_config_map)
   vars = {
     platform_instance_name = local.platform_instance_name
@@ -39,8 +39,8 @@ data "template_file" "kubernetes_config_map_template" {
   }
 }
 
-output "kubernetes_config_map_template" {
-  value = data.template_file.kubernetes_config_map_template.rendered
+output "argocd_bootstrap_config_map" {
+  value = data.template_file.argocd_bootstrap_config_map.rendered
 }
 
 output "aks_id" {

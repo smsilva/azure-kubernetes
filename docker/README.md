@@ -2,16 +2,16 @@
 
 ## Retrieve Config Map Yaml File
 
-```bash
+```shell
 terraform output -raw 
 ```
 
 ## Build
 
-```bash
-cp /usr/bin/kubectl .
+```shell
+cp /usr/bin/kubectl build/kubectl
 
-docker build -t kubernetes-bootstrap:latest .
+docker build -t kubernetes-bootstrap:latest build/
 
 docker tag kubernetes-bootstrap:latest silviosilva/kubernetes-bootstrap:1.0
 
@@ -20,11 +20,13 @@ docker push silviosilva/kubernetes-bootstrap:1.0
 
 ## Run
 
-```bash
+```shell
+mkdir deploy/
+
 terraform output -raw kubernetes_config_map_template | tee deploy/argocd-bootstrap.yaml
 
 docker run \
   -v "${PWD}/deploy:/opt/kubernetes/deploy/" \
-  -e KUBECONFIG_DATA="$(cat ~/.kube/aks_kubeconfig)" \
+  -e KUBECONFIG_DATA="$(terraform output -raw aks_kubeconfig | base64)" \
   silviosilva/kubernetes-bootstrap:1.0
 ```
