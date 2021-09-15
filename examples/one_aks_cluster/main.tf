@@ -1,5 +1,4 @@
 locals {
-  platform_instance_name  = "wasp-sandbox-iq1"
   location                = "centralus"
   admin_group_ids         = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"]
   virtual_network_name    = "vnet-private"
@@ -10,7 +9,7 @@ locals {
 module "vnet" {
   source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=1.0.0"
 
-  platform_instance_name = local.platform_instance_name
+  platform_instance_name = var.platform_instance_name
   location               = local.location
   name                   = local.virtual_network_name
   cidrs                  = local.virtual_network_cidrs
@@ -20,7 +19,7 @@ module "vnet" {
 module "aks" {
   source = "../../src"
 
-  platform_instance_name  = local.platform_instance_name
+  platform_instance_name  = var.platform_instance_name
   cluster_location        = "centralus"
   cluster_version         = "1.21.2"
   cluster_subnet_id       = module.vnet.subnets["aks"].instance.id

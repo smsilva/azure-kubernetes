@@ -41,7 +41,7 @@ resource "azurerm_kubernetes_cluster" "default" {
   default_node_pool {
     name                         = "systempool"
     orchestrator_version         = var.cluster_version
-    only_critical_addons_enabled = true
+    only_critical_addons_enabled = false # Default Node Pool will be used to Deploy User Pods
     enable_auto_scaling          = true
     vm_size                      = "Standard_D2_v2"
     node_count                   = 1
