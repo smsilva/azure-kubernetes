@@ -7,7 +7,7 @@ locals {
 }
 
 module "vnet" {
-  source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=1.0.0"
+  source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=main"
 
   platform_instance_name = var.platform_instance_name
   location               = local.location
