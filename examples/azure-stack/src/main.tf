@@ -1,13 +1,7 @@
-locals {
-  location                = "centralus"
-  admin_group_ids         = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"]
-  virtual_network_name    = "vnet-private"
-  virtual_network_cidrs   = ["10.0.0.0/8"]
-  virtual_network_subnets = [{ cidr = "10.140.0.0/16", name = "aks" }]
-}
+
 
 module "vnet" {
-  source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=main"
+  source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=1.1.0"
 
   platform_instance_name = var.platform_instance_name
   location               = local.location
@@ -17,7 +11,7 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "../../src"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/vnet?ref=1.1.0"
 
   platform_instance_name  = var.platform_instance_name
   cluster_location        = "centralus"
