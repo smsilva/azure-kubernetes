@@ -1,11 +1,13 @@
 locals {
-  resource_group_name     = "wasp-aks"
-  name                    = "wasp-aks"
-  location                = "centralus"
-  admin_group_ids         = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"]
+  name                    = "wasp-aks-blue"
+  resource_group_name     = local.name
+
   virtual_network_name    = "${local.name}-vnet"
   virtual_network_cidrs   = ["10.0.0.0/8"]
   virtual_network_subnets = [{ cidr = "10.140.0.0/16", name = "aks" }]
+
+  admin_group_ids         = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"]
+  location                = "centralus"
 }
 
 module "vnet" {

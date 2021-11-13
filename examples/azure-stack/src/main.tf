@@ -4,7 +4,7 @@ module "vnet" {
   name                = local.virtual_network_name
   cidrs               = local.virtual_network_cidrs
   subnets             = local.virtual_network_subnets
-  resource_group_name = local.resource_group_name
+  resource_group_name = data.azurerm_resource_group.default.name
   location            = var.location
 }
 
