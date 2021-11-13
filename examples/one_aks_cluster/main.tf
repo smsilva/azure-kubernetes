@@ -27,6 +27,7 @@ module "aks" {
   cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
   cluster_admin_group_ids = local.admin_group_ids
   default_node_pool_name  = "system" # 12 Alphanumeric characters
+  resource_group_name     = local.resource_group_name
 }
 
 output "aks_id" {
