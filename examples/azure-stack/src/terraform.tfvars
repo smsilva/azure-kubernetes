@@ -1,3 +1,3 @@
 resource_group_name = "wasp"
-name                = "wasp-aks-blue"
+name                = "aks-blue"
 location            = "eastus2"
