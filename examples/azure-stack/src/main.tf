@@ -8,13 +8,14 @@ module "vnet" {
   location            = var.location
 }
 
-#module "aks" {
-#  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=main"
-#
-#  cluster_name            = local.cluster_name
-#  cluster_location        = var.location
-#  cluster_version         = "1.21.2"
-#  cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
-#  cluster_admin_group_ids = local.admin_group_ids
-#  default_node_pool_name  = "system" # 12 Alphanumeric characters
-#}
+module "aks" {
+  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=main"
+
+  cluster_name            = local.cluster_name
+  cluster_location        = var.location
+  cluster_version         = "1.21.2"
+  cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
+  cluster_admin_group_ids = local.admin_group_ids
+  default_node_pool_name  = "system" # 12 Alphanumeric characters
+  resource_group_name     = data.azurerm_resource_group.default.name
+}
