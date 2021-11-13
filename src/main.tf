@@ -84,6 +84,6 @@ resource "azurerm_kubernetes_cluster" "default" {
 
 resource "azurerm_role_assignment" "resource_group" {
   scope                = data.azurerm_resource_group.default.id
-  principal_id         = data.azurerm_kubernetes_cluster.default.kubelet_identity[0].object_id
+  principal_id         = azurerm_kubernetes_cluster.default.kubelet_identity[0].object_id
   role_definition_name = "Contributor"
 }

@@ -1,4 +1,5 @@
 locals {
+  resource_group_name     = "wasp"
   name                    = "wasp-aks"
   location                = "centralus"
   admin_group_ids         = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"]
@@ -8,12 +9,13 @@ locals {
 }
 
 module "vnet" {
-  source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=1.1.0"
+  source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=2.0.0"
 
-  name                   = local.virtual_network_name
-  cidrs                  = local.virtual_network_cidrs
-  subnets                = local.virtual_network_subnets
-  location               = local.location
+  name                = local.virtual_network_name
+  cidrs               = local.virtual_network_cidrs
+  subnets             = local.virtual_network_subnets
+  location            = local.location
+  resource_group_name = local.resource_group_name
 }
 
 module "aks" {
