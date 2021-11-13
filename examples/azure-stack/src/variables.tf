@@ -1,13 +1,18 @@
-variable "name" {
+variable "cluster_name" {
   type        = string
   description = "Cluster Name"
   default     = "wasp-aks"
 }
 
-variable "location" {
+variable "cluster_location" {
   type        = string
   description = "Cluster Location"
   default     = "centralus"
+}
+
+variable "cluster_version" {
+  type        = string
+  description = "Cluster Version"
 }
 
 variable "resource_group_name" {

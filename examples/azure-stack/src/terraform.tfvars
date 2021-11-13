@@ -1,3 +1,4 @@
 resource_group_name = "wasp-aks-blue"
-name                = "wasp-aks-blue"
-location            = "eastus2"
+cluster_name        = "wasp-aks-blue"
+cluster_location    = "eastus2"
+cluster_version     = "1.21.2"
