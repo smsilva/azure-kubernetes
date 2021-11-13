@@ -1,22 +1,15 @@
 data "azurerm_client_config" "default" {
 }
 
-locals {
-  cluster_name             = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
-  resource_group_name      = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
-  node_resource_group_name = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}-nrg"
-  cluster_dns_prefix       = "${var.platform_instance_name}-${var.cluster_name}-${random_string.aks_id.result}"
-}
-
 resource "random_string" "aks_id" {
   keepers = {
-    platform_instance_name = var.platform_instance_name
-    cluster_name           = var.cluster_name
-    cluster_location       = var.cluster_location
+    cluster_name     = var.cluster_name
+    cluster_location = var.cluster_location
   }
 
   length      = 3
   min_numeric = 1
+  min_lower   = 1
   special     = false
   upper       = false
 }
