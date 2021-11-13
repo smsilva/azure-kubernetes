@@ -1,5 +1,5 @@
 locals {
-  resource_group_name     = "wasp"
+  resource_group_name     = "wasp-aks"
   name                    = "wasp-aks"
   location                = "centralus"
   admin_group_ids         = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"]
