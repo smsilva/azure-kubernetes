@@ -1,5 +1,11 @@
-variable "platform_instance_name" {
+variable "name" {
   type        = string
-  description = "Platform Instance Name"
-  default     = "wasp-sandbox-iq1"
+  description = "Cluster Name"
+  default     = "wasp-global-1"
+}
+
+variable "location" {
+  type        = string
+  description = "Cluster Location"
+  default     = "centralus"
 }

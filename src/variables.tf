@@ -1,8 +1,3 @@
-variable "platform_instance_name" {
-  type        = string
-  description = "Platform Instance Name"
-}
-
 variable "cluster_name" {
   type        = string
   description = "AKS Cluster Name"
