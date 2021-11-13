@@ -1,7 +1,3 @@
-output "platform_instance_name" {
-  value = var.platform_instance_name
-}
-
 output "aks_id" {
   value = azurerm_kubernetes_cluster.default.id
 }
