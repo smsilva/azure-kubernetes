@@ -28,5 +28,10 @@ variable "cluster_subnet_id" {
 variable "default_node_pool_name" {
   type        = string
   description = "Default System Node Pool Name (12 alphanumeric characters only)"
-  default     = "systempool"
+  default     = "system"
+}
+
+variable "resource_group_name" {
+  type    = string
+  default = ""
 }

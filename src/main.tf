@@ -1,29 +1,22 @@
 data "azurerm_client_config" "default" {
 }
 
-resource "random_string" "aks_id" {
-  keepers = {
-    cluster_name     = var.cluster_name
-    cluster_location = var.cluster_location
-  }
-
-  length      = 3
-  min_numeric = 1
-  min_lower   = 1
-  special     = false
-  upper       = false
+locals {
+  cluster_name             = var.cluster_name
+  cluster_dns_prefix       = var.cluster_name
+  resource_group_name      = var.resource_group_name != "" ? var.resource_group_name : var.cluster_name
+  node_resource_group_name = "${local.resource_group_name}-nrg"
 }
 
-resource "azurerm_resource_group" "default" {
-  name     = local.resource_group_name
-  location = var.cluster_location
+data "azurerm_resource_group" "default" {
+  name = local.resource_group_name
 }
 
 resource "azurerm_kubernetes_cluster" "default" {
   name                = local.cluster_name
   dns_prefix          = local.cluster_dns_prefix
-  location            = azurerm_resource_group.default.location
-  resource_group_name = azurerm_resource_group.default.name
+  location            = data.azurerm_resource_group.default.location
+  resource_group_name = data.azurerm_resource_group.default.name
   node_resource_group = local.node_resource_group_name
   kubernetes_version  = var.cluster_version
 
@@ -90,7 +83,7 @@ resource "azurerm_kubernetes_cluster" "default" {
 }
 
 resource "azurerm_role_assignment" "resource_group" {
-  scope                = azurerm_resource_group.default.id
-  principal_id         = azurerm_kubernetes_cluster.default.kubelet_identity[0].object_id
+  scope                = data.azurerm_resource_group.default.id
+  principal_id         = data.azurerm_kubernetes_cluster.default.kubelet_identity[0].object_id
   role_definition_name = "Contributor"
 }
