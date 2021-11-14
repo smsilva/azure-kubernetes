@@ -22,7 +22,7 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=main"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=2.1.0"
 
   cluster_name            = local.cluster_name
   cluster_location        = var.cluster_location
