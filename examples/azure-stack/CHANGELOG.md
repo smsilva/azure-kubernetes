@@ -1,3 +1,15 @@
+## 2.1.2 (2021-11-16)
+
+### Refactor
+
+- **outputs**: new outputs
+
+## 2.1.1 (2021-11-14)
+
+### Fix
+
+- **debug**: debug scripts were update to show some blank lines
+
 ## 2.1.0 (2021-11-14)
 
 ### Feat
