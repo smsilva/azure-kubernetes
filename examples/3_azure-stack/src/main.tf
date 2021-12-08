@@ -26,13 +26,17 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=2.1.2"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=development"
 
   cluster_name            = local.cluster_name
-  cluster_location        = var.cluster_location
-  cluster_version         = var.cluster_version
+  cluster_location        = local.location
+  cluster_version         = "1.21.2"
   cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
   cluster_admin_group_ids = local.admin_group_ids
-  default_node_pool_name  = "system" # 12 Alphanumeric characters
+  default_node_pool_name  = "sysnp01" # 12 Alphanumeric characters
   resource_group_name     = azurerm_resource_group.default.name
+
+  depends_on = [
+    azurerm_resource_group.default
+  ]
 }
