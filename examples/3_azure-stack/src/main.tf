@@ -4,7 +4,7 @@ locals {
   virtual_network_cidrs   = ["10.0.0.0/8"]
   virtual_network_subnets = [{ cidr = "10.150.0.0/16", name = "aks" }]
   resource_group_name     = var.resource_group_name != "" ? var.resource_group_name : local.cluster_name
-  admin_group_ids         = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"]
+  cluster_admin_group_ids = var.cluster_admin_group_ids
 }
 
 resource "azurerm_resource_group" "default" {
@@ -29,10 +29,10 @@ module "aks" {
   source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=development"
 
   cluster_name            = local.cluster_name
-  cluster_location        = local.location
+  cluster_location        = azurerm_resource_group.default.location
   cluster_version         = "1.21.2"
   cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
-  cluster_admin_group_ids = local.admin_group_ids
+  cluster_admin_group_ids = local.cluster_admin_group_ids
   default_node_pool_name  = "sysnp01" # 12 Alphanumeric characters
   resource_group_name     = azurerm_resource_group.default.name
 
