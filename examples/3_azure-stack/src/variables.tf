@@ -19,3 +19,8 @@ variable "resource_group_name" {
   type        = string
   description = "Resource Group Name"
 }
+
+variable "cluster_admin_group_ids" {
+  type        = list(string)
+  description = "AKS Admin Groups"
+}
