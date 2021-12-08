@@ -1,3 +1,22 @@
+## 3.0.0 (2021-12-08)
+
+### Feat
+
+- **provider**: remove provider reference from module source code
+- **provider**: remove provider reference from module source code
+- **provider**: remove provider reference from module source code
+- **provider**: remove provider reference from module source code
+
+### BREAKING CHANGE
+
+- Remove Terraform Provider
+
+## 2.1.2 (2021-11-16)
+
+### Refactor
+
+- **outputs**: new outputs
+
 ## 2.1.1 (2021-11-14)
 
 ### Fix
