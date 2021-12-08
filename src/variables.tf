@@ -7,7 +7,7 @@ variable "cluster_name" {
 variable "cluster_location" {
   type        = string
   description = "AKS Cluster Location"
-  default     = "centralus"
+  default     = "eastus2"
 }
 
 variable "cluster_admin_group_ids" {

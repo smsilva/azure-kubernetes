@@ -7,22 +7,26 @@ locals {
   admin_group_ids         = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"]
 }
 
-data "azurerm_resource_group" "default" {
-  name = local.resource_group_name
+resource "azurerm_resource_group" "default" {
+  name     = local.resource_group_name
+  location = var.cluster_location
 }
 
 module "vnet" {
-  source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=2.0.0"
+  source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=3.0.5"
 
   name                = local.virtual_network_name
   cidrs               = local.virtual_network_cidrs
   subnets             = local.virtual_network_subnets
-  resource_group_name = data.azurerm_resource_group.default.name
-  location            = var.cluster_location
+  resource_group_name = azurerm_resource_group.default.name
+
+  depends_on = [
+    azurerm_resource_group.default
+  ]
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=2.1.0"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=2.1.2"
 
   cluster_name            = local.cluster_name
   cluster_location        = var.cluster_location
@@ -30,5 +34,5 @@ module "aks" {
   cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
   cluster_admin_group_ids = local.admin_group_ids
   default_node_pool_name  = "system" # 12 Alphanumeric characters
-  resource_group_name     = data.azurerm_resource_group.default.name
+  resource_group_name     = azurerm_resource_group.default.name
 }
