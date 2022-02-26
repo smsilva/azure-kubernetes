@@ -53,27 +53,27 @@ resource "azurerm_kubernetes_cluster" "default" {
     }
   }
 
-  addon_profile {
-    oms_agent {
-      enabled = false
-    }
+  # addon_profile {
+  #   oms_agent {
+  #     enabled = false
+  #   }
 
-    aci_connector_linux {
-      enabled = false
-    }
+  #   aci_connector_linux {
+  #     enabled = false
+  #   }
 
-    azure_policy {
-      enabled = false
-    }
+  #   azure_policy {
+  #     enabled = false
+  #   }
 
-    http_application_routing {
-      enabled = false
-    }
+  #   http_application_routing {
+  #     enabled = false
+  #   }
 
-    kube_dashboard {
-      enabled = false
-    }
-  }
+  #   kube_dashboard {
+  #     enabled = false
+  #   }
+  # }
 }
 
 resource "azurerm_role_assignment" "resource_group" {
