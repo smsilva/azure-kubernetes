@@ -24,3 +24,11 @@ variable "cluster_admin_group_ids" {
   type        = list(string)
   description = "AKS Admin Groups"
 }
+
+variable "keyvault_name" {
+  type = string
+}
+
+variable "keyvault_resource_group_name" {
+  type = string
+}
