@@ -1,3 +1,10 @@
+## 3.1.0 (2022-02-26)
+
+### Feat
+
+- **src/examples**: Create new outputs to configure ArgoCD
+- **src**: Update terraform azurerm_kubernetes_cluster to remove addon_profile
+
 ## 3.0.0 (2021-12-08)
 
 ### Feat
