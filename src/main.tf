@@ -52,28 +52,6 @@ resource "azurerm_kubernetes_cluster" "default" {
       admin_group_object_ids = var.cluster_admin_group_ids
     }
   }
-
-  # addon_profile {
-  #   oms_agent {
-  #     enabled = false
-  #   }
-
-  #   aci_connector_linux {
-  #     enabled = false
-  #   }
-
-  #   azure_policy {
-  #     enabled = false
-  #   }
-
-  #   http_application_routing {
-  #     enabled = false
-  #   }
-
-  #   kube_dashboard {
-  #     enabled = false
-  #   }
-  # }
 }
 
 resource "azurerm_role_assignment" "resource_group" {
