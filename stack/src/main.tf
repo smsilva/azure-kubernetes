@@ -1,8 +1,8 @@
 locals {
   cluster_name            = var.cluster_name
-  virtual_network_name    = "${local.cluster_name}-vnet"
-  virtual_network_cidrs   = ["10.0.0.0/8"]
-  virtual_network_subnets = [{ cidr = "10.150.0.0/16", name = "aks" }]
+  virtual_network_name    = local.cluster_name
+  virtual_network_cidrs   = var.virtual_network_cidrs
+  virtual_network_subnets = var.virtual_network_subnets
   resource_group_name     = var.resource_group_name != "" ? var.resource_group_name : local.cluster_name
   cluster_admin_group_ids = var.cluster_admin_group_ids
 }
@@ -26,14 +26,14 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=development"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=3.2.0"
 
   cluster_name            = local.cluster_name
   cluster_location        = azurerm_resource_group.default.location
-  cluster_version         = "1.21.2"
+  cluster_version         = var.cluster_version
   cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
   cluster_admin_group_ids = local.cluster_admin_group_ids
-  default_node_pool_name  = "sysnp01" # 12 Alphanumeric characters
+  default_node_pool_name  = "sys01" # 12 Alphanumeric characters
   resource_group_name     = azurerm_resource_group.default.name
 
   depends_on = [
