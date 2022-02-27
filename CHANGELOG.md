@@ -1,3 +1,15 @@
+## 3.3.0 (2022-02-26)
+
+### Feat
+
+- **src/examples**: Update stack base
+
+## 3.2.0 (2022-02-26)
+
+### Feat
+
+- **src/examples**: Update outputs to configure ArgoCD
+
 ## 3.1.0 (2022-02-26)
 
 ### Feat
