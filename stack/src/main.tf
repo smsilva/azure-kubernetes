@@ -25,6 +25,14 @@ module "vnet" {
   ]
 }
 
+module "vault" {
+  source = "git@github.com:smsilva/azure-key-vault.git//src?ref=0.4.0"
+
+  name           = var.keyvault_name
+  resource_group = azurerm_resource_group.default
+  administrators = var.cluster_admin_group_ids
+}
+
 module "aks" {
   source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=3.2.0"
 
