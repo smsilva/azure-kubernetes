@@ -18,6 +18,7 @@ variable "cluster_version" {
 variable "resource_group_name" {
   type        = string
   description = "Resource Group Name"
+  default     = ""
 }
 
 variable "cluster_admin_group_ids" {
@@ -30,5 +31,16 @@ variable "keyvault_name" {
 }
 
 variable "keyvault_resource_group_name" {
-  type = string
+  type    = string
+  default = "wasp-foundation"
+}
+
+variable "virtual_network_cidrs" {
+  default = ["10.244.0.0/14"]
+}
+
+variable "virtual_network_subnets" {
+  default = [
+    { cidr = "10.246.0.0/16", name = "aks" }
+  ]
 }
