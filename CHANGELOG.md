@@ -1,3 +1,9 @@
+## 3.4.0 (2022-02-27)
+
+### Feat
+
+- **src/stack**: Update stack secrets
+
 ## 3.3.0 (2022-02-26)
 
 ### Feat
