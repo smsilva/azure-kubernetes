@@ -1,7 +1,12 @@
+data "azurerm_key_vault" "default" {
+  name                = var.keyvault_name
+  resource_group_name = var.keyvault_name
+}
+
 module "secrets" {
   source = "git@github.com:smsilva/azure-key-vault.git//src/secrets?ref=0.4.0"
 
-  vault = module.vault.instance
+  vault = data.azurerm_key_vault.default
   values = {
     "cluster-name"                          = module.aks.instance.name,
     "cluster-api-server-host"               = module.aks.instance.kube_admin_config[0].host,
@@ -19,7 +24,7 @@ module "secrets" {
   }
 
   depends_on = [
-    module.vault,
+    data.azurerm_key_vault.default,
     module.aks
   ]
 }
