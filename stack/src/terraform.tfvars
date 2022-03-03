@@ -1,14 +1,16 @@
 # environment:
-#   id: wasp-na-sbx
+#   id: wasp-sbx-na
 #   clusters:
-#     - id: wasp-na-sbx-a
-#     - id: wasp-na-sbx-b
+#     - id: wasp-sbx-na-eus2
+#     - id: wasp-sbx-na-ceus
 
-keyvault_name    = "wasp-na-sbx-a"
-cluster_name     = "wasp-na-sbx-a"
+keyvault_name    = "wasp-sbx-na-eus2"
+cluster_name     = "wasp-sbx-na-eus2"
 cluster_location = "eastus2"
 cluster_version  = "1.21.7"
 
 cluster_admin_group_ids = [
-  "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1" # aks-administrator
+  "805a3d92-4178-4ad1-a0d6-70eae41a463a", # cloud-admin
 ]
+
+# wasp-sbx-na-eus2.eastus2.cloudapp.azure.com
