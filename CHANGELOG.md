@@ -1,3 +1,15 @@
+## 3.6.0 (2022-03-03)
+
+### Feat
+
+- **stack/src**: Not create Resource Group
+
+## 3.5.0 (2022-02-27)
+
+### Feat
+
+- **stack**: Add a Key Vault
+
 ## 3.4.0 (2022-02-27)
 
 ### Feat
