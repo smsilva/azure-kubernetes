@@ -1,3 +1,21 @@
+## 3.7.0 (2022-03-03)
+
+### Feat
+
+- **stack/src**: Reference an Azure Key Vault
+
+## 3.6.1 (2022-03-03)
+
+### Fix
+
+- **stack/src**: Revert Resource Group change
+
+## 3.6.0 (2022-03-03)
+
+### Feat
+
+- **stack/src**: Not create Resource Group
+
 ## 3.5.0 (2022-02-27)
 
 ### Feat
