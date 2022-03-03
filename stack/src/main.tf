@@ -7,8 +7,9 @@ locals {
   cluster_admin_group_ids = var.cluster_admin_group_ids
 }
 
-data "azurerm_resource_group" "default" {
-  name = local.resource_group_name
+resource "azurerm_resource_group" "default" {
+  name     = local.resource_group_name
+  location = var.cluster_location
 }
 
 module "vnet" {
@@ -17,10 +18,10 @@ module "vnet" {
   name                = local.virtual_network_name
   cidrs               = local.virtual_network_cidrs
   subnets             = local.virtual_network_subnets
-  resource_group_name = data.azurerm_resource_group.default.name
+  resource_group_name = azurerm_resource_group.default.name
 
   depends_on = [
-    data.azurerm_resource_group.default
+    azurerm_resource_group.default
   ]
 }
 
@@ -28,7 +29,7 @@ module "vault" {
   source = "git@github.com:smsilva/azure-key-vault.git//src?ref=0.4.0"
 
   name           = var.keyvault_name
-  resource_group = data.azurerm_resource_group.default
+  resource_group = azurerm_resource_group.default
   administrators = local.cluster_admin_group_ids
 }
 
@@ -36,14 +37,14 @@ module "aks" {
   source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=3.2.0"
 
   cluster_name            = local.cluster_name
-  cluster_location        = data.azurerm_resource_group.default.location
+  cluster_location        = azurerm_resource_group.default.location
   cluster_version         = var.cluster_version
   cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
   cluster_admin_group_ids = local.cluster_admin_group_ids
   default_node_pool_name  = "sys01" # 12 Alphanumeric characters
-  resource_group_name     = data.azurerm_resource_group.default.name
+  resource_group_name     = azurerm_resource_group.default.name
 
   depends_on = [
-    data.azurerm_resource_group.default
+    azurerm_resource_group.default
   ]
 }
