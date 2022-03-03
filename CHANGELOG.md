@@ -1,3 +1,9 @@
+## 3.6.1 (2022-03-03)
+
+### Fix
+
+- **stack/src**: Revert Resource Group change
+
 ## 3.6.0 (2022-03-03)
 
 ### Feat
