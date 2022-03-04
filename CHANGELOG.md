@@ -1,3 +1,15 @@
+## 3.8.0 (2022-03-04)
+
+### Feat
+
+- **stack/src/**: Add cluster_id variable
+
+## 3.7.0 (2022-03-03)
+
+### Feat
+
+- **stack/src**: Reference an Azure Key Vault
+
 ## 3.6.1 (2022-03-03)
 
 ### Fix
