@@ -1,3 +1,9 @@
+variable "cluster_id" {
+  type        = string
+  description = "Will be used to store Cluster Secrets"
+  default     = "eus2-a"
+}
+
 variable "cluster_name" {
   type        = string
   description = "Cluster Name"

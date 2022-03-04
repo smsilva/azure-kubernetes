@@ -8,11 +8,11 @@ module "secrets" {
 
   vault = data.azurerm_key_vault.default
   values = {
-    "cluster-name"                          = module.aks.instance.name,
-    "cluster-api-server-host"               = module.aks.instance.kube_admin_config[0].host,
-    "cluster-api-server-token"              = module.aks.instance.kube_admin_config[0].password,
-    "cluster-api-server-ca-certificate"     = module.aks.instance.kube_admin_config[0].cluster_ca_certificate,
-    "cluster-api-server-credentials-argocd" = <<-EOT
+    "cluster-${var.cluster_id}-name"                          = module.aks.instance.name,
+    "cluster-${var.cluster_id}-api-server-host"               = module.aks.instance.kube_admin_config[0].host,
+    "cluster-${var.cluster_id}-api-server-token"              = module.aks.instance.kube_admin_config[0].password,
+    "cluster-${var.cluster_id}-api-server-ca-certificate"     = module.aks.instance.kube_admin_config[0].cluster_ca_certificate,
+    "cluster-${var.cluster_id}-api-server-credentials-argocd" = <<-EOT
     {
       "bearerToken": "${module.aks.instance.kube_admin_config[0].password}",
       "tlsClientConfig": {
