@@ -1,4 +1,3 @@
-
 locals {
   cluster_name             = var.cluster_name
   cluster_dns_prefix       = var.cluster_name
@@ -19,10 +18,10 @@ resource "azurerm_kubernetes_cluster" "default" {
     orchestrator_version         = var.cluster_version
     only_critical_addons_enabled = false # Default Node Pool will be used to Deploy User Pods
     enable_auto_scaling          = true
-    vm_size                      = "Standard_D2_v2"
-    node_count                   = 1
-    min_count                    = 1
-    max_count                    = 5
+    vm_size                      = var.default_node_pool_vm_size
+    node_count                   = var.default_node_pool_count
+    min_count                    = var.default_node_pool_min_count
+    max_count                    = var.default_node_pool_max_count
     max_pods                     = 120
     type                         = "VirtualMachineScaleSets"
     os_disk_type                 = "Managed"

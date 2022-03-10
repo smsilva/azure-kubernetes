@@ -1,7 +1,7 @@
 locals {
   location = "eastus2"
 
-  cluster_name    = "wasp-4-${random_string.id.result}"
+  cluster_name    = "wasp-aks-${random_string.id.result}"
   cluster_version = "1.21.7"
 
   resource_group_name = local.cluster_name
@@ -26,7 +26,7 @@ module "aks" {
   cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
   cluster_admin_group_ids = local.admin_group_ids
   resource_group_name     = azurerm_resource_group.default.name
-  default_node_pool_name  = "npsys01" # 12 Alphanumeric characters
+  default_node_pool_name  = "sys01" # 12 Alphanumeric characters
 
   depends_on = [
     azurerm_resource_group.default,
@@ -35,7 +35,7 @@ module "aks" {
 }
 
 module "secrets" {
-  source = "git@github.com:smsilva/azure-key-vault.git//src/secrets?ref=0.4.0"
+  source = "git@github.com:smsilva/azure-key-vault.git//src/secrets?ref=1.0.0"
 
   vault = data.azurerm_key_vault.foundation
   values = {

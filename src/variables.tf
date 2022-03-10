@@ -31,6 +31,22 @@ variable "default_node_pool_name" {
   default     = "system"
 }
 
+variable "default_node_pool_vm_size" {
+  default = "Standard_D2_v2"
+}
+
+variable "default_node_pool_count" {
+  default = 1
+}
+
+variable "default_node_pool_min_count" {
+  default = 1
+}
+
+variable "default_node_pool_max_count" {
+  default = 5
+}
+
 variable "resource_group_name" {
   type    = string
   default = ""
