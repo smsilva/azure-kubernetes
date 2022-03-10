@@ -1,4 +1,3 @@
-
 locals {
   cluster_name             = var.cluster_name
   cluster_dns_prefix       = var.cluster_name
