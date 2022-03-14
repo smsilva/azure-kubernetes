@@ -1,3 +1,17 @@
+## 3.10.0 (2022-03-14)
+
+### Feat
+
+- **stack/src/secrets.tf**: Reduce Key Names
+- Update azure-kubernetes to version 3.9.0
+
+## 3.9.0 (2022-03-10)
+
+### Feat
+
+- **examples/3_one_aks_cluster_using_key_vault**: Moved example
+- **src/**: New Variables for Default Node Pool
+
 ## 3.8.0 (2022-03-04)
 
 ### Feat
@@ -57,9 +71,6 @@
 
 ### Feat
 
-- **provider**: remove provider reference from module source code
-- **provider**: remove provider reference from module source code
-- **provider**: remove provider reference from module source code
 - **provider**: remove provider reference from module source code
 
 ### BREAKING CHANGE
