@@ -1,3 +1,9 @@
+## 3.12.0 (2022-03-16)
+
+### Feat
+
+- **src/**: Create an Application Gateway Submodule
+
 ## 3.11.0 (2022-03-16)
 
 ### Feat
