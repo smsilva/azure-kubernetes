@@ -40,13 +40,14 @@ module "aks" {
   ]
 }
 
-module "app-gw" {
+module "appgw" {
   count  = var.application_gateway_enabled ? 1 : 0
-  source = "git@github.com:smsilva/azure-application-gateway.git//src?ref=0.4.3"
+  source = "./application-gateway"
 
-  name      = "${local.cluster_name}-app-gw"
-  location  = azurerm_resource_group.default.location
-  subnet_id = module.vnet.subnets["app-gw"].instance.id
+  name           = local.cluster_name
+  resource_group = azurerm_resource_group.default
+  subnet_id      = module.vnet.subnets["app-gw"].instance.id
+  cluster        = module.aks
 
   depends_on = [
     module.aks

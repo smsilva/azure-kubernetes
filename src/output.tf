@@ -6,6 +6,10 @@ output "instance" {
   value = azurerm_kubernetes_cluster.default
 }
 
+output "identity" {
+  value = azurerm_kubernetes_cluster.default.identity[0]
+}
+
 output "aks_identity_principal_id" {
   value = azurerm_kubernetes_cluster.default.identity[0].principal_id
 }

@@ -38,3 +38,7 @@ output "cluster_ca_certificate" {
   value     = module.aks.instance.kube_admin_config[0].cluster_ca_certificate
   sensitive = true
 }
+
+output "application_gateway_id" {
+  value = (module.appgw)[*].instance.id
+}
