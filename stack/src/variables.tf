@@ -47,6 +47,7 @@ variable "virtual_network_cidrs" {
 
 variable "virtual_network_subnets" {
   default = [
-    { cidr = "10.246.0.0/16", name = "aks" }
+    { cidr = "10.246.0.0/16", name = "aks" },
+    { cidr = "10.247.2.0/27", name = "app-gw" }
   ]
 }

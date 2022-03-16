@@ -26,7 +26,7 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=3.9.0"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=3.10.1"
 
   cluster_name            = local.cluster_name
   cluster_location        = azurerm_resource_group.default.location
@@ -36,6 +36,18 @@ module "aks" {
   resource_group_name     = azurerm_resource_group.default.name
 
   depends_on = [
-    azurerm_resource_group.default
+    module.vnet
+  ]
+}
+
+module "app-gw" {
+  source = "git@github.com:smsilva/azure-application-gateway.git//src?ref=0.4.3"
+
+  name      = "${local.cluster_name}-app-gw"
+  location  = azurerm_resource_group.default.location
+  subnet_id = module.vnet.subnets["app-gw"].instance.id
+
+  depends_on = [
+    module.aks
   ]
 }
