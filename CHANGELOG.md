@@ -1,3 +1,9 @@
+## 3.10.1 (2022-03-16)
+
+### Refactor
+
+- **src/main.tf**: Change azurerm_role_assignment for kubelet Managed Identity on AKS Resource Group
+
 ## 3.10.0 (2022-03-14)
 
 ### Feat
