@@ -51,3 +51,7 @@ variable "virtual_network_subnets" {
     { cidr = "10.247.2.0/27", name = "app-gw" }
   ]
 }
+
+variable "application_gateway_enabled" {
+  default = false
+}

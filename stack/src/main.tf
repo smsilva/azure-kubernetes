@@ -41,6 +41,7 @@ module "aks" {
 }
 
 module "app-gw" {
+  count  = var.application_gateway_enabled ? 1 : 0
   source = "git@github.com:smsilva/azure-application-gateway.git//src?ref=0.4.3"
 
   name      = "${local.cluster_name}-app-gw"
