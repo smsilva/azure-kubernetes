@@ -7,26 +7,27 @@ locals {
 }
 
 resource "azurerm_kubernetes_cluster" "default" {
-  name                = local.cluster_name
-  dns_prefix          = local.cluster_dns_prefix
-  location            = data.azurerm_resource_group.default.location
-  resource_group_name = data.azurerm_resource_group.default.name
-  node_resource_group = local.node_resource_group_name
-  kubernetes_version  = var.cluster_version
+  name                              = local.cluster_name
+  dns_prefix                        = local.cluster_dns_prefix
+  location                          = data.azurerm_resource_group.default.location
+  resource_group_name               = data.azurerm_resource_group.default.name
+  node_resource_group               = local.node_resource_group_name
+  kubernetes_version                = var.cluster_version
+  role_based_access_control_enabled = true
 
   default_node_pool {
     name                         = var.default_node_pool_name
     orchestrator_version         = var.cluster_version
     only_critical_addons_enabled = false # Default Node Pool will be used to Deploy User Pods
     enable_auto_scaling          = true
-    vm_size                      = "Standard_D2_v2"
-    node_count                   = 1
-    min_count                    = 1
-    max_count                    = 5
-    max_pods                     = 120
+    vm_size                      = var.default_node_pool_vm_size
+    node_count                   = var.default_node_pool_node_count
+    min_count                    = var.default_node_pool_min_count
+    max_count                    = var.default_node_pool_max_count
+    max_pods                     = var.default_node_pool_max_pods
     type                         = "VirtualMachineScaleSets"
     os_disk_type                 = "Managed"
-    os_disk_size_gb              = "100"
+    os_disk_size_gb              = var.default_node_pool_os_disk_size_gb
     vnet_subnet_id               = var.cluster_subnet_id
 
     upgrade_settings {
@@ -44,35 +45,10 @@ resource "azurerm_kubernetes_cluster" "default" {
     network_policy    = "azure"
   }
 
-  role_based_access_control {
-    enabled = true
-
-    azure_active_directory {
-      managed                = true
-      admin_group_object_ids = var.cluster_admin_group_ids
-    }
-  }
-
-  addon_profile {
-    oms_agent {
-      enabled = false
-    }
-
-    aci_connector_linux {
-      enabled = false
-    }
-
-    azure_policy {
-      enabled = false
-    }
-
-    http_application_routing {
-      enabled = false
-    }
-
-    kube_dashboard {
-      enabled = false
-    }
+  azure_active_directory_role_based_access_control {
+    managed                = true
+    azure_rbac_enabled     = true
+    admin_group_object_ids = var.cluster_admin_group_ids
   }
 }
 

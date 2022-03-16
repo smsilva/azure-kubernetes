@@ -4,17 +4,13 @@ provider "azurerm" {
 
 locals {
   location                = "eastus2"
-  cluster_name            = "wasp-aks-example-1"
+  cluster_name            = "wasp-aks-example-1-${random_string.id.result}"
+  cluster_version         = "1.21.7"
   resource_group_name     = local.cluster_name
   virtual_network_name    = "${local.cluster_name}-vnet"
   virtual_network_cidrs   = ["10.0.0.0/8"]
   virtual_network_subnets = [{ cidr = "10.140.0.0/16", name = "aks" }]
   admin_group_ids         = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"]
-}
-
-resource "azurerm_resource_group" "default" {
-  name     = local.resource_group_name
-  location = local.location
 }
 
 module "vnet" {
@@ -35,7 +31,7 @@ module "aks" {
 
   cluster_name            = local.cluster_name
   cluster_location        = local.location
-  cluster_version         = "1.21.2"
+  cluster_version         = local.cluster_version
   cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
   cluster_admin_group_ids = local.admin_group_ids
   default_node_pool_name  = "sysnp01" # 12 Alphanumeric characters

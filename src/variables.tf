@@ -31,6 +31,37 @@ variable "default_node_pool_name" {
   default     = "system"
 }
 
+variable "default_node_pool_vm_size" {
+  type        = string
+  description = "Default Node Pool Virtual Machine Size"
+  default     = "Standard_D2_v2"
+}
+
+variable "default_node_pool_os_disk_size_gb" {
+  type    = string
+  default = "100"
+}
+
+variable "default_node_pool_node_count" {
+  type    = number
+  default = 1
+}
+
+variable "default_node_pool_min_count" {
+  type    = number
+  default = 1
+}
+
+variable "default_node_pool_max_count" {
+  type    = number
+  default = 5
+}
+
+variable "default_node_pool_max_pods" {
+  type    = number
+  default = 120
+}
+
 variable "resource_group_name" {
   type    = string
   default = ""
