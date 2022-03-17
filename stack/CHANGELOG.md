@@ -1,3 +1,33 @@
+## 3.14.0 (2022-03-17)
+
+### Fix
+
+- **src/outputs.tf**: Application Gateway Name, Resource Group Name and Kubelet Identity ID
+
+### Feat
+
+- **stack/src/main.tf**: Update AKS and Application Gateway Module versions
+
+## 3.13.0 (2022-03-17)
+
+### Fix
+
+- **src/terraform.tfvars**: Remove unused Terraform Variable
+
+### Feat
+
+- **stack/src/**: Add Role Assignment for Application Gateway and Resource Group
+
+### Refactor
+
+- **stack/src/application-gateway**: Move outputs to a dedicated file
+
+## 3.12.1 (2022-03-17)
+
+### Refactor
+
+- **src/main.tf**: Moving Role Assingments Fields
+
 ## 3.12.0 (2022-03-16)
 
 ### Feat
