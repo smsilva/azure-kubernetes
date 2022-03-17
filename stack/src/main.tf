@@ -27,7 +27,7 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=3.10.1"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=3.13.0"
 
   cluster_name            = local.cluster_name
   cluster_location        = azurerm_resource_group.default.location
@@ -42,7 +42,7 @@ module "aks" {
 }
 
 module "appgw" {
-  source = "git@github.com:smsilva/azure-application-gateway.git//src?ref=1.1.0"
+  source = "git@github.com:smsilva/azure-application-gateway.git//src?ref=1.1.1"
 
   name           = local.application_gateway_name
   resource_group = azurerm_resource_group.default
