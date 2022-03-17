@@ -52,13 +52,13 @@ resource "azurerm_kubernetes_cluster" "default" {
 }
 
 resource "azurerm_role_assignment" "kubelet_contributor_on_cluster_resource_group" {
-  scope                = data.azurerm_resource_group.default.id
-  principal_id         = azurerm_kubernetes_cluster.default.kubelet_identity[0].object_id
   role_definition_name = "Contributor"
+  principal_id         = azurerm_kubernetes_cluster.default.kubelet_identity[0].object_id
+  scope                = data.azurerm_resource_group.default.id
 }
 
 resource "azurerm_role_assignment" "kubelet_contributor_on_cluster_infrastructure_resource_group" {
-  scope                = data.azurerm_resource_group.cluster_infrastructure.id
-  principal_id         = azurerm_kubernetes_cluster.default.kubelet_identity[0].object_id
   role_definition_name = "Contributor"
+  principal_id         = azurerm_kubernetes_cluster.default.kubelet_identity[0].object_id
+  scope                = data.azurerm_resource_group.cluster_infrastructure.id
 }
