@@ -7,7 +7,7 @@ output "name" {
 }
 
 output "kubelet_identity_id" {
-  value = module.aks.instance.kubelet_identity[0].object_id
+  value = module.aks.instance.kubelet_identity[0].user_assigned_identity_id
 }
 
 output "kubelet_identity_client_id" {
@@ -51,6 +51,14 @@ output "application_gateway_id" {
   value = module.appgw.instance.id
 }
 
+output "application_gateway_name" {
+  value = module.appgw.instance.name
+}
+
 output "application_gateway_resource_group_id" {
   value = azurerm_resource_group.default.id
+}
+
+output "application_gateway_resource_group_name" {
+  value = azurerm_resource_group.default.name
 }
