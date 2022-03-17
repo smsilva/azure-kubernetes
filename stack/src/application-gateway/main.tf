@@ -5,7 +5,3 @@ module "appgw" {
   resource_group = var.resource_group
   subnet_id      = var.subnet_id
 }
-
-output "instance" {
-  value = module.appgw.instance
-}
