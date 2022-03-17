@@ -1,10 +1,11 @@
 locals {
-  cluster_name            = var.cluster_name
-  virtual_network_name    = local.cluster_name
-  virtual_network_cidrs   = var.virtual_network_cidrs
-  virtual_network_subnets = var.virtual_network_subnets
-  resource_group_name     = var.resource_group_name != "" ? var.resource_group_name : local.cluster_name
-  cluster_admin_group_ids = var.cluster_admin_group_ids
+  cluster_name             = var.cluster_name
+  application_gateway_name = var.application_gateway_name != "" ? var.application_gateway_name : var.cluster_name
+  virtual_network_name     = local.cluster_name
+  virtual_network_cidrs    = var.virtual_network_cidrs
+  virtual_network_subnets  = var.virtual_network_subnets
+  resource_group_name      = var.resource_group_name != "" ? var.resource_group_name : local.cluster_name
+  cluster_admin_group_ids  = var.cluster_admin_group_ids
 }
 
 resource "azurerm_resource_group" "default" {
@@ -41,15 +42,35 @@ module "aks" {
 }
 
 module "appgw" {
-  count  = var.application_gateway_enabled ? 1 : 0
-  source = "./application-gateway"
+  source = "git@github.com:smsilva/azure-application-gateway.git//src?ref=1.1.0"
 
-  name           = local.cluster_name
+  name           = local.application_gateway_name
   resource_group = azurerm_resource_group.default
   subnet_id      = module.vnet.subnets["app-gw"].instance.id
-  cluster        = module.aks
 
   depends_on = [
-    module.aks
+    module.vnet
+  ]
+}
+
+resource "azurerm_role_assignment" "identity_contributor_on_application_gateway" {
+  role_definition_name = "Contributor"
+  principal_id         = module.aks.instance.kubelet_identity[0].object_id
+  scope                = module.appgw.instance.id
+
+  depends_on = [
+    module.aks,
+    module.appgw
+  ]
+}
+
+resource "azurerm_role_assignment" "identity_reader_on_application_gateway_resource_group" {
+  role_definition_name = "Reader"
+  principal_id         = module.aks.instance.kubelet_identity[0].object_id
+  scope                = azurerm_resource_group.default.id
+
+  depends_on = [
+    module.aks,
+    module.appgw
   ]
 }

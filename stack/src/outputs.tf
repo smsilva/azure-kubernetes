@@ -6,8 +6,16 @@ output "name" {
   value = module.aks.instance.name
 }
 
+output "kubelet_identity_id" {
+  value = module.aks.instance.kubelet_identity[0].object_id
+}
+
 output "kubelet_identity_client_id" {
   value = module.aks.aks_kubelet_identity_client_id
+}
+
+output "kubelet_identity_object_id" {
+  value = module.aks.instance.kubelet_identity[0].object_id
 }
 
 output "kubeconfig" {
@@ -40,5 +48,9 @@ output "cluster_ca_certificate" {
 }
 
 output "application_gateway_id" {
-  value = (module.appgw)[*].instance.id
+  value = module.appgw.instance.id
+}
+
+output "application_gateway_resource_group_id" {
+  value = azurerm_resource_group.default.id
 }

@@ -52,6 +52,6 @@ variable "virtual_network_subnets" {
   ]
 }
 
-variable "application_gateway_enabled" {
-  default = false
+variable "application_gateway_name" {
+  default = ""
 }
