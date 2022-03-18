@@ -28,13 +28,13 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=3.13.0"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=4.0.0"
 
-  name            = local.cluster_name
-  version         = local.cluster_version
-  subnet          = module.vnet.subnets["aks"].instance
-  admin_group_ids = local.cluster_admin_group_ids
-  resource_group  = azurerm_resource_group.default
+  name                 = local.cluster_name
+  orchestrator_version = local.cluster_version
+  admin_id_list        = local.cluster_admin_group_ids
+  subnet               = module.vnet.subnets["aks"].instance
+  resource_group       = azurerm_resource_group.default
 
   depends_on = [
     module.vnet
