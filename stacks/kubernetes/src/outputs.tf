@@ -1,5 +1,5 @@
 output "id" {
-  value = module.aks.aks_id
+  value = module.aks.id
 }
 
 output "name" {
@@ -11,7 +11,7 @@ output "kubelet_identity_id" {
 }
 
 output "kubelet_identity_client_id" {
-  value = module.aks.aks_kubelet_identity_client_id
+  value = module.aks.kubelet_identity_client_id
 }
 
 output "kubelet_identity_object_id" {
@@ -19,7 +19,7 @@ output "kubelet_identity_object_id" {
 }
 
 output "kubeconfig" {
-  value     = module.aks.aks_kubeconfig
+  value     = module.aks.kubeconfig
   sensitive = true
 }
 
