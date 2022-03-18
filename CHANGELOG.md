@@ -1,3 +1,9 @@
+## 4.1.0 (2022-03-18)
+
+### Feat
+
+- **stacks/kubernetes/src/main.tf**: Update module version and Parameters
+
 ## 4.0.0 (2022-03-18)
 
 ### Feat
