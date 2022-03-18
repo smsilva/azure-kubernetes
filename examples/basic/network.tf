@@ -1,14 +1,7 @@
-resource "random_string" "id" {
-  length      = 3
-  min_lower   = 1
-  min_numeric = 2
-  lower       = true
-  special     = false
-}
-
-resource "azurerm_resource_group" "default" {
-  name     = local.resource_group_name
-  location = local.location
+locals {
+  virtual_network_name    = "${local.cluster_name}-vnet"
+  virtual_network_cidrs   = ["10.244.0.0/14"]
+  virtual_network_subnets = [{ cidr = "10.246.0.0/16", name = "aks" }]
 }
 
 module "vnet" {

@@ -6,8 +6,16 @@ output "name" {
   value = module.aks.instance.name
 }
 
+output "kubelet_identity_id" {
+  value = module.aks.instance.kubelet_identity[0].user_assigned_identity_id
+}
+
 output "kubelet_identity_client_id" {
   value = module.aks.aks_kubelet_identity_client_id
+}
+
+output "kubelet_identity_object_id" {
+  value = module.aks.instance.kubelet_identity[0].object_id
 }
 
 output "kubeconfig" {

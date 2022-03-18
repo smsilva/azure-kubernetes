@@ -1,28 +1,27 @@
-variable "cluster_name" {
+variable "resource_group" {}
+
+variable "subnet" {}
+
+variable "name" {
   type        = string
   description = "AKS Cluster Name"
   default     = "aks"
 }
 
-variable "cluster_location" {
+variable "location" {
   type        = string
   description = "AKS Cluster Location"
   default     = "eastus2"
 }
 
-variable "cluster_admin_group_ids" {
+variable "admin_id_list" {
   type        = list(string)
   description = "AKS Admin Groups"
 }
 
-variable "cluster_version" {
+variable "orchestrator_version" {
   type        = string
-  description = "AKS Version"
-}
-
-variable "cluster_subnet_id" {
-  type        = string
-  description = "AKS Node Pool Subnet ID"
+  description = "Kubernetes Version"
 }
 
 variable "default_node_pool_name" {
@@ -60,9 +59,4 @@ variable "default_node_pool_max_count" {
 variable "default_node_pool_max_pods" {
   type    = number
   default = 120
-}
-
-variable "resource_group_name" {
-  type    = string
-  default = ""
 }
