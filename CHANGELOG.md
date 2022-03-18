@@ -1,3 +1,10 @@
+## 4.2.0 (2022-03-18)
+
+### Feat
+
+- **stacks/kubernetes/src/secrets.tf**: Add a prefix for each secret
+- **stacks/kubernetes/src/outputs.tf**: Update outputs
+
 ## 4.1.0 (2022-03-18)
 
 ### Feat
