@@ -1,15 +1,17 @@
 locals {
-  cluster_name             = var.cluster_name
-  application_gateway_name = var.application_gateway_name != "" ? var.application_gateway_name : var.cluster_name
-  virtual_network_name     = local.cluster_name
-  virtual_network_cidrs    = var.virtual_network_cidrs
-  virtual_network_subnets  = var.virtual_network_subnets
-  resource_group_name      = var.resource_group_name != "" ? var.resource_group_name : local.cluster_name
-  cluster_admin_group_ids  = var.cluster_admin_group_ids
+  cluster_name                    = var.cluster_name
+  cluster_version                 = var.cluster_version
+  cluster_admin_group_ids         = var.cluster_admin_group_ids
+  cluster_resource_group_name     = var.cluster_resource_group_name != "" ? var.cluster_resource_group_name : local.cluster_name
+  cluster_resource_group_location = var.cluster_location
+  application_gateway_name        = local.cluster_name
+  virtual_network_name            = local.cluster_name
+  virtual_network_cidrs           = var.virtual_network_cidrs
+  virtual_network_subnets         = var.virtual_network_subnets
 }
 
 resource "azurerm_resource_group" "default" {
-  name     = local.resource_group_name
+  name     = local.cluster_resource_group_name
   location = var.cluster_location
 }
 
@@ -27,14 +29,13 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=3.13.0"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=4.0.0"
 
-  cluster_name            = local.cluster_name
-  cluster_location        = azurerm_resource_group.default.location
-  cluster_version         = var.cluster_version
-  cluster_subnet_id       = module.vnet.subnets["aks"].instance.id
-  cluster_admin_group_ids = local.cluster_admin_group_ids
-  resource_group_name     = azurerm_resource_group.default.name
+  name                 = local.cluster_name
+  orchestrator_version = local.cluster_version
+  admin_id_list        = local.cluster_admin_group_ids
+  subnet               = module.vnet.subnets["aks"].instance
+  resource_group       = azurerm_resource_group.default
 
   depends_on = [
     module.vnet
@@ -42,11 +43,11 @@ module "aks" {
 }
 
 module "appgw" {
-  source = "git@github.com:smsilva/azure-application-gateway.git//src?ref=1.1.1"
+  source = "git@github.com:smsilva/azure-application-gateway.git//src?ref=1.2.0"
 
   name           = local.application_gateway_name
   resource_group = azurerm_resource_group.default
-  subnet_id      = module.vnet.subnets["app-gw"].instance.id
+  subnet         = module.vnet.subnets["app-gw"].instance
 
   depends_on = [
     module.vnet

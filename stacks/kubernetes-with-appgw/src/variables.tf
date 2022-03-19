@@ -21,9 +21,9 @@ variable "cluster_version" {
   description = "Cluster Version"
 }
 
-variable "resource_group_name" {
+variable "cluster_resource_group_name" {
   type        = string
-  description = "Resource Group Name"
+  description = "Cluster Resource Group Name"
   default     = ""
 }
 
@@ -50,8 +50,4 @@ variable "virtual_network_subnets" {
     { cidr = "10.246.0.0/16", name = "aks" },
     { cidr = "10.247.2.0/27", name = "app-gw" }
   ]
-}
-
-variable "application_gateway_name" {
-  default = ""
 }
