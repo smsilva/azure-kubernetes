@@ -1,3 +1,10 @@
+## 4.4.0 (2022-03-22)
+
+### Feat
+
+- **stacks/kubernetes-with-appgw/src/main.tf**: Update Application Gateway module version to 1.3.0 to enable http2
+- Create outputs for Application Gateway Resource
+
 ## 4.3.0 (2022-03-18)
 
 ### Feat
