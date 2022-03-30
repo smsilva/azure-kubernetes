@@ -41,7 +41,7 @@ resource "azurerm_kubernetes_cluster" "default" {
   }
 
   network_profile {
-    load_balancer_sku = "Standard"
+    load_balancer_sku = "standard"
     network_plugin    = "azure"
     network_policy    = "azure"
   }
