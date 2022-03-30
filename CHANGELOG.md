@@ -1,3 +1,9 @@
+## 4.5.0 (2022-03-30)
+
+### Feat
+
+- Update azurerm provider
+
 ## 4.4.0 (2022-03-22)
 
 ### Feat
