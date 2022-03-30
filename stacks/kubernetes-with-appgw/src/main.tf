@@ -43,7 +43,7 @@ module "aks" {
 }
 
 module "appgw" {
-  source = "git@github.com:smsilva/azure-application-gateway.git//src?ref=1.3.0"
+  source = "git@github.com:smsilva/azure-application-gateway.git//src?ref=1.4.0"
 
   name           = local.application_gateway_name
   resource_group = azurerm_resource_group.default
