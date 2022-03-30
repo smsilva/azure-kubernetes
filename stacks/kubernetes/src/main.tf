@@ -28,7 +28,7 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=4.0.0"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=4.5.0"
 
   name                 = local.cluster_name
   orchestrator_version = local.cluster_version
