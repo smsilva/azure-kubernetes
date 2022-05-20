@@ -1,10 +1,10 @@
 locals {
   cluster_location               = "eastus2"
   cluster_name                   = "wasp-aks-${random_string.id.result}"
-  cluster_version                = "1.21.7"
+  cluster_version                = "1.21.9"
   cluster_resource_group_name    = local.cluster_name
   cluster_admin_id_list          = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
-  cluster_default_node_pool_name = "npsys01" # 12 Alphanumeric characters
+  cluster_default_node_pool_name = "npsys01"                                # 12 Alphanumeric characters
 }
 
 resource "azurerm_resource_group" "default" {
