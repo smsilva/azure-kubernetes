@@ -15,7 +15,7 @@ resource "azurerm_resource_group" "default" {
 }
 
 module "vnet" {
-  source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=3.0.5"
+  source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=3.0.6"
 
   name                = local.virtual_network_name
   cidrs               = local.virtual_network_cidrs

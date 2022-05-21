@@ -8,6 +8,12 @@ variable "name" {
   default     = "aks"
 }
 
+variable "dns_prefix" {
+  type        = string
+  description = "AKS Cluster DNS Prefix"
+  default     = ""
+}
+
 variable "location" {
   type        = string
   description = "AKS Cluster Location"

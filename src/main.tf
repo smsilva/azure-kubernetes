@@ -1,6 +1,6 @@
 locals {
   cluster_name             = var.name
-  cluster_dns_prefix       = var.name
+  cluster_dns_prefix       = var.dns_prefix != "" ? var.dns_prefix : var.name
   cluster_subnet_id        = var.subnet.id
   orchestrator_version     = var.orchestrator_version
   resource_group_name      = var.resource_group != "" ? var.resource_group.name : local.cluster_name
