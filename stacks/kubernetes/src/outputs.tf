@@ -29,7 +29,8 @@ output "instance" {
 }
 
 output "api_server" {
-  value = module.aks.instance.kube_admin_config[0].host
+  value     = module.aks.instance.kube_admin_config[0].host
+  sensitive = true
 }
 
 output "api_token" {

@@ -1,9 +1,3 @@
-variable "cluster_id" {
-  type        = string
-  description = "Will be used to store Cluster Secrets"
-  default     = "eus2-a"
-}
-
 variable "cluster_name" {
   type        = string
   description = "Cluster Name"
@@ -37,8 +31,7 @@ variable "keyvault_name" {
 }
 
 variable "keyvault_resource_group_name" {
-  type    = string
-  default = "wasp-foundation"
+  type = string
 }
 
 variable "virtual_network_cidrs" {
@@ -50,4 +43,23 @@ variable "virtual_network_subnets" {
     { cidr = "10.246.0.0/16", name = "aks" },
     { cidr = "10.247.2.0/27", name = "app-gw" }
   ]
+}
+
+variable "argocd_url" {
+  type = string
+}
+
+variable "install_argocd" {
+  type    = bool
+  default = false
+}
+
+variable "install_cert_manager" {
+  type    = bool
+  default = false
+}
+
+variable "install_external_secrets" {
+  type    = bool
+  default = false
 }

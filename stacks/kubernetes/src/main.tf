@@ -40,3 +40,16 @@ module "aks" {
     module.vnet
   ]
 }
+
+module "argocd" {
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/argocd?ref=development"
+
+  url                      = var.argocd_url
+  install_cert_manager     = var.install_cert_manager
+  install_external_secrets = var.install_external_secrets
+  install_argocd           = var.install_argocd
+
+  depends_on = [
+    module.aks
+  ]
+}

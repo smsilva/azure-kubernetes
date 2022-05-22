@@ -49,9 +49,26 @@ module "aks" {
   ]
 }
 
+variable "armKeyVaultName" {
+  type = string
+}
+
+variable "armClientSecret" {
+  type      = string
+  sensitive = true
+}
+
 module "argocd" {
   source = "../../src/argocd"
 
-  url                  = "argocd.silvios.me"
-  install_cert_manager = false
+  url                      = "argocd.sandbox.wasp.silvios.me"
+  install_cert_manager     = true
+  install_external_secrets = true
+  install_argocd           = true
+  armKeyVaultName        = var.armKeyVaultName
+  armClientSecret        = var.armClientSecret
+
+  depends_on = [
+    module.aks
+  ]
 }
