@@ -33,7 +33,7 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "../../src"
+  source = "../../src/cluster"
 
   name                   = local.cluster_name
   location               = local.cluster_location
