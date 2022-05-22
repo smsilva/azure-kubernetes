@@ -1,0 +1,6 @@
+argo-cd:
+  fullnameOverride: "argocd"
+  server:
+    config:
+      url: https://argocd.example.com
+      users.anonymous.enabled: "false"

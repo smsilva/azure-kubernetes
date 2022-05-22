@@ -48,3 +48,10 @@ module "aks" {
     module.vnet
   ]
 }
+
+module "argocd" {
+  source = "../../src/argocd"
+
+  url                  = "argocd.silvios.me"
+  install_cert_manager = false
+}
