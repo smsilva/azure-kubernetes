@@ -21,15 +21,6 @@ resource "helm_release" "external_secrets" {
   atomic           = true
 }
 
-data "template_file" "argocd_values_sso" {
-  template = file("${path.module}/templates/argocd-values-sso.yaml")
-  vars = {
-    server_config_url_host       = var.url
-    server_config_oidc_client_id = var.argocd_sso_application_id
-    server_config_oidc_tenant_id = data.azurerm_client_config.current.tenant_id
-  }
-}
-
 data "template_file" "external_secrets_values" {
   template = file("${path.module}/templates/external-secrets-values.yaml")
   vars = {
@@ -71,27 +62,5 @@ resource "helm_release" "external_dns" {
 
   depends_on = [
     helm_release.external_secrets_config
-  ]
-}
-
-resource "helm_release" "argocd" {
-  count            = var.install_argocd ? 1 : 0
-  chart            = "${path.module}/charts/argocd"
-  name             = "argocd"
-  namespace        = "argocd"
-  create_namespace = true
-  atomic           = true
-  timeout          = 600 # 10 minutes
-
-  values = [
-    data.template_file.argocd_values_sso.rendered,
-    file("${path.module}/templates/argocd-values-configs-known-hosts.yaml"),
-  ]
-
-  depends_on = [
-    helm_release.cert_manager,
-    helm_release.external_secrets,
-    helm_release.external_secrets_config,
-    helm_release.external_dns
   ]
 }

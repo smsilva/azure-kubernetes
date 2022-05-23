@@ -39,3 +39,11 @@ variable "armClientSecret" {
   type      = string
   sensitive = true
 }
+
+variable "argocd_rbac_group_admin" {
+  type = string
+}
+
+variable "argocd_rbac_group_contributor" {
+  type = string
+}

@@ -1,0 +1,12 @@
+argo-cd:
+  server:
+    rbacConfig:
+      policy.csv: |
+        p, role:app-contributor, applications, delete, default/*, allow
+        p, role:app-contributor, applications, get, default/*, allow
+        p, role:app-contributor, applications, sync, default/*, allow
+        p, role:app-contributor, applications, action/apps/Deployment/restart*, default/*, allow
+        g, "${server_rbac_config_group_contributor}", role:app-contributor
+        g, "${server_rbac_config_group_contributor}", role:readonly
+        g, "${server_rbac_config_group_admin}", role:admin
+      policy.default: role:empty

@@ -1,0 +1,53 @@
+argo-cd:
+  extraObjects:
+    - apiVersion: external-secrets.io/v1alpha1
+      kind: ExternalSecret
+      metadata:
+        name: argocd-secret
+      spec:
+        refreshInterval: 1h
+        secretStoreRef:
+          kind: ClusterSecretStore
+          name: azure-subscription-key-vault
+        target:
+          name: argocd-secret
+          creationPolicy: Merge
+        data:
+          - secretKey: "oidc.azuread.clientSecret"
+            remoteRef:
+              key: secret/argocd-oidc-azuread-client-secret
+
+    - apiVersion: external-secrets.io/v1alpha1
+      kind: ExternalSecret
+      metadata:
+        name: argocd-repo-creds-github
+      spec:
+        refreshInterval: 1h
+        secretStoreRef:
+          kind: ClusterSecretStore
+          name: azure-subscription-key-vault
+      
+        target:
+          name: argocd-repo-creds-github
+          creationPolicy: Owner
+          template:
+            metadata:
+              annotations:
+                managed-by: argocd.argoproj.io
+              labels:
+                argocd.argoproj.io/secret-type: repo-creds
+            type: Opaque
+            data:
+              sshPrivateKey: |
+                {{`{{ .idrsabase64filecontent | base64decode | toString }}`}}
+              url: |
+                {{`{{ .privaterepourl | toString }}`}}
+      
+        data:
+          - secretKey: "idrsabase64filecontent"
+            remoteRef:
+              key: secret/argocd-repo-creds-base64-encoded-private-key-github
+      
+          - secretKey: "privaterepourl"
+            remoteRef:
+              key: secret/argocd-repo-creds-url-github
