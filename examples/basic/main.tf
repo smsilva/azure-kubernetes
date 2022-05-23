@@ -55,6 +55,7 @@ module "argocd" {
   source = "../../src/argocd"
 
   url                              = "argocd.sandbox.wasp.silvios.me"
+  ingress_issuer_name              = "letsencrypt-staging-nginx"
   install_cert_manager             = true
   install_external_secrets         = true
   install_external_dns             = true

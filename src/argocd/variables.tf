@@ -52,3 +52,9 @@ variable "argocd_rbac_group_admin" {
 variable "argocd_rbac_group_contributor" {
   type = string
 }
+
+variable "ingress_issuer_name" {
+  type        = string
+  description = "cert-manager Issuer Name"
+  default     = "letsencrypt-staging-nginx"
+}

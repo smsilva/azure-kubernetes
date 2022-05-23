@@ -14,14 +14,16 @@ resource "helm_release" "argocd" {
     file("${path.module}/templates/argocd-values-additional-projects.yaml"),
     file("${path.module}/templates/argocd-values-configs-known-hosts.yaml"),
     file("${path.module}/templates/argocd-values-extra-objects.yaml"),
-    file("${path.module}/templates/argocd-values-ingress-nginx.yaml"),
   ]
 
   depends_on = [
-    helm_release.cert_manager,
+    data.template_file.argocd_values_ingress_nginx,
+    data.template_file.argocd_values_rbac,
+    data.template_file.argocd_values_sso,
     helm_release.cert_manager_issuers,
-    helm_release.external_secrets,
+    helm_release.cert_manager,
+    helm_release.external_dns,
     helm_release.external_secrets_config,
-    helm_release.external_dns
+    helm_release.external_secrets,
   ]
 }
