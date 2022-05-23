@@ -12,6 +12,19 @@ resource "helm_release" "cert_manager" {
   }
 }
 
+resource "helm_release" "cert_manager_issuers" {
+  count            = var.install_cert_manager ? 1 : 0
+  chart            = "${path.module}/charts/cert-manager-issuers"
+  name             = "cert-manager-issuers"
+  namespace        = "cert-manager"
+  create_namespace = true
+  atomic           = true
+
+  depends_on = [
+    helm_release.cert_manager
+  ]
+}
+
 resource "helm_release" "external_secrets" {
   count            = var.install_external_secrets ? 1 : 0
   chart            = "${path.module}/charts/external-secrets-0.4.4.tgz"

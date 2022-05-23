@@ -21,6 +21,11 @@ variable "install_external_secrets" {
   default = false
 }
 
+variable "install_nginx_ingress_controller" {
+  type    = bool
+  default = false
+}
+
 variable "install_argocd" {
   type    = bool
   default = false

@@ -1,0 +1,22 @@
+argo-cd:
+  server:
+    ingress:
+      enabled: true
+      https: true
+      hosts:
+        - ${server_ingress_host}
+      pathType: ImplementationSpecific
+      paths:
+        - /
+        - /argocd
+      tls:
+        - secretName: argocd-secret
+          hosts:
+            - ${server_ingress_host}
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        kubernetes.io/tls-acme: "true"
+        cert-manager.io/cluster-issuer: ${server_ingress_issuer_name}
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+        nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"

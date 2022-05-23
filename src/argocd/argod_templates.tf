@@ -14,3 +14,11 @@ data "template_file" "argocd_values_rbac" {
     server_rbac_config_group_contributor = var.argocd_rbac_group_contributor
   }
 }
+
+data "template_file" "argocd_values_ingress_nginx" {
+  template = file("${path.module}/templates/argocd-values-ingress-nginx.yaml")
+  vars = {
+    server_ingress_host        = var.url
+    server_ingress_issuer_name = "letsencrypt-staging-nginx"
+  }
+}

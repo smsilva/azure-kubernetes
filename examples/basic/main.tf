@@ -54,15 +54,16 @@ module "aks" {
 module "argocd" {
   source = "../../src/argocd"
 
-  url                           = "argocd.sandbox.wasp.silvios.me"
-  install_cert_manager          = true
-  install_external_secrets      = true
-  install_external_dns          = true
-  install_argocd                = true
-  argocd_rbac_group_admin       = "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1" # aks-administrator
-  argocd_rbac_group_contributor = "2deb9d06-5807-4107-a5a6-94368f39d79f" # aks-contributor
-  armKeyVaultName               = var.armKeyVaultName
-  armClientSecret               = var.armClientSecret
+  url                              = "argocd.sandbox.wasp.silvios.me"
+  install_cert_manager             = true
+  install_external_secrets         = true
+  install_external_dns             = true
+  install_nginx_ingress_controller = false
+  install_argocd                   = true
+  argocd_rbac_group_admin          = "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1" # aks-administrator
+  argocd_rbac_group_contributor    = "2deb9d06-5807-4107-a5a6-94368f39d79f" # aks-contributor
+  armKeyVaultName                  = var.armKeyVaultName
+  armClientSecret                  = var.armClientSecret
 
   depends_on = [
     module.aks

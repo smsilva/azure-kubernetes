@@ -1,0 +1,14 @@
+letsencrypt:
+  email: abi-staff@ciandt.com
+  servers:
+    - name:  prod
+      url:   https://acme-v02.api.letsencrypt.org/directory
+
+    - name:  staging
+      url:   https://acme-staging-v02.api.letsencrypt.org/directory
+  issuers:
+    - name:  application-gateway
+      class: azure/application-gateway
+
+    - name:  nginx
+      class: nginx

@@ -8,15 +8,18 @@ resource "helm_release" "argocd" {
   timeout          = 600 # 10 minutes
 
   values = [
-    data.template_file.argocd_values_sso.rendered,
+    data.template_file.argocd_values_ingress_nginx.rendered,
     data.template_file.argocd_values_rbac.rendered,
-    file("${path.module}/templates/argocd-values-configs-known-hosts.yaml"),
+    data.template_file.argocd_values_sso.rendered,
     file("${path.module}/templates/argocd-values-additional-projects.yaml"),
+    file("${path.module}/templates/argocd-values-configs-known-hosts.yaml"),
     file("${path.module}/templates/argocd-values-extra-objects.yaml"),
+    file("${path.module}/templates/argocd-values-ingress-nginx.yaml"),
   ]
 
   depends_on = [
     helm_release.cert_manager,
+    helm_release.cert_manager_issuers,
     helm_release.external_secrets,
     helm_release.external_secrets_config,
     helm_release.external_dns
