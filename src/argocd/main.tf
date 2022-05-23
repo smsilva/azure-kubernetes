@@ -61,6 +61,19 @@ resource "helm_release" "external_secrets_config" {
   ]
 }
 
+resource "helm_release" "external_dns" {
+  count            = var.install_external_dns ? 1 : 0
+  chart            = "${path.module}/charts/external-dns"
+  name             = "external-dns"
+  namespace        = "external-dns"
+  create_namespace = true
+  atomic           = true
+
+  depends_on = [
+    helm_release.external_secrets_config
+  ]
+}
+
 resource "helm_release" "argocd" {
   count            = var.install_argocd ? 1 : 0
   chart            = "${path.module}/charts/argocd"
@@ -78,6 +91,7 @@ resource "helm_release" "argocd" {
   depends_on = [
     helm_release.cert_manager,
     helm_release.external_secrets,
-    helm_release.external_secrets_config
+    helm_release.external_secrets_config,
+    helm_release.external_dns
   ]
 }

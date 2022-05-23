@@ -26,6 +26,11 @@ variable "install_argocd" {
   default = false
 }
 
+variable "install_external_dns" {
+  type    = bool
+  default = false
+}
+
 variable "armKeyVaultName" {
   type = string
 }
