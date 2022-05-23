@@ -1,3 +1,23 @@
+## 5.0.0 (2022-05-23)
+
+### Feat
+
+- **argocd**: Install and Configure ArgoCD with NGINX Ingress Controller
+- Add cert-manager-issuers, nginx-ingress-controller and ArgoCD Ingress
+- Configure external-dns
+- Install external-dns
+- **stacks/kubernetes/src/**: Add ArgoCD install
+- Install cert-manager
+- Add ArgoCD Module
+- **examples/basic/main.tf**: Update AKS version
+- **stacks/kubernetes-with-appgw/src/main.tf**: Update App Gateway Module to 1.4.0
+- **stacks/kubernetes-with-appgw/src/main.tf**: Update azure-kubernetes module to 4.5.0
+- **stacks/kubernetes/src/main.tf**: Update azure-kubernetes module to 4.5.0
+
+### Refactor
+
+- Update azure-kubernetes repository
+
 ## 4.5.0 (2022-03-30)
 
 ### Feat
