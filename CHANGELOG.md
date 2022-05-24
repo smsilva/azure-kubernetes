@@ -1,3 +1,14 @@
+## 5.0.3 (2022-05-24)
+
+### Refactor
+
+- **examples/basic/main.tf**: Update local values
+- **src/argocd/templates/argocd-values-ingress-*.yaml**: Reordering lines and update values
+
+### Fix
+
+- ArgoCD NGINX Ingress Controller Configuration
+
 ## 5.0.2 (2022-05-24)
 
 ### Fix
