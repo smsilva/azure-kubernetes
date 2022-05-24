@@ -12,10 +12,10 @@ argo-cd:
         - /
         - /argocd
       tls:
-        - secretName: ${server_ingress_tls_secret_name}
+        - secretName: argocd-ingress
           hosts:
             - ${server_ingress_host}
       annotations:
-        kubernetes.io/ingress.class: "${server_ingress_class_name}"
         appgw.ingress.kubernetes.io/backend-protocol: "http"
         cert-manager.io/cluster-issuer: ${server_ingress_issuer_name}
+        kubernetes.io/ingress.class: "azure/application-gateway"
