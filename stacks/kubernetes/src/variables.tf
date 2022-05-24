@@ -63,3 +63,31 @@ variable "install_external_secrets" {
   type    = bool
   default = false
 }
+
+variable "install_external_dns" {
+  type    = bool
+  default = false
+}
+
+variable "install_nginx_ingress_controller" {
+  type    = bool
+  default = false
+}
+
+variable "armClientSecret" {
+  type      = string
+  sensitive = true
+}
+
+variable "argocd_rbac_group_admin" {
+  type = string
+}
+
+variable "argocd_rbac_group_contributor" {
+  type = string
+}
+
+variable "argocd_ingress_issuer_name" {
+  type    = string
+  default = "letsencrypt-staging-nginx"
+}

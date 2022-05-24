@@ -44,10 +44,18 @@ module "aks" {
 module "argocd" {
   source = "git@github.com:smsilva/azure-kubernetes.git//src/argocd?ref=development"
 
-  url                      = var.argocd_url
-  install_cert_manager     = var.install_cert_manager
-  install_external_secrets = var.install_external_secrets
-  install_argocd           = var.install_argocd
+  url                              = var.argocd_url
+  cluster_instance                 = module.aks.instance
+  install_cert_manager             = var.install_cert_manager
+  install_external_secrets         = var.install_external_secrets
+  install_external_dns             = var.install_external_dns
+  install_nginx_ingress_controller = var.install_nginx_ingress_controller
+  install_argocd                   = var.install_argocd
+  argocd_rbac_group_admin          = var.argocd_rbac_group_admin
+  argocd_rbac_group_contributor    = var.argocd_rbac_group_contributor
+  ingress_issuer_name              = var.argocd_ingress_issuer_name
+  armKeyVaultName                  = var.keyvault_name
+  armClientSecret                  = var.armClientSecret
 
   depends_on = [
     module.aks
