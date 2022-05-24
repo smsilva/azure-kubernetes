@@ -1,3 +1,9 @@
+## 5.0.2 (2022-05-24)
+
+### Fix
+
+- ArgoCD NGINX Ingress Controller Configuration
+
 ## 5.0.1 (2022-05-23)
 
 ### Fix
