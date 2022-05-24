@@ -1,5 +1,11 @@
 data "azurerm_client_config" "current" {}
 
+variable "cluster_instance" {
+  type = object({
+    name = string
+  })
+}
+
 variable "url" {
   type    = string
   default = "argocd.example.com"

@@ -54,12 +54,13 @@ module "aks" {
 module "argocd" {
   source = "../../src/argocd"
 
-  url                              = "argocd.sandbox.wasp.silvios.me"
+  url                              = "argocd-eastus2-demo.sandbox.wasp.silvios.me"
   ingress_issuer_name              = "letsencrypt-staging-nginx"
+  cluster_instance                 = module.aks.instance
   install_cert_manager             = true
   install_external_secrets         = true
   install_external_dns             = true
-  install_nginx_ingress_controller = false
+  install_nginx_ingress_controller = true
   install_argocd                   = true
   argocd_rbac_group_admin          = "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1" # aks-administrator
   argocd_rbac_group_contributor    = "2deb9d06-5807-4107-a5a6-94368f39d79f" # aks-contributor

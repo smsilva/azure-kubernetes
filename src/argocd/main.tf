@@ -1,3 +1,23 @@
+data "template_file" "nginx_ingress_controller" {
+  template = file("${path.module}/templates/ingress-nginx-values.yaml")
+  vars = {
+    controller_service_annotations_azure_dns_label_name = var.cluster_instance.name
+  }
+}
+
+resource "helm_release" "nginx_ingress_controller" {
+  count            = var.install_nginx_ingress_controller ? 1 : 0
+  chart            = "${path.module}/charts/ingress-nginx"
+  name             = "ingress-nginx"
+  namespace        = "ingress-nginx"
+  create_namespace = true
+  atomic           = true
+
+  values = [
+    data.template_file.nginx_ingress_controller.rendered
+  ]
+}
+
 resource "helm_release" "cert_manager" {
   count            = var.install_cert_manager ? 1 : 0
   chart            = "${path.module}/charts/cert-manager-v1.7.2.tgz"
@@ -34,8 +54,8 @@ resource "helm_release" "external_secrets" {
   atomic           = true
 }
 
-data "template_file" "external_secrets_values" {
-  template = file("${path.module}/templates/external-secrets-values.yaml")
+data "template_file" "external_secrets_config_values" {
+  template = file("${path.module}/templates/external-secrets-config-values.yaml")
   vars = {
     secret_data_arm_client_id           = data.azurerm_client_config.current.client_id,
     cluster_secret_store_arm_tenant_id  = data.azurerm_client_config.current.tenant_id,
@@ -57,7 +77,7 @@ resource "helm_release" "external_secrets_config" {
   }
 
   values = [
-    data.template_file.external_secrets_values.rendered,
+    data.template_file.external_secrets_config_values.rendered,
   ]
 
   depends_on = [

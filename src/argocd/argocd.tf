@@ -25,5 +25,6 @@ resource "helm_release" "argocd" {
     helm_release.external_dns,
     helm_release.external_secrets_config,
     helm_release.external_secrets,
+    helm_release.nginx_ingress_controller,
   ]
 }
