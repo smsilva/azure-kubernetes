@@ -1,3 +1,9 @@
+## 6.0.0 (2022-05-24)
+
+### Feat
+
+- **stacks/kubernetes/src/**: Change variable names
+
 ## 5.0.3 (2022-05-24)
 
 ### Refactor
