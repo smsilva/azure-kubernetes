@@ -28,7 +28,7 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src?ref=6.0.0"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/cluster?ref=6.1.0"
 
   name                 = local.cluster_name
   orchestrator_version = local.cluster_version
@@ -42,7 +42,7 @@ module "aks" {
 }
 
 module "argocd" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src/argocd?ref=6.0.0"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/argocd?ref=6.1.0"
 
   url                              = var.argocd_url
   cluster_instance                 = module.aks.instance
