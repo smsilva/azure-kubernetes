@@ -54,7 +54,7 @@ module "aks" {
 module "argocd" {
   source = "../../src/argocd"
 
-  url                              = "argocd-eastus2-demo.sandbox.wasp.silvios.me"
+  url                              = "argocd.sandbox.wasp.silvios.me"
   ingress_issuer_name              = "letsencrypt-staging-nginx"
   cluster_instance                 = module.aks.instance
   install_cert_manager             = true
