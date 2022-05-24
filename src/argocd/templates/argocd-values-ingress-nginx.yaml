@@ -8,7 +8,6 @@ argo-cd:
       pathType: ImplementationSpecific
       paths:
         - /
-        - /argocd
       tls:
         - secretName: argocd-ingress
           hosts:
