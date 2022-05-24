@@ -7,16 +7,16 @@ resource "random_string" "id" {
 }
 
 locals {
-  virtual_network_cidrs               = ["10.244.0.0/14"]
-  virtual_network_subnets             = [{ cidr = "10.246.0.0/16", name = "aks" }]
-  virtual_network_name                = "wasp-example-${random_string.id.result}"
-  cluster_name                        = "wasp-example-${random_string.id.result}"
+  cluster_name                        = "wasp-example-basic-${random_string.id.result}"
   cluster_location                    = "eastus2"
   cluster_version                     = "1.21.9"
-  cluster_resource_group_name         = "wasp-example-${random_string.id.result}"
-  cluster_admin_id_list               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
-  cluster_default_node_pool_name      = "npsys01"
   cluster_default_node_pool_min_count = 3
+  cluster_default_node_pool_name      = "npsys01"
+  cluster_admin_id_list               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
+  cluster_resource_group_name         = local.cluster_name
+  virtual_network_name                = local.cluster_name
+  virtual_network_cidrs               = ["10.244.0.0/14"]
+  virtual_network_subnets             = [{ cidr = "10.246.0.0/16", name = "aks" }]
 }
 
 resource "azurerm_resource_group" "default" {
