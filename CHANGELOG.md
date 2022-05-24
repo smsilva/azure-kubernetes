@@ -1,3 +1,9 @@
+## 6.1.0 (2022-05-24)
+
+### Feat
+
+- Update modules version
+
 ## 6.0.0 (2022-05-24)
 
 ### Feat
