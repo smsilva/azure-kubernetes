@@ -18,7 +18,7 @@ data "template_file" "argocd_values_ingress_nginx" {
 locals {
   argocd_values_rbac = templatefile("${path.module}/templates/argocd-values-rbac-config.yaml", {
     server_rbac_config_group_contributors   = var.rbac_group_contributor_ids
-    server_rbac_config_group_administrators = var.rbac_group_administrator_ids
+    server_rbac_config_group_administrators = var.argocd_admin_id_list
   })
 }
 

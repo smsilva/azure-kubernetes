@@ -21,7 +21,7 @@ locals {
   argocd_ingress_issuer_name          = "letsencrypt-nginx-staging"
   rbac_group_contributor_ids          = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
 
-  rbac_group_administrator_ids = [
+  argocd_admin_id_list = [
     "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1", # aks-administrator
     "805a3d92-4178-4ad1-a0d6-70eae41a463a", # cloud-admin
   ]
@@ -68,7 +68,7 @@ module "argocd" {
   install_external_dns             = true
   install_nginx_ingress_controller = true
   install_argocd                   = true
-  rbac_group_administrator_ids     = local.rbac_group_administrator_ids
+  argocd_admin_id_list             = local.argocd_admin_id_list
   rbac_group_contributor_ids       = local.rbac_group_contributor_ids
   armKeyVaultName                  = var.armKeyVaultName
   armClientSecret                  = var.armClientSecret

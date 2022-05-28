@@ -51,7 +51,7 @@ variable "armClientSecret" {
   sensitive = true
 }
 
-variable "rbac_group_administrator_ids" {
+variable "argocd_admin_id_list" {
   type = list(string)
 }
 
