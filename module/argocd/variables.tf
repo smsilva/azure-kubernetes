@@ -6,17 +6,12 @@ variable "cluster_instance" {
   })
 }
 
-variable "url" {
+variable "host" {
   type        = string
-  description = "ArgoCD url"
-
-  validation {
-    condition     = length(regexall("(^http)(s?)://", var.url)) > 0
-    error_message = "ArgoCD url must starts with https:// or http://"
-  }
+  description = "ArgoCD host"
 }
 
-variable "argocd_sso_application_id" {
+variable "sso_application_id" {
   type        = string
   description = "Active Directory App Registration: Application (client) ID"
   default     = "5b59d3e0-04f4-4be4-aff4-b159a8ed4b46" # argocd
@@ -56,11 +51,11 @@ variable "armClientSecret" {
   sensitive = true
 }
 
-variable "argocd_rbac_group_admin" {
+variable "rbac_group_admin" {
   type = string
 }
 
-variable "argocd_rbac_group_contributor" {
+variable "rbac_group_contributor" {
   type = string
 }
 
