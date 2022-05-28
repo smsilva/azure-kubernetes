@@ -1,3 +1,15 @@
+## 7.0.0 (2022-05-28)
+
+### Feat
+
+- **argocd-install**: Enable the customization of an Active Directory App Registration
+
+### Refactor
+
+- Change Variable names
+- Rename variable from rbac_group_administrator_ids to argocd_admin_id_list
+- Rename directories
+
 ## 6.2.0 (2022-05-28)
 
 ### Feat
