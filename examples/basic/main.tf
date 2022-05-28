@@ -42,7 +42,7 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "../../module/cluster"
+  source = "../../src/cluster"
 
   name                        = local.cluster_name
   orchestrator_version        = local.cluster_version
@@ -58,7 +58,7 @@ module "aks" {
 }
 
 module "argocd" {
-  source = "../../module/argocd"
+  source = "../../src/argocd"
 
   host                             = local.argocd_host
   ingress_issuer_name              = local.argocd_ingress_issuer_name

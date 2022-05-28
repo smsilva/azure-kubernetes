@@ -44,6 +44,6 @@ output "cluster_ca_certificate" {
   sensitive = true
 }
 
-output "argocd_values_rbac" {
-  value = module.argocd.template_argocd_values_rbac
+output "templates" {
+  value = module.argocd.templates
 }
