@@ -34,10 +34,9 @@ module "vnet" {
 }
 
 module "aks" {
-  source = "../../src/cluster"
+  source = "../../module/cluster"
 
   name                        = local.cluster_name
-  location                    = local.cluster_location
   orchestrator_version        = local.cluster_version
   admin_id_list               = local.cluster_admin_id_list
   default_node_pool_min_count = local.cluster_default_node_pool_min_count
@@ -46,16 +45,15 @@ module "aks" {
   subnet                      = module.vnet.subnets["aks"].instance
 
   depends_on = [
-    azurerm_resource_group.default,
     module.vnet
   ]
 }
 
 module "argocd" {
-  source = "../../src/argocd"
+  source = "../../module/argocd"
 
   url                              = "argocd.sandbox.wasp.silvios.me"
-  ingress_issuer_name              = "letsencrypt-staging-nginx"
+  ingress_issuer_name              = "letsencrypt-nginx-staging"
   cluster_instance                 = module.aks.instance
   install_cert_manager             = true
   install_external_secrets         = true

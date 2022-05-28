@@ -14,12 +14,6 @@ variable "dns_prefix" {
   default     = ""
 }
 
-variable "location" {
-  type        = string
-  description = "AKS Cluster Location"
-  default     = "eastus2"
-}
-
 variable "admin_id_list" {
   type        = list(string)
   description = "AKS Admin Groups"
@@ -34,6 +28,10 @@ variable "default_node_pool_name" {
   type        = string
   description = "Default System Node Pool Name (12 alphanumeric characters only)"
   default     = "system"
+  validation {
+    condition     = length(var.default_node_pool_name) <= 12
+    error_message = "The Node Pool Name should be 12 character long."
+  }
 }
 
 variable "default_node_pool_vm_size" {

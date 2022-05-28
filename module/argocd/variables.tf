@@ -7,8 +7,8 @@ variable "cluster_instance" {
 }
 
 variable "url" {
-  type    = string
-  default = "argocd.example.com"
+  type = string
+  description = "ArgoCD url"
 }
 
 variable "argocd_sso_application_id" {
@@ -62,5 +62,15 @@ variable "argocd_rbac_group_contributor" {
 variable "ingress_issuer_name" {
   type        = string
   description = "cert-manager Issuer Name"
-  default     = "letsencrypt-staging-nginx"
+  default     = "letsencrypt-nginx-staging"
+
+  validation {
+    condition = contains([
+      "letsencrypt-application-gateway-production",
+      "letsencrypt-application-gateway-staging",
+      "letsencrypt-nginx-production",
+      "letsencrypt-nginx-staging",
+    ], var.ingress_issuer_name)
+    error_message = "This is not a cert-manager ClusterIssuer available."
+  }
 }

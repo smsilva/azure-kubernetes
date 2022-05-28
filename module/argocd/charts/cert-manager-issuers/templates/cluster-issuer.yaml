@@ -4,13 +4,13 @@
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-{{ $server.name }}-{{ $issuer.name }}
+  name: letsencrypt-{{ $issuer.name }}-{{ $server.name }}
 spec:
   acme:
     email: {{ $.Values.letsencrypt.email }}
-    server: {{ $server.url }}
+    server: https://{{ $server.host }}.api.letsencrypt.org/directory
     privateKeySecretRef:
-      name: letsencrypt-{{ $server.name }}-{{ $issuer.name }}-issuer-account-key
+      name: letsencrypt-{{ $issuer.name }}-issuer-account-key-{{ $server.name }}
     solvers:
       - http01:
           ingress:
