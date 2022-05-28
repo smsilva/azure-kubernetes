@@ -17,6 +17,14 @@ locals {
   virtual_network_name                = local.cluster_name
   virtual_network_cidrs               = ["10.244.0.0/14"]
   virtual_network_subnets             = [{ cidr = "10.246.0.0/16", name = "aks" }]
+  argocd_host                         = "argocd.sandbox.wasp.silvios.me"
+  argocd_ingress_issuer_name          = "letsencrypt-nginx-staging"
+  rbac_group_contributor_ids          = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
+
+  rbac_group_administrator_ids = [
+    "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1", # aks-administrator
+    "805a3d92-4178-4ad1-a0d6-70eae41a463a", # cloud-admin
+  ]
 }
 
 resource "azurerm_resource_group" "default" {
@@ -52,16 +60,16 @@ module "aks" {
 module "argocd" {
   source = "../../module/argocd"
 
-  host                             = "argocd.sandbox.wasp.silvios.me"
-  ingress_issuer_name              = "letsencrypt-nginx-staging"
+  host                             = local.argocd_host
+  ingress_issuer_name              = local.argocd_ingress_issuer_name
   cluster_instance                 = module.aks.instance
   install_cert_manager             = true
   install_external_secrets         = true
   install_external_dns             = true
   install_nginx_ingress_controller = true
   install_argocd                   = true
-  rbac_group_admin                 = "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1" # aks-administrator
-  rbac_group_contributor           = "2deb9d06-5807-4107-a5a6-94368f39d79f" # aks-contributor
+  rbac_group_administrator_ids     = local.rbac_group_administrator_ids
+  rbac_group_contributor_ids       = local.rbac_group_contributor_ids
   armKeyVaultName                  = var.armKeyVaultName
   armClientSecret                  = var.armClientSecret
 

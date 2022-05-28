@@ -51,12 +51,12 @@ variable "armClientSecret" {
   sensitive = true
 }
 
-variable "rbac_group_admin" {
-  type = string
+variable "rbac_group_administrator_ids" {
+  type = list(string)
 }
 
-variable "rbac_group_contributor" {
-  type = string
+variable "rbac_group_contributor_ids" {
+  type = list(string)
 }
 
 variable "ingress_issuer_name" {

@@ -6,7 +6,11 @@ argo-cd:
         p, role:app-contributor, applications, get, default/*, allow
         p, role:app-contributor, applications, sync, default/*, allow
         p, role:app-contributor, applications, action/apps/Deployment/restart*, default/*, allow
-        g, "${server_rbac_config_group_contributor}", role:app-contributor
-        g, "${server_rbac_config_group_contributor}", role:readonly
-        g, "${server_rbac_config_group_admin}", role:admin
+%{ for contributor_id in server_rbac_config_group_contributors ~}
+        g, "${contributor_id}", role:app-contributor
+        g, "${contributor_id}", role:readonly
+%{ endfor ~}
+%{ for administrator_id in server_rbac_config_group_administrators ~}
+        g, "${administrator_id}", role:admin
+%{ endfor ~}
       policy.default: role:empty

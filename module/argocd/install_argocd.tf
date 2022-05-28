@@ -7,20 +7,19 @@ data "template_file" "argocd_values_sso" {
   }
 }
 
-data "template_file" "argocd_values_rbac" {
-  template = file("${path.module}/templates/argocd-values-rbac-config.yaml")
-  vars = {
-    server_rbac_config_group_admin       = var.rbac_group_admin
-    server_rbac_config_group_contributor = var.rbac_group_contributor
-  }
-}
-
 data "template_file" "argocd_values_ingress_nginx" {
   template = file("${path.module}/templates/argocd-values-ingress-nginx.yaml")
   vars = {
     server_ingress_host        = var.host
     server_ingress_issuer_name = var.ingress_issuer_name
   }
+}
+
+locals {
+  argocd_values_rbac = templatefile("${path.module}/templates/argocd-values-rbac-config.yaml", {
+    server_rbac_config_group_contributors   = var.rbac_group_contributor_ids
+    server_rbac_config_group_administrators = var.rbac_group_administrator_ids
+  })
 }
 
 resource "helm_release" "argocd" {
@@ -34,16 +33,15 @@ resource "helm_release" "argocd" {
 
   values = [
     data.template_file.argocd_values_ingress_nginx.rendered,
-    data.template_file.argocd_values_rbac.rendered,
     data.template_file.argocd_values_sso.rendered,
     file("${path.module}/templates/argocd-values-additional-projects.yaml"),
     file("${path.module}/templates/argocd-values-configs-known-hosts.yaml"),
     file("${path.module}/templates/argocd-values-extra-objects.yaml"),
+    local.argocd_values_rbac,
   ]
 
   depends_on = [
     data.template_file.argocd_values_ingress_nginx,
-    data.template_file.argocd_values_rbac,
     data.template_file.argocd_values_sso,
     helm_release.cert_manager_issuers,
     helm_release.cert_manager,

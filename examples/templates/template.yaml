@@ -1,0 +1,4 @@
+servers:
+%{ for s in nameservers ~}
+  - name: ${s}
+%{ endfor ~}

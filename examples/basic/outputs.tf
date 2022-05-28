@@ -43,3 +43,7 @@ output "cluster_ca_certificate" {
   value     = module.aks.instance.kube_admin_config[0].cluster_ca_certificate
   sensitive = true
 }
+
+output "argocd_values_rbac" {
+  value = module.argocd.template_argocd_values_rbac
+}
