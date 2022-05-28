@@ -1,32 +1,34 @@
 # Kubernetes Kubectl Docker Image
 
-## Retrieve Config Map Yaml File
-
-```shell
-terraform output -raw 
-```
 
 ## Build
 
 ```shell
-cp /usr/bin/kubectl build/kubectl
+cd docker
 
-docker build -t kubernetes-bootstrap:latest build/
-
-docker tag kubernetes-bootstrap:latest silviosilva/kubernetes-bootstrap:1.0
-
-docker push silviosilva/kubernetes-bootstrap:1.0
+./build.sh
 ```
 
 ## Run
 
 ```shell
-mkdir -p deploy/
+cd docker
 
-terraform output -raw argocd_bootstrap_config_map | tee deploy/argocd_bootstrap_config_map.yaml
+export KUBECONFIG_DATA=$(cat ~/.kube/config | base64 | tr -d "\n")
 
 docker run \
-  -v "${PWD}/deploy:/opt/kubernetes/deploy/" \
-  -e KUBECONFIG_DATA="$(terraform output -raw aks_kubeconfig | base64)" \
-  silviosilva/kubernetes-bootstrap:1.0
+  --volume "${PWD}/deploy:/deploy" \
+  --env KUBECONFIG_DATA="${KUBECONFIG_DATA?}" \
+  kubectl:latest \
+    version -o yaml
+
+docker run \
+  --volume "${PWD}/deploy:/deploy" \
+  --env KUBECONFIG_DATA="${KUBECONFIG_DATA?}" \
+  kubectl:latest \
+    -n foo apply \
+    -f /deploy && \
+    kubectl \
+      -n foo \
+      get cm bar
 ```

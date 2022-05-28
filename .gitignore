@@ -7,6 +7,7 @@
 **/.terraform/
 **/.terraform/*
 **/examples/**/deploy
+**/docker/*temp*
 crash.log
 kubectl
 override.tf
