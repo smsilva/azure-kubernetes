@@ -11,6 +11,7 @@ locals {
   cluster_location                    = "eastus2"
   cluster_version                     = "1.21.9"
   cluster_default_node_pool_min_count = 3
+  cluster_default_node_pool_max_count = 10
   cluster_default_node_pool_name      = "npsys01"
   cluster_administrators_ids          = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
   cluster_resource_group_name         = local.cluster_name
