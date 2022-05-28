@@ -1,3 +1,17 @@
+## 6.2.0 (2022-05-28)
+
+### Feat
+
+- Update kubectl image
+- Introduce the new terraform template function
+- **stacks/kubernetes/src/main.tf**: Update version
+
+### Refactor
+
+- Update variables names
+- ArgoCD url validation
+- Split resources in new files
+
 ## 6.1.0 (2022-05-24)
 
 ### Feat
