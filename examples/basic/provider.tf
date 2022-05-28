@@ -8,11 +8,18 @@ terraform {
       source  = "hashicorp/azurerm"
       version = ">= 3.0.0, < 4.0.0"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = ">= 2.22.0, < 3.0.0"
+    }
   }
 }
 
 provider "azurerm" {
   features {}
+}
+
+provider "azuread" {
 }
 
 provider "helm" {

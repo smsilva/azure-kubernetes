@@ -1,5 +1,5 @@
 variable "url" {
-  type = string
+  type    = string
   default = "https://argocd.example.com"
 }
 
