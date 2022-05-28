@@ -6,12 +6,12 @@ variable "cluster_instance" {
   })
 }
 
-variable "host" {
+variable "argocd_host" {
   type        = string
   description = "ArgoCD host"
 }
 
-variable "sso_application_id" {
+variable "argocd_sso_application_id" {
   type        = string
   description = "Active Directory App Registration: Application (client) ID"
   default     = "5b59d3e0-04f4-4be4-aff4-b159a8ed4b46" # argocd
@@ -59,7 +59,7 @@ variable "argocd_contributors_ids" {
   type = list(string)
 }
 
-variable "ingress_issuer_name" {
+variable "argocd_ingress_issuer_name" {
   type        = string
   description = "cert-manager Issuer Name"
   default     = "letsencrypt-nginx-staging"
@@ -70,7 +70,7 @@ variable "ingress_issuer_name" {
       "letsencrypt-application-gateway-staging",
       "letsencrypt-nginx-production",
       "letsencrypt-nginx-staging",
-    ], var.ingress_issuer_name)
+    ], var.argocd_ingress_issuer_name)
     error_message = "This is not a cert-manager ClusterIssuer available."
   }
 }
