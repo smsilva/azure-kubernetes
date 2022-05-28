@@ -20,6 +20,10 @@ locals {
     server_rbac_config_group_contributors   = var.argocd_contributors_ids
     server_rbac_config_group_administrators = var.argocd_administrators_ids
   })
+
+  argocd_values_extra_objects = templatefile("${path.module}/templates/argocd-values-extra-objects.yaml", {
+    argocd_sso_application_id = var.argocd_sso_application_id
+  })
 }
 
 resource "helm_release" "argocd" {
@@ -36,7 +40,7 @@ resource "helm_release" "argocd" {
     data.template_file.argocd_values_sso.rendered,
     file("${path.module}/templates/argocd-values-additional-projects.yaml"),
     file("${path.module}/templates/argocd-values-configs-known-hosts.yaml"),
-    file("${path.module}/templates/argocd-values-extra-objects.yaml"),
+    local.argocd_values_extra_objects,
     local.argocd_values_rbac,
   ]
 

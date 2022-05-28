@@ -3,7 +3,7 @@ argo-cd:
     - apiVersion: external-secrets.io/v1alpha1
       kind: ExternalSecret
       metadata:
-        name: argocd-secret
+        name: argocd-secret-merge-oidc-azuread
       spec:
         refreshInterval: 1h
         secretStoreRef:
@@ -15,7 +15,7 @@ argo-cd:
         data:
           - secretKey: "oidc.azuread.clientSecret"
             remoteRef:
-              key: secret/argocd-oidc-azuread-client-secret
+              key: secret/argocd-oidc-azuread-${argocd_sso_application_id}
 
     - apiVersion: external-secrets.io/v1alpha1
       kind: ExternalSecret

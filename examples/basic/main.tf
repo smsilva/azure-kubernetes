@@ -18,7 +18,8 @@ locals {
   virtual_network_name                = local.cluster_name
   virtual_network_cidrs               = ["10.244.0.0/14"]
   virtual_network_subnets             = [{ cidr = "10.246.0.0/16", name = "aks" }]
-  argocd_sso_application_id           = "5b59d3e0-04f4-4be4-aff4-b159a8ed4b46" # argocd
+  # argocd_sso_application_id           = "5b59d3e0-04f4-4be4-aff4-b159a8ed4b46" # argocd
+  argocd_sso_application_id           = "0f653961-73b3-4df4-b036-5384f8fb51b3" # argocd-wasp-sandbox
   argocd_host                         = "argocd.sandbox.wasp.silvios.me"
   argocd_ingress_issuer_name          = "letsencrypt-nginx-staging"
   argocd_contributors_ids             = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
@@ -68,6 +69,7 @@ module "argocd" {
   install_nginx_ingress_controller = true
   install_argocd                   = true
   argocd_host                      = local.argocd_host
+  argocd_sso_application_id        = local.argocd_sso_application_id
   argocd_ingress_issuer_name       = local.argocd_ingress_issuer_name
   argocd_administrators_ids        = local.argocd_administrators_ids
   argocd_contributors_ids          = local.argocd_contributors_ids
