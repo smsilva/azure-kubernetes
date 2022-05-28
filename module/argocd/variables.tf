@@ -7,8 +7,13 @@ variable "cluster_instance" {
 }
 
 variable "url" {
-  type = string
+  type        = string
   description = "ArgoCD url"
+
+  validation {
+    condition     = length(regexall("(^http)(s?)://", var.url)) > 0
+    error_message = "ArgoCD url must starts with https:// or http://"
+  }
 }
 
 variable "argocd_sso_application_id" {
