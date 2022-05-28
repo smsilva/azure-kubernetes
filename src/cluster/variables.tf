@@ -14,7 +14,7 @@ variable "dns_prefix" {
   default     = ""
 }
 
-variable "admin_id_list" {
+variable "administrators_ids" {
   type        = list(string)
   description = "AKS Admin Groups"
 }

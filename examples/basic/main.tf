@@ -12,16 +12,15 @@ locals {
   cluster_version                     = "1.21.9"
   cluster_default_node_pool_min_count = 3
   cluster_default_node_pool_name      = "npsys01"
-  cluster_admin_id_list               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
+  cluster_administrators_ids          = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
   cluster_resource_group_name         = local.cluster_name
   virtual_network_name                = local.cluster_name
   virtual_network_cidrs               = ["10.244.0.0/14"]
   virtual_network_subnets             = [{ cidr = "10.246.0.0/16", name = "aks" }]
   argocd_host                         = "argocd.sandbox.wasp.silvios.me"
   argocd_ingress_issuer_name          = "letsencrypt-nginx-staging"
-  rbac_group_contributor_ids          = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
-
-  argocd_admin_id_list = [
+  argocd_contributors_ids             = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
+  argocd_administrators_ids = [
     "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1", # aks-administrator
     "805a3d92-4178-4ad1-a0d6-70eae41a463a", # cloud-admin
   ]
@@ -46,7 +45,7 @@ module "aks" {
 
   name                        = local.cluster_name
   orchestrator_version        = local.cluster_version
-  admin_id_list               = local.cluster_admin_id_list
+  administrators_ids          = local.cluster_administrators_ids
   default_node_pool_min_count = local.cluster_default_node_pool_min_count
   default_node_pool_name      = local.cluster_default_node_pool_name
   resource_group              = azurerm_resource_group.default
@@ -68,8 +67,8 @@ module "argocd" {
   install_external_dns             = true
   install_nginx_ingress_controller = true
   install_argocd                   = true
-  argocd_admin_id_list             = local.argocd_admin_id_list
-  rbac_group_contributor_ids       = local.rbac_group_contributor_ids
+  argocd_administrators_ids        = local.argocd_administrators_ids
+  argocd_contributors_ids          = local.argocd_contributors_ids
   armKeyVaultName                  = var.armKeyVaultName
   armClientSecret                  = var.armClientSecret
 
