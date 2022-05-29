@@ -1,3 +1,8 @@
+variable "dns_zone" {
+  type        = string
+  description = "Azure DNS Zone"
+}
+
 variable "cluster_name" {
   type        = string
   description = "Cluster Name"
@@ -21,16 +26,41 @@ variable "cluster_resource_group_name" {
   default     = ""
 }
 
-variable "cluster_admin_group_ids" {
+variable "cluster_administrators_ids" {
   type        = list(string)
-  description = "AKS Admin Groups"
+  description = "AKS Administrator Groups"
 }
 
-variable "keyvault_name" {
+variable "cluster_default_node_pool_name" {
+  type        = string
+  description = "Default System Node Pool Name (12 alphanumeric characters only)"
+  default     = "system"
+  validation {
+    condition     = length(var.cluster_default_node_pool_name) <= 12
+    error_message = "The Node Pool Name should be 12 character long."
+  }
+}
+
+variable "cluster_default_node_pool_min_count" {
+  type    = number
+  default = 1
+}
+
+variable "cluster_default_node_pool_max_count" {
+  type    = number
+  default = 5
+}
+
+variable "cluster_default_node_pool_max_pods" {
+  type    = number
+  default = 120
+}
+
+variable "key_vault_name" {
   type = string
 }
 
-variable "keyvault_resource_group_name" {
+variable "key_vault_resource_group_name" {
   type = string
 }
 
@@ -43,10 +73,6 @@ variable "virtual_network_subnets" {
     { cidr = "10.246.0.0/16", name = "aks" },
     { cidr = "10.247.2.0/27", name = "app-gw" }
   ]
-}
-
-variable "argocd_url" {
-  type = string
 }
 
 variable "install_argocd" {
@@ -79,12 +105,12 @@ variable "armClientSecret" {
   sensitive = true
 }
 
-variable "argocd_rbac_group_admin" {
-  type = string
+variable "argocd_administrators_ids" {
+  type = list(string)
 }
 
-variable "argocd_rbac_group_contributor" {
-  type = string
+variable "argocd_contributors_ids" {
+  type = list(string)
 }
 
 variable "argocd_ingress_issuer_name" {
