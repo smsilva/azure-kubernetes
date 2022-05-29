@@ -8,7 +8,8 @@ resource "random_string" "id" {
 
 locals {
   dns_zone                            = "sandbox.wasp.silvios.me"
-  cluster_name                        = "wasp-example-basic-${random_string.id.result}"
+  cluster_base_name                   = "example-basic-${random_string.id.result}"
+  cluster_name                        = "wasp-${local.cluster_base_name}"
   cluster_location                    = "eastus2"
   cluster_version                     = "1.21.9"
   cluster_default_node_pool_min_count = 3
@@ -16,12 +17,10 @@ locals {
   cluster_default_node_pool_name      = "npsys01"
   cluster_administrators_ids          = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
   cluster_resource_group_name         = local.cluster_name
-  virtual_network_name                = local.cluster_name
-  virtual_network_cidrs               = ["10.244.0.0/14"]
-  virtual_network_subnets             = [{ cidr = "10.246.0.0/16", name = "aks" }]
   key_vault_name                      = "waspfoundation636a465c"
   key_vault_resource_group_name       = "wasp-foundation"
-  argocd_host                         = "argocd-${local.cluster_name}.${local.dns_zone}"
+  argocd_host_base_name               = "argocd-${local.cluster_base_name}"
+  argocd_host                         = "${local.argocd_host_base_name}.${local.dns_zone}"
   argocd_ingress_issuer_name          = "letsencrypt-nginx-staging"
   argocd_contributors_ids             = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
   argocd_administrators_ids = [

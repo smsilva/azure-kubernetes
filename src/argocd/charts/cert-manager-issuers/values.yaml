@@ -2,11 +2,11 @@ letsencrypt:
   email: alerts@silvios.me
 
   servers:
-    - name:  production
-      host:   acme-v02
+    - name: production
+      host: acme-v02
   
-    - name:  staging
-      host:   acme-staging-v02 https://.api.letsencrypt.org/directory
+    - name: staging
+      host: acme-staging-v02
 
   issuers:
     - name:  application-gateway

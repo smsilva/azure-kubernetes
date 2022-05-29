@@ -1,3 +1,9 @@
+locals {
+  virtual_network_name    = local.cluster_name
+  virtual_network_cidrs   = ["10.244.0.0/14"]
+  virtual_network_subnets = [{ cidr = "10.246.0.0/16", name = "aks" }]
+}
+
 resource "azurerm_resource_group" "default" {
   name     = local.cluster_resource_group_name
   location = local.cluster_location

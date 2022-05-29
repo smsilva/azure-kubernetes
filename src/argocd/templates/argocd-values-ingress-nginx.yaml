@@ -9,9 +9,10 @@ argo-cd:
       paths:
         - /
       tls:
-        - secretName: argocd-ingress
+        - secretName: argocd-secret # do not change, this is provided by Argo CD
           hosts:
             - ${server_ingress_host}
+            - argocd.sandbox.wasp.silvios.me
       annotations:
         cert-manager.io/cluster-issuer: ${server_ingress_issuer_name}
         external-dns.alpha.kubernetes.io/ttl: "1m"
