@@ -2,14 +2,13 @@ data "azuread_client_config" "current" {}
 
 locals {
   azuread_application_name                   = var.name
-  azuread_application_host                   = "${var.name}.${var.dns_zone}"
+  azuread_application_url                    = "${var.name}.${var.dns_zone}"
   azuread_application_password_rotation_days = "120"
 }
 
 resource "azuread_application" "default" {
   display_name            = local.azuread_application_name
   identifier_uris         = ["api://${local.azuread_application_name}"]
-  logo_image              = null
   owners                  = [data.azuread_client_config.current.object_id]
   sign_in_audience        = "AzureADandPersonalMicrosoftAccount"
   group_membership_claims = ["All"]
@@ -17,8 +16,7 @@ resource "azuread_application" "default" {
   api {
     mapped_claims_enabled          = true
     requested_access_token_version = 2
-
-    known_client_applications = []
+    known_client_applications      = []
   }
 
   feature_tags {
@@ -58,11 +56,11 @@ resource "azuread_application" "default" {
   }
 
   web {
-    homepage_url = "https://${local.azuread_application_host}"
-    logout_url   = "https://${local.azuread_application_host}/logout"
+    homepage_url = "https://${local.azuread_application_url}"
+    logout_url   = "https://${local.azuread_application_url}/logout"
 
     redirect_uris = [
-      "https://${local.azuread_application_host}/auth/callback",
+      "https://${local.azuread_application_url}/auth/callback",
       "https://oidcdebugger.com/debug",
     ]
 

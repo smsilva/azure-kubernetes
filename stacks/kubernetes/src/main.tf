@@ -32,6 +32,7 @@ module "aks" {
 module "argocd" {
   source = "git@github.com:smsilva/azure-kubernetes.git//src/argocd?ref=development"
 
+  domain                           = var.dns_zone
   cluster_instance                 = module.aks.instance
   install_cert_manager             = var.install_cert_manager
   install_external_secrets         = var.install_external_secrets

@@ -6,6 +6,11 @@ variable "cluster_instance" {
   })
 }
 
+variable "domain" {
+  type        = string
+  description = "Base Domain"
+}
+
 variable "argocd_host" {
   type        = string
   description = "ArgoCD host"

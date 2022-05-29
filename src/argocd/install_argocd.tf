@@ -11,6 +11,7 @@ data "template_file" "argocd_values_ingress_nginx" {
   template = file("${path.module}/templates/argocd-values-ingress-nginx.yaml")
   vars = {
     server_ingress_host        = var.argocd_host
+    server_ingress_domain      = var.domain
     server_ingress_issuer_name = var.argocd_ingress_issuer_name
   }
 }

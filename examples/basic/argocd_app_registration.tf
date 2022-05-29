@@ -6,7 +6,7 @@ data "azurerm_key_vault" "default" {
 module "argocd_app_registration" {
   source = "../../src/active_directory/app_registration"
 
-  name     = local.argocd_host_base_name
+  name     = local.argocd_app_registration_name
   dns_zone = local.dns_zone
 }
 
