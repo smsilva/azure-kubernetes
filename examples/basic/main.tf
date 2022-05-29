@@ -19,8 +19,8 @@ locals {
   virtual_network_name                = local.cluster_name
   virtual_network_cidrs               = ["10.244.0.0/14"]
   virtual_network_subnets             = [{ cidr = "10.246.0.0/16", name = "aks" }]
-  azure_key_vault_name                = "waspfoundation636a465c"
-  azure_key_vault_resource_group_name = "wasp-foundation"
+  key_vault_name                      = "waspfoundation636a465c"
+  key_vault_resource_group_name       = "wasp-foundation"
   argocd_host                         = "argocd-${local.cluster_name}.${local.dns_zone}"
   argocd_ingress_issuer_name          = "letsencrypt-nginx-staging"
   argocd_contributors_ids             = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor

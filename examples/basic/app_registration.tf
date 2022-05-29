@@ -1,6 +1,6 @@
 data "azurerm_key_vault" "default" {
-  name                = local.azure_key_vault_name
-  resource_group_name = local.azure_key_vault_resource_group_name
+  name                = local.key_vault_name
+  resource_group_name = local.key_vault_resource_group_name
 }
 
 module "argocd_app_registration" {
