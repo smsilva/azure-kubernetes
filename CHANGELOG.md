@@ -1,3 +1,9 @@
+## 7.1.0 (2022-05-28)
+
+### Feat
+
+- Create AKS Cluster with ArgoCD and an App Registration for SSO
+
 ## 7.0.0 (2022-05-28)
 
 ### Feat
