@@ -1,0 +1,251 @@
+## 7.2.0 (2022-05-28)
+
+### Feat
+
+- Change azure-kubernetes-cluster stack adding an App Registration
+
+### Refactor
+
+- Example basic
+
+## 7.1.0 (2022-05-28)
+
+### Feat
+
+- Create AKS Cluster with ArgoCD and an App Registration for SSO
+
+## 7.0.0 (2022-05-28)
+
+### Feat
+
+- **argocd-install**: Enable the customization of an Active Directory App Registration
+
+### Refactor
+
+- Change Variable names
+- Rename variable from rbac_group_administrator_ids to argocd_admin_id_list
+- Rename variable from rbac_group_administrator_ids to argocd_admin_id_list
+- Rename directories
+
+## 6.2.0 (2022-05-28)
+
+### Feat
+
+- Update kubectl image
+- Introduce the new terraform template function
+- **stacks/kubernetes/src/main.tf**: Update version
+
+### Refactor
+
+- Update variables names
+- ArgoCD url validation
+- Split resources in new files
+
+## 6.1.0 (2022-05-24)
+
+### Feat
+
+- Update modules version
+
+## 6.0.0 (2022-05-24)
+
+### Feat
+
+- **stacks/kubernetes/src/**: Change variable names
+
+## 5.0.3 (2022-05-24)
+
+### Refactor
+
+- **examples/basic/main.tf**: Update local values
+- **src/argocd/templates/argocd-values-ingress-*.yaml**: Reordering lines and update values
+
+### Fix
+
+- ArgoCD NGINX Ingress Controller Configuration
+
+## 5.0.2 (2022-05-24)
+
+### Fix
+
+- ArgoCD NGINX Ingress Controller Configuration
+
+## 5.0.1 (2022-05-23)
+
+### Fix
+
+- ArgoCD NGINX Ingress Controller Configuration
+
+## 5.0.0 (2022-05-23)
+
+### Feat
+
+- **argocd**: Install and Configure ArgoCD with NGINX Ingress Controller
+- Add cert-manager-issuers, nginx-ingress-controller and ArgoCD Ingress
+- Configure external-dns
+- Install external-dns
+- **stacks/kubernetes/src/**: Add ArgoCD install
+- Install cert-manager
+- Add ArgoCD Module
+- **examples/basic/main.tf**: Update AKS version
+- **stacks/kubernetes-with-appgw/src/main.tf**: Update App Gateway Module to 1.4.0
+- **stacks/kubernetes-with-appgw/src/main.tf**: Update azure-kubernetes module to 4.5.0
+- **stacks/kubernetes/src/main.tf**: Update azure-kubernetes module to 4.5.0
+
+### Refactor
+
+- Update azure-kubernetes repository
+
+## 4.5.0 (2022-03-30)
+
+### Feat
+
+- Update azurerm provider
+
+## 4.4.0 (2022-03-22)
+
+### Feat
+
+- **stacks/kubernetes-with-appgw/src/main.tf**: Update Application Gateway module version to 1.3.0 to enable http2
+- Create outputs for Application Gateway Resource
+
+## 4.3.0 (2022-03-18)
+
+### Feat
+
+- **stacks/kubernetes-with-appgw/**: Create an AKS Cluster and an Application Gateway
+
+## 4.2.0 (2022-03-18)
+
+### Feat
+
+- **stacks/kubernetes/src/secrets.tf**: Add a prefix for each secret
+- **stacks/kubernetes/src/outputs.tf**: Update outputs
+
+## 4.1.0 (2022-03-18)
+
+### Feat
+
+- **stacks/kubernetes/src/main.tf**: Update module version and Parameters
+
+## 4.0.0 (2022-03-18)
+
+### Feat
+
+- Change Variables and base Modules
+
+### BREAKING CHANGE
+
+- Several Variables were changed
+
+## 3.14.0 (2022-03-17)
+
+### Fix
+
+- **src/outputs.tf**: Application Gateway Name, Resource Group Name and Kubelet Identity ID
+
+### Feat
+
+- **stack/src/main.tf**: Update AKS and Application Gateway Module versions
+
+## 3.13.0 (2022-03-17)
+
+### Fix
+
+- **src/terraform.tfvars**: Remove unused Terraform Variable
+
+### Feat
+
+- **stack/src/**: Add Role Assignment for Application Gateway and Resource Group
+
+### Refactor
+
+- **stack/src/application-gateway**: Move outputs to a dedicated file
+
+## 3.12.1 (2022-03-17)
+
+### Refactor
+
+- **src/main.tf**: Moving Role Assingments Fields
+
+## 3.12.0 (2022-03-16)
+
+### Feat
+
+- **src/**: Create an Application Gateway Submodule
+
+## 3.11.0 (2022-03-16)
+
+### Feat
+
+- **stack/src/**: Add an Application Gateway
+
+### Refactor
+
+- **src/main.tf**: Change azurerm_role_assignment for kubelet Managed Identity on AKS Resource Group
+
+## 3.10.0 (2022-03-16)
+
+### Feat
+
+- **stack/src/secrets.tf**: Reduce Key Names
+- Update azure-kubernetes to version 3.9.0
+- **examples/3_one_aks_cluster_using_key_vault**: Moved example
+- **src/**: New Variables for Default Node Pool
+- **stack/src/**: Add cluster_id variable
+- **stack/src**: Reference an Azure Key Vault
+- **stack/src**: Not create Resource Group
+- **stack**: Add a Key Vault
+- **src/stack**: Update stack secrets
+- **src/examples**: Update stack base
+- **src/examples**: Update outputs to configure ArgoCD
+- **src/examples**: Create new outputs to configure ArgoCD
+- **src**: Update terraform azurerm_kubernetes_cluster to remove addon_profile
+- **provider**: remove provider reference from module source code
+- **provider**: remove provider reference from module source code
+- **provider**: remove provider reference from module source code
+- **provider**: remove provider reference from module source code
+- **provider**: remove provider reference from module source code
+
+### Fix
+
+- **stack/src**: Revert Resource Group change
+
+### BREAKING CHANGE
+
+- Remove Terraform Provider
+- Remove Terraform Provider
+
+### Refactor
+
+- Terraform Module and Example with Azure Application Gateway
+
+## 2.1.2 (2021-11-16)
+
+### Refactor
+
+- **outputs**: new outputs
+
+## 2.1.1 (2021-11-14)
+
+### Fix
+
+- **debug**: debug scripts were update to show some blank lines
+
+## 2.1.0 (2021-11-14)
+
+### Feat
+
+- **semver**: using commitizen to version azure-kubernetes example
+
+## 2.0.0 (2021-11-13)
+
+### Fix
+
+- **variables**: Variables has names changed
+
+## 0.1.0 (2021-11-13)
+
+### Feat
+
+- **stack**: Configured a Stack
