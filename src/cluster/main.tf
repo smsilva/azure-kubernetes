@@ -17,18 +17,18 @@ resource "azurerm_kubernetes_cluster" "default" {
   role_based_access_control_enabled = true
 
   default_node_pool {
-    name                         = var.default_node_pool_name
+    name                         = var.node_pool_name
     orchestrator_version         = local.orchestrator_version
+    vm_size                      = var.node_pool_vm_size
+    min_count                    = var.node_pool_min_count
+    max_count                    = var.node_pool_max_count
+    max_pods                     = var.node_pool_max_pods
+    os_disk_size_gb              = var.node_pool_os_disk_size_gb
+    vnet_subnet_id               = local.cluster_subnet_id
     only_critical_addons_enabled = false # Default Node Pool will be used to Deploy User Pods
     enable_auto_scaling          = true
-    vm_size                      = var.default_node_pool_vm_size
-    min_count                    = var.default_node_pool_min_count
-    max_count                    = var.default_node_pool_max_count
-    max_pods                     = var.default_node_pool_max_pods
     type                         = "VirtualMachineScaleSets"
     os_disk_type                 = "Managed"
-    os_disk_size_gb              = var.default_node_pool_os_disk_size_gb
-    vnet_subnet_id               = local.cluster_subnet_id
 
     upgrade_settings {
       max_surge = "33%"
@@ -68,4 +68,11 @@ resource "azurerm_role_assignment" "identity_network_contributor_on_subscription
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_kubernetes_cluster.default.identity[0].principal_id
   scope                = "/subscriptions/${data.azurerm_client_config.default.subscription_id}"
+}
+
+resource "azurerm_role_assignment" "azure_kubernetes_service_cluster_user_role_for_admins" {
+  for_each             = toset(var.administrators_ids) 
+  role_definition_name = "Azure Kubernetes Service Cluster User Role"
+  principal_id         = each.value
+  scope                = azurerm_kubernetes_cluster.default.id
 }

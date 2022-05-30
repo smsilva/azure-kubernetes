@@ -16,17 +16,7 @@ stackbuild .
 # Follow Process
 
 ```bash
-watch -n 5 '
-helm list -A && echo && \
-kubectl get ExternalSecrets -A | head -n 8 && echo && \
-kubectl get Ingress -A | head -n 5 && echo && \
-kubectl -n argocd get Applications,Statefulsets | grep -E "NAME|bootstrap|infra|bar|nri" && echo && \
-ARGOCD_HOST=$(kubectl \
-  -n argocd get ingress \
-  -l app.kubernetes.io/name=argocd-server \
-  -o jsonpath='{.items[0].spec.rules[0].host}') && \
-echo "https://${ARGOCD_HOST}: $(curl -Is https://${ARGOCD_HOST} | head -1)"
-'
+watch -n 5 'scripts/follow-creation.sh'
 ```
 
 # Cleanup
