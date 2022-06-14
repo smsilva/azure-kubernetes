@@ -51,3 +51,24 @@ argo-cd:
           - secretKey: "privaterepourl"
             remoteRef:
               key: secret/argocd-repo-creds-url-github
+
+    - apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: httpbin
+        namespace: argocd
+      spec:
+        destination:
+          name: in-cluster
+          namespace: httpbin
+        project: infra
+        source:
+          path: charts/httpbin
+          repoURL: git@github.com:smsilva/wasp-gitops.git
+          targetRevision: HEAD
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: true
+          syncOptions:
+            - CreateNamespace=true

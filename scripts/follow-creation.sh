@@ -1,3 +1,7 @@
+kubectl get namespaces | grep -vE "^kube-|^default"
+
+echo
+
 helm list -A
 
 echo
@@ -46,6 +50,8 @@ if [ -n "${ARGOCD_HOST}" ]; then
 else
   echo "ArgoCD Ingress not created yet."
 fi
+
+echo
 
 kubectl get Applications \
   --namespace argocd \

@@ -1,12 +1,21 @@
+data "azurerm_client_config" "current" {}
+
 variable "dns_zone" {
   type        = string
   description = "Azure DNS Zone"
+  default     = "sandbox.wasp.silvios.me"
 }
 
-variable "cluster_name" {
+variable "cluster_name_prefix" {
+  type        = string
+  description = "Cluster Name Prefix"
+  default     = "wasp-"
+}
+
+variable "cluster_base_name" {
   type        = string
   description = "Cluster Name"
-  default     = "wasp-aks"
+  default     = "example"
 }
 
 variable "cluster_location" {
@@ -43,7 +52,7 @@ variable "cluster_default_node_pool_name" {
 
 variable "cluster_default_node_pool_min_count" {
   type    = number
-  default = 1
+  default = 3
 }
 
 variable "cluster_default_node_pool_max_count" {
@@ -61,7 +70,8 @@ variable "key_vault_name" {
 }
 
 variable "key_vault_resource_group_name" {
-  type = string
+  type    = string
+  default = "wasp-foundation"
 }
 
 variable "virtual_network_cidrs" {
@@ -95,12 +105,12 @@ variable "install_external_dns" {
   default = false
 }
 
-variable "install_nginx_ingress_controller" {
+variable "install_ingress_nginx" {
   type    = bool
   default = false
 }
 
-variable "armClientSecret" {
+variable "ARM_CLIENT_SECRET" {
   type      = string
   sensitive = true
 }
@@ -116,4 +126,10 @@ variable "argocd_contributors_ids" {
 variable "argocd_ingress_issuer_name" {
   type    = string
   default = "letsencrypt-staging-nginx"
+}
+
+variable "argocd_prefix" {
+  type        = string
+  description = "ArgoCD Prefix"
+  default     = "argocd-"
 }
