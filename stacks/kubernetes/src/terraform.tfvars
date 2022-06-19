@@ -9,6 +9,7 @@ cluster_administrators_ids          = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] #
 argocd_administrators_ids           = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
 argocd_contributors_ids             = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
 argocd_ingress_issuer_name          = "letsencrypt-nginx-staging"
+argocd_prefix                       = "argocd-"
 install_cert_manager                = true
 install_external_secrets            = true
 install_external_dns                = true

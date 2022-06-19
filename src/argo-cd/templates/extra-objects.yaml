@@ -46,29 +46,8 @@ argo-cd:
         data:
           - secretKey: "idrsabase64filecontent"
             remoteRef:
-              key: secret/argocd-repo-creds-base64-encoded-private-key-github
+              key: secret/argocd-repo-creds-github-ssh-private-key-base64-encoded
       
           - secretKey: "privaterepourl"
             remoteRef:
-              key: secret/argocd-repo-creds-url-github
-
-    - apiVersion: argoproj.io/v1alpha1
-      kind: Application
-      metadata:
-        name: httpbin
-        namespace: argocd
-      spec:
-        destination:
-          name: in-cluster
-          namespace: httpbin
-        project: infra
-        source:
-          path: charts/httpbin
-          repoURL: git@github.com:smsilva/wasp-gitops.git
-          targetRevision: HEAD
-        syncPolicy:
-          automated:
-            prune: true
-            selfHeal: true
-          syncOptions:
-            - CreateNamespace=true
+              key: secret/argocd-repo-creds-github-url

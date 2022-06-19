@@ -131,5 +131,4 @@ variable "argocd_ingress_issuer_name" {
 variable "argocd_prefix" {
   type        = string
   description = "ArgoCD Prefix"
-  default     = "argocd-"
 }

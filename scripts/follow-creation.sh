@@ -28,10 +28,11 @@ kubectl get Ingress \
 echo
 
 ARGOCD_HOST=$(kubectl \
-  -n argocd \
+  --namespace argocd \
   get ingress \
-  -l app.kubernetes.io/name=argocd-server \
-  -o jsonpath='{.items[0].spec.rules[0].host}' --ignore-not-found)
+  --selector app.kubernetes.io/name=argocd-server \
+  --output jsonpath='{.items[0].spec.rules[0].host}' \
+  --ignore-not-found)
 
 if [ -n "${ARGOCD_HOST}" ]; then
   dig ${ARGOCD_HOST} | grep "^${ARGOCD_HOST}"
@@ -45,7 +46,7 @@ if [ -n "${ARGOCD_HOST}" ]; then
       echo "DNS not resolved by 8.8.8.8 yet: ${ARGOCD_HOST}"
     fi
   else
-    echo "https://${ARGOCD_HOST}: $(curl -Isk https://${ARGOCD_HOST} | head -1)"
+    echo "https://${ARGOCD_HOST}: $(curl -Isk --max-time 5 https://${ARGOCD_HOST} | head -1)"
   fi
 else
   echo "ArgoCD Ingress not created yet."
