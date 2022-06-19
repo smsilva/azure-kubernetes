@@ -16,7 +16,7 @@ stackbuild .
 # Follow Process
 
 ```bash
-watch -n 5 'scripts/follow-creation.sh'
+watch -n 10 'scripts/follow-creation.sh'
 ```
 
 # Cleanup

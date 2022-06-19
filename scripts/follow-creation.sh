@@ -57,4 +57,4 @@ echo
 kubectl get Applications \
   --namespace argocd \
   --ignore-not-found \
-| grep -E "NAME|bootstrap|infra|bar|nri"
+| grep -E "NAME|bootstrap|infra|bar|nri|httpbin"
