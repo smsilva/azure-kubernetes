@@ -23,7 +23,6 @@ locals {
   argocd_contributors_ids         = var.argocd_contributors_ids
   key_vault_name                  = var.key_vault_name
   key_vault_resource_group_name   = var.key_vault_resource_group_name
-  branch_name                     = "refactor"
 }
 
 resource "azurerm_resource_group" "default" {
@@ -32,7 +31,7 @@ resource "azurerm_resource_group" "default" {
 }
 
 module "aks" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src/cluster?ref=refactor"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/cluster?ref=main"
 
   name                 = local.cluster_name
   orchestrator_version = local.cluster_version
@@ -49,7 +48,7 @@ module "aks" {
 }
 
 module "argocd_app_registration" {
-  source = "git@github.com:smsilva/azure-kubernetes.git//src/active-directory/app-registration?ref=refactor"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/active-directory/app-registration?ref=main"
 
   name     = local.argocd_app_registration_name
   dns_zone = local.dns_zone
@@ -57,7 +56,7 @@ module "argocd_app_registration" {
 
 module "cert_manager" {
   count  = local.install_cert_manager ? 1 : 0
-  source = "git@github.com:smsilva/azure-kubernetes.git//src/cert-manager?ref=refactor"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/cert-manager?ref=main"
 
   depends_on = [
     module.aks
@@ -66,7 +65,7 @@ module "cert_manager" {
 
 module "external_secrets" {
   count  = local.install_external_secrets ? 1 : 0
-  source = "git@github.com:smsilva/azure-kubernetes.git//src/external-secrets?ref=refactor"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/external-secrets?ref=main"
 
   tenant_id      = data.azurerm_client_config.current.tenant_id
   client_id      = data.azurerm_client_config.current.client_id
@@ -80,7 +79,7 @@ module "external_secrets" {
 
 module "external_dns" {
   count  = local.install_external_dns ? 1 : 0
-  source = "git@github.com:smsilva/azure-kubernetes.git//src/external-dns?ref=refactor"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/external-dns?ref=main"
 
   depends_on = [
     module.external_secrets
@@ -89,7 +88,7 @@ module "external_dns" {
 
 module "ingress_nginx" {
   count  = local.install_ingress_nginx ? 1 : 0
-  source = "git@github.com:smsilva/azure-kubernetes.git//src/ingress-nginx?ref=refactor"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/ingress-nginx?ref=main"
 
   cname = module.aks.instance.name
 
@@ -100,7 +99,7 @@ module "ingress_nginx" {
 
 module "argo_cd" {
   count  = local.install_argocd ? 1 : 0
-  source = "git@github.com:smsilva/azure-kubernetes.git//src/argo-cd?ref=refactor"
+  source = "git@github.com:smsilva/azure-kubernetes.git//src/argo-cd?ref=main"
 
   cname              = local.argocd_host_base_name
   domain             = local.dns_zone
