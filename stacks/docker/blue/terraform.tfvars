@@ -1,5 +1,4 @@
 dns_zone                            = "sandbox.wasp.silvios.me"
-cluster_base_name                   = "blue"
 cluster_location                    = "eastus2"
 cluster_version                     = "1.21.9"
 cluster_default_node_pool_min_count = 3
