@@ -8,7 +8,6 @@ module "secrets" {
 
   vault = data.azurerm_key_vault.default
   values = {
-    "aks-${local.cluster_name}-name"                   = module.aks.instance.name,
     "aks-${local.cluster_name}-api-host"               = module.aks.instance.kube_admin_config[0].host,
     "aks-${local.cluster_name}-api-token"              = module.aks.instance.kube_admin_config[0].password,
     "aks-${local.cluster_name}-api-ca-certificate"     = module.aks.instance.kube_admin_config[0].cluster_ca_certificate,
