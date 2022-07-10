@@ -2,7 +2,6 @@ locals {
   cluster_name             = var.name
   cluster_dns_prefix       = var.dns_prefix != "" ? var.dns_prefix : var.name
   cluster_subnet_id        = var.subnet.id
-  orchestrator_version     = var.orchestrator_version
   resource_group_name      = var.resource_group != "" ? var.resource_group.name : local.cluster_name
   node_resource_group_name = "${local.resource_group_name}-nrg"
 }
@@ -13,12 +12,12 @@ resource "azurerm_kubernetes_cluster" "default" {
   location                          = data.azurerm_resource_group.default.location
   resource_group_name               = data.azurerm_resource_group.default.name
   node_resource_group               = local.node_resource_group_name
-  kubernetes_version                = local.orchestrator_version
+  kubernetes_version                = var.orchestrator_version
   role_based_access_control_enabled = true
 
   default_node_pool {
     name                         = var.node_pool_name
-    orchestrator_version         = local.orchestrator_version
+    orchestrator_version         = var.node_pool_kubernetes_version
     vm_size                      = var.node_pool_vm_size
     min_count                    = var.node_pool_min_count
     max_count                    = var.node_pool_max_count
@@ -71,7 +70,7 @@ resource "azurerm_role_assignment" "identity_network_contributor_on_subscription
 }
 
 resource "azurerm_role_assignment" "azure_kubernetes_service_cluster_user_role_for_admins" {
-  for_each             = toset(var.administrators_ids) 
+  for_each             = toset(var.administrators_ids)
   role_definition_name = "Azure Kubernetes Service Cluster User Role"
   principal_id         = each.value
   scope                = azurerm_kubernetes_cluster.default.id

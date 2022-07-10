@@ -59,3 +59,8 @@ variable "node_pool_max_pods" {
   type    = number
   default = 120
 }
+
+variable "node_pool_kubernetes_version" {
+  type        = string
+  description = "Default Node Pool Kubernetes Version"
+}
