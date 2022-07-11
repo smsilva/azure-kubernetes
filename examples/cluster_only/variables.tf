@@ -1,10 +1,5 @@
 data "azurerm_client_config" "current" {}
 
-data "azurerm_key_vault" "default" {
-  name                = local.key_vault_name
-  resource_group_name = local.key_vault_resource_group_name
-}
-
 resource "random_string" "id" {
   length      = 3
   min_lower   = 1
