@@ -1,0 +1,12 @@
+rbac:
+  enabled: true
+
+armAuth:
+  type: aadPodIdentity
+  identityResourceID: ${arm_auth_identity_resource_id}
+  identityClientID:   ${arm_auth_identity_client_id}
+
+appgw:
+  subscriptionId: ${app_gw_subscription_id}
+  resourceGroup:  ${app_gw_resource_group}
+  name:           ${app_gw_name}

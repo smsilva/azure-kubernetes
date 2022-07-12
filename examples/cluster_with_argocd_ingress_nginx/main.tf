@@ -1,6 +1,6 @@
 locals {
   cluster_random_id               = random_string.id.result
-  cluster_base_name               = "example-helm-charts-${local.cluster_random_id}"
+  cluster_base_name               = "example-${local.cluster_random_id}"
   cluster_name                    = "wasp-${local.cluster_base_name}"
   cluster_resource_group_name     = local.cluster_name
   cluster_resource_group_location = "eastus2"
