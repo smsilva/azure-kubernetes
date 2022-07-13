@@ -9,6 +9,14 @@ data "template_file" "ingress_azure" {
   }
 }
 
+resource "helm_release" "aad_pod_identity" {
+  chart            = "${path.module}/../helm/charts/aad-pod-identity"
+  name             = "aad-pod-identity"
+  namespace        = "kube-system"
+  create_namespace = false
+  atomic           = true
+}
+
 resource "helm_release" "ingress_azure" {
   chart            = "${path.module}/../helm/charts/ingress-azure"
   name             = "ingress-azure"
@@ -18,5 +26,9 @@ resource "helm_release" "ingress_azure" {
 
   values = [
     data.template_file.ingress_azure.rendered
+  ]
+
+  depends_on = [
+    helm_release.aad_pod_identity
   ]
 }

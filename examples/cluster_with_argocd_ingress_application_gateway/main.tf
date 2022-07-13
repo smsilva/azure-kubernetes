@@ -11,11 +11,11 @@ locals {
   cluster_node_pool_name              = "system01"
   cluster_administrators_ids          = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
   application_gateway_name            = local.cluster_name
-  install_cert_manager                = false
-  install_external_secrets            = false
-  install_external_dns                = false
-  install_ingress_application_gateway = false
-  install_argocd                      = false
+  install_cert_manager                = true
+  install_external_secrets            = true
+  install_external_dns                = true
+  install_ingress_application_gateway = true
+  install_argocd                      = true
   dns_zone                            = "sandbox.wasp.silvios.me"
   argocd_host_base_name               = "argocd-${local.cluster_base_name}"
   argocd_app_registration_name        = local.argocd_host_base_name
@@ -137,6 +137,7 @@ module "argo_cd" {
     module.argocd_app_registration,
     module.cert_manager,
     module.external_secrets,
+    module.external_dns,
     module.ingress_azure,
   ]
 }

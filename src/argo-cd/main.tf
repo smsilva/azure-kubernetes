@@ -16,6 +16,15 @@ data "template_file" "ingress_nginx" {
   }
 }
 
+data "template_file" "ingress_azure" {
+  template = file("${path.module}/templates/ingress-application-gateway.yaml")
+  vars = {
+    server_ingress_host        = var.cname
+    server_ingress_domain      = var.domain
+    server_ingress_issuer_name = var.ingress_issuer_name
+  }
+}
+
 locals {
   rbac = templatefile("${path.module}/templates/rbac-config.yaml", {
     server_rbac_config_group_contributors   = var.contributors_ids
@@ -36,7 +45,7 @@ resource "helm_release" "argocd" {
   timeout          = 600 # 10 minutes
 
   values = [
-    data.template_file.ingress_nginx.rendered,
+    data.template_file.ingress_azure.rendered,
     data.template_file.sso.rendered,
     file("${path.module}/templates/additional-projects.yaml"),
     file("${path.module}/templates/configs-known-hosts.yaml"),
