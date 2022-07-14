@@ -17,7 +17,7 @@ resource "azurerm_kubernetes_cluster" "default" {
 
   default_node_pool {
     name                         = var.node_pool_name
-    orchestrator_version         = var.node_pool_kubernetes_version
+    orchestrator_version         = var.node_pool_kubernetes_version == null ? var.orchestrator_version : var.node_pool_kubernetes_version
     vm_size                      = var.node_pool_vm_size
     min_count                    = var.node_pool_min_count
     max_count                    = var.node_pool_max_count
