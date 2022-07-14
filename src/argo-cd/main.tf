@@ -51,6 +51,7 @@ resource "helm_release" "argocd" {
     data.template_file.sso.rendered,
     file("${path.module}/templates/additional-projects.yaml"),
     file("${path.module}/templates/configs-known-hosts.yaml"),
+    file("${path.module}/templates/resource-customizations.yaml"),
     local.extra_objects,
     local.rbac,
   ]
