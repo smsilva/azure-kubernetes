@@ -11,7 +11,7 @@ argo-cd:
       paths:
         - /
       tls:
-        - secretName: argocd-tls # do not change, this is provided by Argo CD
+        - secretName: argocd-tls
           hosts:
             - ${server_ingress_host}.${server_ingress_domain}
       annotations:
