@@ -109,11 +109,10 @@ module "ingress_azure" {
   count  = local.install_ingress_application_gateway ? 1 : 0
   source = "../../src/ingress-azure"
 
-  name                      = local.application_gateway_name
-  resource_group_name       = azurerm_resource_group.default.name
-  user_assigned_identity_id = module.aks.instance.kubelet_identity[0].user_assigned_identity_id
-  client_id                 = module.aks.instance.kubelet_identity[0].client_id
-  subscription_id           = data.azurerm_client_config.current.subscription_id
+  application_gateway  = module.application_gateway.instance
+  identity_resource_id = module.aks.instance.kubelet_identity[0].user_assigned_identity_id
+  identity_client_id   = module.aks.instance.kubelet_identity[0].client_id
+  subscription_id      = data.azurerm_client_config.current.subscription_id
 
   depends_on = [
     module.aks,

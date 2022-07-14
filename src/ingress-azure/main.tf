@@ -1,11 +1,11 @@
 data "template_file" "ingress_azure" {
-  template = file("${path.module}/template-values.yaml")
+  template = file("${path.module}/templates/values.yaml")
   vars = {
-    arm_auth_identity_resource_id = var.user_assigned_identity_id
-    arm_auth_identity_client_id   = var.client_id
+    arm_auth_identity_resource_id = var.identity_resource_id
+    arm_auth_identity_client_id   = var.identity_client_id
     app_gw_subscription_id        = var.subscription_id
-    app_gw_resource_group         = var.resource_group_name
-    app_gw_name                   = var.name
+    app_gw_resource_group         = var.application_gateway.resource_group_name
+    app_gw_name                   = var.application_gateway.name
   }
 }
 

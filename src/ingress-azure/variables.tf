@@ -1,16 +1,10 @@
-variable "name" {
+variable "application_gateway" {}
+
+variable "identity_resource_id" {
   type = string
 }
 
-variable "resource_group_name" {
-  type = string
-}
-
-variable "user_assigned_identity_id" {
-  type = string
-}
-
-variable "client_id" {
+variable "identity_client_id" {
   type = string
 }
 
