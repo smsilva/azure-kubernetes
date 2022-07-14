@@ -34,6 +34,8 @@ locals {
   extra_objects = templatefile("${path.module}/templates/extra-objects.yaml", {
     argocd_sso_application_id = var.sso_application_id
   })
+
+  ingress_template = length(regexall(".*application-gateway.*", var.ingress_issuer_name)) > 0 ? data.template_file.ingress_azure.rendered : data.template_file.ingress_nginx.rendered
 }
 
 resource "helm_release" "argocd" {
@@ -45,7 +47,7 @@ resource "helm_release" "argocd" {
   timeout          = 600 # 10 minutes
 
   values = [
-    data.template_file.ingress_azure.rendered,
+    local.ingress_template,
     data.template_file.sso.rendered,
     file("${path.module}/templates/additional-projects.yaml"),
     file("${path.module}/templates/configs-known-hosts.yaml"),
@@ -55,6 +57,7 @@ resource "helm_release" "argocd" {
 
   depends_on = [
     data.template_file.ingress_nginx,
+    data.template_file.ingress_azure,
     data.template_file.sso,
   ]
 }
