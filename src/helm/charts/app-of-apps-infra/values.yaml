@@ -1,0 +1,13 @@
+global:
+  environment:
+    id: undefined-id
+    domain: sandbox.wasp.silvios.me
+    namespace: argocd
+
+helm:
+  files:
+    - values-aks.yaml
+
+source:
+  repoURL: git@github.com:smsilva/wasp-gitops.git
+  targetRevision: HEAD

@@ -9,7 +9,7 @@ kubectl get service \
 
 kubectl get ExternalSecrets \
   --all-namespaces \
-  --ignore-not-found \
+  --ignore-not-found 2> /dev/null \
 | head -n 5; echo
 
 kubectl get Ingress \
