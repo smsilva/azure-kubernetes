@@ -22,6 +22,7 @@ locals {
   argocd_administrators_ids                = local.cluster_administrators_ids
   argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
   argocd_app_of_apps_infra_target_revision = "development"
+  argocd_ingress_issuer_name               = "letsencrypt-application-gateway-staging"
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
   virtual_network_name                     = local.cluster_name
@@ -130,7 +131,7 @@ module "argo_cd" {
   sso_application_id  = module.argocd_app_registration.instance.application_id
   administrators_ids  = local.argocd_administrators_ids
   contributors_ids    = local.argocd_contributors_ids
-  ingress_issuer_name = "letsencrypt-application-gateway-staging"
+  ingress_issuer_name = local.argocd_ingress_issuer_name
 
   depends_on = [
     module.argocd_app_registration,
@@ -145,8 +146,8 @@ module "app_of_apps_infra" {
   count  = local.install_app_of_apps_infra ? 1 : 0
   source = "../../src/app-of-apps-infra"
 
-  environment_id = local.cluster_base_name
-  targetRevision = local.argocd_app_of_apps_infra_target_revision
+  environment_id  = local.cluster_base_name
+  target_revision = local.argocd_app_of_apps_infra_target_revision
 
   depends_on = [
     module.argo_cd

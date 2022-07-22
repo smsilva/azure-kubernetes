@@ -12,7 +12,7 @@ variable "environment_id" {
   type = string
 }
 
-variable "targetRevision" {
+variable "target_revision" {
   type        = string
   description = "Git Target Revision"
   default     = "HEAD"

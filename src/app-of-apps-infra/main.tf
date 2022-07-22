@@ -12,6 +12,6 @@ resource "helm_release" "app_of_apps_infra" {
 
   set {
     name  = "source.targetRevision"
-    value = var.targetRevision
+    value = var.target_revision
   }
 }
