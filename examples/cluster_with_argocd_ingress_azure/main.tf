@@ -1,7 +1,6 @@
 locals {
   cluster_random_id                        = random_string.id.result
-  cluster_base_name                        = "example-${local.cluster_random_id}"
-  cluster_name                             = "wasp-${local.cluster_base_name}"
+  cluster_name                             = "wasp-${local.cluster_random_id}"
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
   cluster_version                          = "1.21.9"
@@ -17,7 +16,7 @@ locals {
   install_argocd                           = true
   install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
-  argocd_host_base_name                    = "argocd.${local.cluster_base_name}"
+  argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
   argocd_administrators_ids                = local.cluster_administrators_ids
   argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
@@ -146,7 +145,7 @@ module "app_of_apps_infra" {
   count  = local.install_app_of_apps_infra ? 1 : 0
   source = "../../src/app-of-apps-infra"
 
-  environment_id  = local.cluster_base_name
+  environment_id  = local.cluster_random_id
   target_revision = local.argocd_app_of_apps_infra_target_revision
 
   depends_on = [

@@ -6,9 +6,9 @@ data "azurerm_key_vault" "default" {
 }
 
 resource "random_string" "id" {
-  length      = 3
-  min_lower   = 1
-  min_numeric = 2
+  length      = 8
+  min_lower   = 2
+  min_numeric = 6
   lower       = true
   special     = false
 }
