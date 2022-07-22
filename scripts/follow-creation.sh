@@ -64,8 +64,7 @@ if [ -n "${ARGOCD_HOST}" ]; then
 
   kubectl get Applications \
     --namespace argocd \
-    --ignore-not-found \
-  | grep -E "NAME|bootstrap|infra|bar|nri|httpbin"
+    --ignore-not-found
 
 else
   echo
