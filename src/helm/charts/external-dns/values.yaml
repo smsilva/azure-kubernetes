@@ -85,9 +85,18 @@ service:
   port: 7979
   annotations: {}
 
-extraVolumes: []
+extraVolumes:
+  - name: azure-config-file
+    secret:
+      secretName: azure-config-file
+      items:
+        - key: azure-config-file.json
+          path: azure.json
 
-extraVolumeMounts: []
+extraVolumeMounts:
+  - name: azure-config-file
+    mountPath: /etc/kubernetes
+    readOnly: true
 
 resources: {}
 
@@ -118,6 +127,6 @@ txtSuffix: ""
 
 domainFilters: []
 
-provider: aws
+provider: azure
 
 extraArgs: []
