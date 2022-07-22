@@ -11,3 +11,9 @@ variable "namespace" {
 variable "environment_id" {
   type = string
 }
+
+variable "targetRevision" {
+  type        = string
+  description = "Git Target Revision"
+  default     = "HEAD"
+}

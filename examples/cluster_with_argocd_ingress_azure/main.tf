@@ -1,30 +1,31 @@
 locals {
-  cluster_random_id                   = random_string.id.result
-  cluster_base_name                   = "example-${local.cluster_random_id}"
-  cluster_name                        = "wasp-${local.cluster_base_name}"
-  cluster_resource_group_name         = local.cluster_name
-  cluster_resource_group_location     = "eastus2"
-  cluster_version                     = "1.21.9"
-  cluster_node_pool_min_count         = 3
-  cluster_node_pool_max_count         = 5
-  cluster_node_pool_name              = "system01"
-  cluster_administrators_ids          = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
-  application_gateway_name            = local.cluster_name
-  install_cert_manager                = true
-  install_external_secrets            = true
-  install_external_dns                = true
-  install_ingress_application_gateway = true
-  install_argocd                      = true
-  install_app_of_apps_infra           = true
-  dns_zone                            = "sandbox.wasp.silvios.me"
-  argocd_host_base_name               = "argocd-${local.cluster_base_name}"
-  argocd_app_registration_name        = local.argocd_host_base_name
-  argocd_administrators_ids           = local.cluster_administrators_ids
-  argocd_contributors_ids             = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
-  key_vault_name                      = "waspfoundation636a465c"
-  key_vault_resource_group_name       = "wasp-foundation"
-  virtual_network_name                = local.cluster_name
-  virtual_network_cidrs               = ["10.244.0.0/14"]
+  cluster_random_id                        = random_string.id.result
+  cluster_base_name                        = "example-${local.cluster_random_id}"
+  cluster_name                             = "wasp-${local.cluster_base_name}"
+  cluster_resource_group_name              = local.cluster_name
+  cluster_resource_group_location          = "eastus2"
+  cluster_version                          = "1.21.9"
+  cluster_node_pool_min_count              = 3
+  cluster_node_pool_max_count              = 5
+  cluster_node_pool_name                   = "system01"
+  cluster_administrators_ids               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
+  application_gateway_name                 = local.cluster_name
+  install_cert_manager                     = true
+  install_external_secrets                 = true
+  install_external_dns                     = true
+  install_ingress_application_gateway      = true
+  install_argocd                           = true
+  install_app_of_apps_infra                = true
+  dns_zone                                 = "sandbox.wasp.silvios.me"
+  argocd_host_base_name                    = "argocd.${local.cluster_base_name}"
+  argocd_app_registration_name             = local.argocd_host_base_name
+  argocd_administrators_ids                = local.cluster_administrators_ids
+  argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
+  argocd_app_of_apps_infra_target_revision = "development"
+  key_vault_name                           = "waspfoundation636a465c"
+  key_vault_resource_group_name            = "wasp-foundation"
+  virtual_network_name                     = local.cluster_name
+  virtual_network_cidrs                    = ["10.244.0.0/14"]
   virtual_network_subnets = [
     { cidr = "10.246.0.0/16", name = "aks" },
     { cidr = "10.245.0.0/28", name = "application_gateway" },
@@ -144,7 +145,8 @@ module "app_of_apps_infra" {
   count  = local.install_app_of_apps_infra ? 1 : 0
   source = "../../src/app-of-apps-infra"
 
-  environment_id = local.cluster_name
+  environment_id = local.cluster_base_name
+  targetRevision = local.argocd_app_of_apps_infra_target_revision
 
   depends_on = [
     module.argo_cd

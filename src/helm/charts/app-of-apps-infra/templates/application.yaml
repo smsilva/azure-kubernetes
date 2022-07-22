@@ -3,36 +3,31 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: app-of-apps-infra
-  namespace: {{ $.Values.global.environment.namespace }}
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
+  namespace: {{ .Release.Namespace }}
 spec:
-  project: infra
+  project: {{ .Values.project }}
 
   source:
     {{- toYaml .Values.source | nindent 4 }}
-    path: infrastructure/bootstrap/applications
-
-    {{- with $.Values.global.environment }}
     helm:
-      {{- if $.Values.helm }}
-      valueFiles:
-      {{- range $.Values.helm.files }}
-        - {{ . }}
-      {{- end }}
-      {{- end }}
       values: |
-        global:
-          environment:
-          {{- toYaml . | nindent 12 }}
+        environment:
+          {{- toYaml $.Values.environment | nindent 10 }}
+        project: {{ $.Values.project }}
         source:
           repoURL: {{ $.Values.source.repoURL }}
           targetRevision: {{ $.Values.source.targetRevision }}
-    {{- end }}
+
+      {{- if $.Values.helm }}
+      valueFiles:
+        {{- range $.Values.helm.files }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
 
   destination:
-    name: in-cluster
-    namespace: {{ $.Values.global.environment.namespace }}
+    name: {{ .Values.destination.name }}
+    namespace: {{ .Release.Namespace }}
 
   syncPolicy:
     automated:

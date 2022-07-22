@@ -6,7 +6,12 @@ resource "helm_release" "app_of_apps_infra" {
   atomic           = false
 
   set {
-    name  = "global.environment.id"
+    name  = "environment.id"
     value = var.environment_id
+  }
+
+  set {
+    name  = "source.targetRevision"
+    value = var.targetRevision
   }
 }

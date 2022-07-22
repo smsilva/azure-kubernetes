@@ -1,13 +1,17 @@
-global:
-  environment:
-    id: undefined-id
-    domain: sandbox.wasp.silvios.me
-    namespace: argocd
+environment:
+  id: undefined-id
+  domain: sandbox.wasp.silvios.me
 
 helm:
   files:
     - values-aks.yaml
 
+project: infra
+
 source:
   repoURL: git@github.com:smsilva/wasp-gitops.git
-  targetRevision: HEAD
+  path: infrastructure/bootstrap/applications
+  targetRevision: development
+
+destination:
+  name: in-cluster
