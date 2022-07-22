@@ -9,8 +9,11 @@ image:
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
+
 nameOverride: ""
 fullnameOverride: ""
+
+commonLabels: {}
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -24,7 +27,7 @@ serviceAccount:
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
-  additionalPermissions: {}
+  additionalPermissions: []
 
 # Annotations to add to the Deployment
 deploymentAnnotations: {}
@@ -33,6 +36,8 @@ podLabels: {}
 
 # Annotations to add to the Pod
 podAnnotations: {}
+
+shareProcessNamespace: false
 
 podSecurityContext:
   fsGroup: 65534
@@ -80,18 +85,9 @@ service:
   port: 7979
   annotations: {}
 
-extraVolumes:
-  - name: azure-config-file
-    secret:
-      secretName: azure-config-file
-      items:
-        - key: azure-config-file.json
-          path: azure.json
+extraVolumes: []
 
-extraVolumeMounts:
-  - name: azure-config-file
-    mountPath: /etc/kubernetes
-    readOnly: true
+extraVolumeMounts: []
 
 resources: {}
 
@@ -122,6 +118,6 @@ txtSuffix: ""
 
 domainFilters: []
 
-provider: azure
+provider: aws
 
 extraArgs: []
