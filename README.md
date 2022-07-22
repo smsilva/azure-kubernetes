@@ -24,3 +24,15 @@ watch -n 10 'scripts/follow-creation.sh'
 ```bash
 kubectl delete namespace {argocd,cert-manager,external-secrets,ingress-azure}
 ```
+
+# Helm Charts
+
+| Name              | URL                                                                     |
+| ----------------- | ----------------------------------------------------------------------- |
+| aad-pod-identity  | https://raw.githubusercontent.com/Azure/aad-pod-identity/master/charts  |
+| argo-cd           | https://argoproj.github.io/argo-helm                                    |
+| cert-manager      | https://charts.jetstack.io                                              |
+| external-dns      | https://kubernetes-sigs.github.io/external-dns                          |
+| external-secrets  | https://charts.external-secrets.io                                      |
+| ingress-azure     | https://appgwingress.blob.core.windows.net/ingress-azure-helm-package   |
+| ingress-nginx     | https://kubernetes.github.io/ingress-nginx                              |
