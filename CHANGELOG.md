@@ -1,3 +1,58 @@
+## 8.0.0 (2022-07-25)
+
+### Refactor
+
+- **examples/**: Update examples
+- Change example cluser random id to 6 characters
+- **examples/cluster_with_argocd_ingress_azure/**: Use only cluster_random_id
+- ArgoCD App of Apps Infra
+- ArgoCD App of Apps Infra
+- Update AKS Module variables
+- Update variables for Application Gateway
+- **src/**: Update Self Signed Cluster Issuer name
+- **scripts/follow-creation.sh**: Update ArgoCD url test
+- Rename example folder
+- Update ArgoCD Helm Chart version
+- Docker examples
+- Update cluster secrets store
+- Update examples
+
+### Fix
+
+- **src/helm/charts/external-dns**: Update with Azure's parameters
+
+### Feat
+
+- Update ingress-nginx from 4.1.3 to 4.2.0
+- Update external-secrets Helm Chart from 0.5.4 to 0.5.8
+- Update external-dns Helm Chart from 1.9.1 to 1.10.1
+- Update cert-manager Helm Chart from 1.8.0 to 1.9.0
+- Update ArgoCD Helm Chart from 4.9.12 to 4.10.0
+- Add App of Apps Infra ArgoCD
+- Add ArgoCD customizations to enable Application Sync Waves
+- Update ArgoCD Ingress
+- Add aad-pod-identity
+- Add Application Gateway Module
+- Change tests and add a version for Default Node Pool
+- **stacks/kubernetes/stack.yaml**: Update terraform version from 1.2.2 to 1.2.4
+- **stacks/kubernetes/src/secrets.tf**: Remove unused key
+- Using docker to create different base images
+- Update ExternalSecret names
+- **src/main.tf**: Change branch from refactor to main
+- Update stack code
+- argo-cd install
+- Update ArgoCD Ingress to use Alternate DNS
+
+## 7.2.0 (2022-05-28)
+
+### Feat
+
+- Change azure-kubernetes-cluster stack adding an App Registration
+
+### Refactor
+
+- Example basic
+
 ## 7.1.0 (2022-05-28)
 
 ### Feat
