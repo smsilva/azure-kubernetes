@@ -39,7 +39,7 @@ locals {
 }
 
 resource "helm_release" "argocd" {
-  chart            = "${path.module}/../helm/charts/argocd"
+  chart            = "${path.module}/../helm/charts/argo-cd"
   name             = "argocd"
   namespace        = "argocd"
   create_namespace = true
