@@ -8,15 +8,12 @@ locals {
   cluster_node_pool_max_count              = 5
   cluster_node_pool_name                   = "system01"
   cluster_administrators_ids               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
-  virtual_network_name                     = local.cluster_name
-  virtual_network_cidrs                    = ["10.244.0.0/14"]
-  virtual_network_subnets                  = [{ cidr = "10.246.0.0/16", name = "aks" }]
   install_cert_manager                     = true
   install_external_secrets                 = true
   install_external_dns                     = true
   install_ingress_nginx                    = true
   install_argocd                           = true
-  install_app_of_apps_infra                = true
+  install_app_of_apps_infra                = false
   dns_zone                                 = "sandbox.wasp.silvios.me"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
@@ -26,6 +23,9 @@ locals {
   argocd_ingress_issuer_name               = "letsencrypt-nginx-staging"
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
+  virtual_network_name                     = local.cluster_name
+  virtual_network_cidrs                    = ["10.244.0.0/14"]
+  virtual_network_subnets                  = [{ cidr = "10.246.0.0/16", name = "aks" }]
 }
 
 resource "azurerm_resource_group" "default" {
