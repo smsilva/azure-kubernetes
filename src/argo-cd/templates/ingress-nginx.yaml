@@ -5,7 +5,6 @@ argo-cd:
       https: true
       hosts:
         - ${server_ingress_host}.${server_ingress_domain}
-        - argocd.${server_ingress_domain}
       pathType: ImplementationSpecific
       paths:
         - /
@@ -13,7 +12,6 @@ argo-cd:
         - secretName: argocd-secret # do not change, this is provided by Argo CD
           hosts:
             - ${server_ingress_host}.${server_ingress_domain}
-            - argocd.${server_ingress_domain}
       annotations:
         cert-manager.io/cluster-issuer: ${server_ingress_issuer_name}
         external-dns.alpha.kubernetes.io/ttl: "1m"
