@@ -1,16 +1,15 @@
-argo-cd:
-  server:
-    rbacConfig:
-      policy.csv: |
-        p, role:app-contributor, applications, delete, default/*, allow
-        p, role:app-contributor, applications, get, default/*, allow
-        p, role:app-contributor, applications, sync, default/*, allow
-        p, role:app-contributor, applications, action/apps/Deployment/restart*, default/*, allow
+server:
+  rbacConfig:
+    policy.csv: |
+      p, role:app-contributor, applications, delete, default/*, allow
+      p, role:app-contributor, applications, get, default/*, allow
+      p, role:app-contributor, applications, sync, default/*, allow
+      p, role:app-contributor, applications, action/apps/Deployment/restart*, default/*, allow
 %{ for contributor_id in server_rbac_config_group_contributors ~}
-        g, "${contributor_id}", role:app-contributor
-        g, "${contributor_id}", role:readonly
+      g, "${contributor_id}", role:app-contributor
+      g, "${contributor_id}", role:readonly
 %{ endfor ~}
 %{ for administrator_id in server_rbac_config_group_administrators ~}
-        g, "${administrator_id}", role:admin
+      g, "${administrator_id}", role:admin
 %{ endfor ~}
-      policy.default: role:empty
+    policy.default: role:empty

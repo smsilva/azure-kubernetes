@@ -10,42 +10,25 @@
 
 # helm repo update &> /dev/null
 
-AAD_POD_IDENTITY_VERSION_LOCAL=$( helm show chart src/helm/charts/aad-pod-identity     | grep '^version:' | awk '{ print $2 }')
-ARGOCD_VERSION_LOCAL=$(           helm show chart src/helm/charts/argo-cd/charts/* | grep '^version:' | awk '{ print $2 }')
-CERT_MANAGER_VERSION_LOCAL=$(     helm show chart src/helm/charts/cert-manager         | grep '^version:' | awk '{ print $2 }')
-EXTERNAL_DNS_VERSION_LOCAL=$(     helm show chart src/helm/charts/external-dns         | grep '^version:' | awk '{ print $2 }')
-EXTERNAL_SECRETS_VERSION_LOCAL=$( helm show chart src/helm/charts/external-secrets     | grep '^version:' | awk '{ print $2 }')
-INGRESS_AZURE_VERSION_LOCAL=$(    helm show chart src/helm/charts/ingress-azure        | grep '^version:' | awk '{ print $2 }')
-INGRESS_NGINX_VERSION_LOCAL=$(    helm show chart src/helm/charts/ingress-nginx        | grep '^version:' | awk '{ print $2 }')
-
-AAD_POD_IDENTITY_VERSION_REPO=$(  helm search repo aad-pod-identity/aad-pod-identity --output json | jq -r '.[0].version')
-ARGOCD_VERSION_REPO=$(            helm search repo argo-cd/argo-cd                   --output json | jq -r '.[0].version')
-CERT_MANAGER_VERSION_REPO=$(      helm search repo cert-manager/cert-manager         --output json | jq -r '.[0].version')
-EXTERNAL_DNS_VERSION_REPO=$(      helm search repo external-dns/external-dns         --output json | jq -r '.[0].version')
-EXTERNAL_SECRETS_VERSION_REPO=$(  helm search repo external-secrets/external-secrets --output json | jq -r '.[0].version')
-INGRESS_AZURE_VERSION_REPO=$(     helm search repo ingress-azure/ingress-azure       --output json | jq -r '.[0].version')
-INGRESS_NGINX_VERSION_REPO=$(     helm search repo ingress-nginx/ingress-nginx       --output json | jq -r '.[0].version')
-
-show_updates() {
-  HELM_CHART=$1
-  LOCAL_VERSION=$2
-  REMOTE_VERSION=$3
+check_helm_chart_version() {
+  HELM_CHART_NAME=$1
+  LOCAL_VERSION=$(helm show chart src/helm/charts/${HELM_CHART_NAME} | grep '^version:' | awk '{ print $2 }')
+  REMOTE_VERSION=$(helm search repo ${HELM_CHART_NAME}/${HELM_CHART_NAME} --output json | jq -r '.[0].version')
   ACTION="none"
 
   if [ "${LOCAL_VERSION}" != "${REMOTE_VERSION}" ]; then
     ACTION="update"
+    printf "%s %s %s %s\n" ${HELM_CHART_NAME} ${LOCAL_VERSION} ${REMOTE_VERSION} ${ACTION}
   fi
-
-  printf "%s %s %s %s\n" ${HELM_CHART} ${LOCAL_VERSION} ${REMOTE_VERSION} ${ACTION}
 }
 
 (
 echo "HELM_CHART LOCAL_VERSION REMOTE_VERSION ACTION"
-show_updates aad-pod-identity ${AAD_POD_IDENTITY_VERSION_LOCAL} ${AAD_POD_IDENTITY_VERSION_REPO}
-show_updates argo-cd          ${ARGOCD_VERSION_LOCAL}           ${ARGOCD_VERSION_REPO}
-show_updates cert-manager     ${CERT_MANAGER_VERSION_LOCAL}     ${CERT_MANAGER_VERSION_REPO}
-show_updates external-dns     ${EXTERNAL_DNS_VERSION_LOCAL}     ${EXTERNAL_DNS_VERSION_REPO}
-show_updates external-secrets ${EXTERNAL_SECRETS_VERSION_LOCAL} ${EXTERNAL_SECRETS_VERSION_REPO}
-show_updates ingress-azure    ${INGRESS_AZURE_VERSION_LOCAL}    ${INGRESS_AZURE_VERSION_REPO}
-show_updates ingress-nginx    ${INGRESS_NGINX_VERSION_LOCAL}    ${INGRESS_NGINX_VERSION_REPO}
+check_helm_chart_version aad-pod-identity
+check_helm_chart_version argo-cd
+check_helm_chart_version cert-manager
+check_helm_chart_version external-dns
+check_helm_chart_version external-secrets
+check_helm_chart_version ingress-azure
+check_helm_chart_version ingress-nginx
 ) | column -t

@@ -1,24 +1,23 @@
-argo-cd:
-  server:
-    extraArgs:
-      - --insecure
-    ingress:
-      enabled: true
-      https: true
-      hosts:
-        - ${server_ingress_host}.${server_ingress_domain}
-      pathType: ImplementationSpecific
-      paths:
-        - /
-      tls:
-        - secretName: argocd-tls
-          hosts:
-            - ${server_ingress_host}.${server_ingress_domain}
-      annotations:
-        kubernetes.io/ingress.class: "azure/application-gateway"
-        kubernetes.io/tls-acme: "true"
-        cert-manager.io/cluster-issuer: ${server_ingress_issuer_name}
-        cert-manager.io/acme-challenge-type: http01
-        appgw.ingress.kubernetes.io/health-probe-interval: "30"
-        appgw.ingress.kubernetes.io/health-probe-timeout: "30"
-        appgw.ingress.kubernetes.io/health-probe-unhealthy-threshold: "3"
+server:
+  extraArgs:
+    - --insecure
+  ingress:
+    enabled: true
+    https: true
+    hosts:
+      - ${server_ingress_host}.${server_ingress_domain}
+    pathType: ImplementationSpecific
+    paths:
+      - /
+    tls:
+      - secretName: argocd-tls
+        hosts:
+          - ${server_ingress_host}.${server_ingress_domain}
+    annotations:
+      kubernetes.io/ingress.class: "azure/application-gateway"
+      kubernetes.io/tls-acme: "true"
+      cert-manager.io/cluster-issuer: ${server_ingress_issuer_name}
+      cert-manager.io/acme-challenge-type: http01
+      appgw.ingress.kubernetes.io/health-probe-interval: "30"
+      appgw.ingress.kubernetes.io/health-probe-timeout: "30"
+      appgw.ingress.kubernetes.io/health-probe-unhealthy-threshold: "3"

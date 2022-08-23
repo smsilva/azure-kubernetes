@@ -1,69 +1,68 @@
-argo-cd:
-  extraObjects:
-      # This is based on https://argo-cd.readthedocs.io/en/latest/operator-manual/upgrading/2.3-2.4/#workaround
-      # This is for git provider(s) using SSH authentication that does not support algorithms newer than rsa-ssh
-    - apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: argocd-ssh-rsa-authentication-config
+extraObjects:
+    # This is based on https://argo-cd.readthedocs.io/en/latest/operator-manual/upgrading/2.3-2.4/#workaround
+    # This is for git provider(s) using SSH authentication that does not support algorithms newer than rsa-ssh
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: argocd-ssh-rsa-authentication-config
+    data:
+      config: |
+        Host vs-ssh.visualstudio.com
+          HostkeyAlgorithms +ssh-rsa
+          PubkeyAcceptedAlgorithms +ssh-rsa
+        
+        Host ssh.dev.azure.com 
+          HostkeyAlgorithms +ssh-rsa 
+          PubkeyAcceptedAlgorithms +ssh-rsa
+
+  - apiVersion: external-secrets.io/v1alpha1
+    kind: ExternalSecret
+    metadata:
+      name: argocd-secret-merge-oidc-azuread
+    spec:
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: azure-subscription-key-vault
+      target:
+        name: argocd-secret
+        creationPolicy: Merge
       data:
-        config: |
-          Host vs-ssh.visualstudio.com
-            HostkeyAlgorithms +ssh-rsa
-            PubkeyAcceptedAlgorithms +ssh-rsa
-          
-          Host ssh.dev.azure.com 
-            HostkeyAlgorithms +ssh-rsa 
-            PubkeyAcceptedAlgorithms +ssh-rsa
+        - secretKey: "oidc.azuread.clientSecret"
+          remoteRef:
+            key: secret/argocd-oidc-azuread-${argocd_sso_application_id}
 
-    - apiVersion: external-secrets.io/v1alpha1
-      kind: ExternalSecret
-      metadata:
-        name: argocd-secret-merge-oidc-azuread
-      spec:
-        refreshInterval: 1h
-        secretStoreRef:
-          kind: ClusterSecretStore
-          name: azure-subscription-key-vault
-        target:
-          name: argocd-secret
-          creationPolicy: Merge
-        data:
-          - secretKey: "oidc.azuread.clientSecret"
-            remoteRef:
-              key: secret/argocd-oidc-azuread-${argocd_sso_application_id}
-
-    - apiVersion: external-secrets.io/v1alpha1
-      kind: ExternalSecret
-      metadata:
+  - apiVersion: external-secrets.io/v1alpha1
+    kind: ExternalSecret
+    metadata:
+      name: argocd-repo-creds-github
+    spec:
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: azure-subscription-key-vault
+    
+      target:
         name: argocd-repo-creds-github
-      spec:
-        refreshInterval: 1h
-        secretStoreRef:
-          kind: ClusterSecretStore
-          name: azure-subscription-key-vault
-      
-        target:
-          name: argocd-repo-creds-github
-          creationPolicy: Owner
-          template:
-            metadata:
-              annotations:
-                managed-by: argocd.argoproj.io
-              labels:
-                argocd.argoproj.io/secret-type: repo-creds
-            type: Opaque
-            data:
-              sshPrivateKey: |
-                {{`{{ .idrsabase64filecontent | base64decode | toString }}`}}
-              url: |
-                {{`{{ .privaterepourl | toString }}`}}
-      
-        data:
-          - secretKey: "idrsabase64filecontent"
-            remoteRef:
-              key: secret/argocd-repo-creds-github-ssh-private-key-base64-encoded
-      
-          - secretKey: "privaterepourl"
-            remoteRef:
-              key: secret/argocd-repo-creds-github-url
+        creationPolicy: Owner
+        template:
+          metadata:
+            annotations:
+              managed-by: argocd.argoproj.io
+            labels:
+              argocd.argoproj.io/secret-type: repo-creds
+          type: Opaque
+          data:
+            sshPrivateKey: |
+              {{`{{ .idrsabase64filecontent | base64decode | toString }}`}}
+            url: |
+              {{`{{ .privaterepourl | toString }}`}}
+    
+      data:
+        - secretKey: "idrsabase64filecontent"
+          remoteRef:
+            key: secret/argocd-repo-creds-github-ssh-private-key-base64-encoded
+    
+        - secretKey: "privaterepourl"
+          remoteRef:
+            key: secret/argocd-repo-creds-github-url

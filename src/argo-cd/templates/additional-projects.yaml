@@ -1,19 +1,18 @@
-argo-cd:
-  server:
-    additionalProjects:
-      - name: infra
-        description: Infrastructure
-        sourceRepos:
-          - git@github.com:smsilva/argocd.git
-          - git@github.com:smsilva/helm.git
-          - git@github.com:smsilva/wasp-gitops.git
-        destinations:
-          - name: in-cluster
-            namespace: '*'
-            server: '*'
-        namespaceResourceWhitelist:
-          - group: '*'
-            kind: '*'
-        clusterResourceWhitelist:
-          - group: '*'
-            kind: '*'
+server:
+  additionalProjects:
+    - name: infra
+      description: Infrastructure
+      sourceRepos:
+        - git@github.com:smsilva/argocd.git
+        - git@github.com:smsilva/helm.git
+        - git@github.com:smsilva/wasp-gitops.git
+      destinations:
+        - name: in-cluster
+          namespace: '*'
+          server: '*'
+      namespaceResourceWhitelist:
+        - group: '*'
+          kind: '*'
+      clusterResourceWhitelist:
+        - group: '*'
+          kind: '*'
