@@ -47,12 +47,13 @@ resource "helm_release" "argocd" {
   timeout          = 600 # 10 minutes
 
   values = [
-    local.ingress_template,
     data.template_file.sso.rendered,
     file("${path.module}/templates/additional-projects.yaml"),
     file("${path.module}/templates/configs-known-hosts.yaml"),
+    file("${path.module}/templates/extra-volumes.yaml"),
     file("${path.module}/templates/resource-customizations.yaml"),
     local.extra_objects,
+    local.ingress_template,
     local.rbac,
   ]
 

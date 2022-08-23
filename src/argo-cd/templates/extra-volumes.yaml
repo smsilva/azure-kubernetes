@@ -1,0 +1,21 @@
+controller:
+  volumes:
+    - name: ssh-rsa-auth-config
+      configMap:
+        name: argocd-ssh-rsa-authentication-config
+
+  volumeMounts:
+    - name: ssh-rsa-auth-config
+      mountPath: /home/argocd/.ssh/config
+      subPath: config
+
+repoServer:
+  volumes:
+    - name: ssh-rsa-auth-config
+      configMap:
+        name: argocd-ssh-rsa-authentication-config
+
+  volumeMounts:
+    - name: ssh-rsa-auth-config
+      mountPath: /home/argocd/.ssh/config
+      subPath: config
