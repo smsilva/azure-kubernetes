@@ -53,6 +53,8 @@ serviceAccount:
   create: true
   # -- Annotations to add to the service account.
   annotations: {}
+  # -- Extra Labels to add to the service account.
+  extraLabels: {}
   # -- The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template.
   name: ""
@@ -117,6 +119,17 @@ serviceMonitor:
   # -- Timeout if metrics can't be retrieved in given time interval
   scrapeTimeout: 25s
 
+metrics:
+  service:
+    # -- Enable if you use another monitoring tool than Prometheus to scrape the metrics
+    enabled: false
+
+    # -- Metrics service port to scrape
+    port: 8080
+
+    # -- Additional service annotations
+    annotations: {}
+
 nodeSelector: {}
 
 tolerations: []
@@ -163,6 +176,8 @@ webhook:
     create: true
     # -- Annotations to add to the service account.
     annotations: {}
+    # -- Extra Labels to add to the service account.
+    extraLabels: {}
     # -- The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template.
     name: ""
@@ -199,6 +214,17 @@ webhook:
 
     # -- Timeout if metrics can't be retrieved in given time interval
     scrapeTimeout: 25s
+
+  metrics:
+    service:
+      # -- Enable if you use another monitoring tool than Prometheus to scrape the metrics
+      enabled: false
+
+      # -- Metrics service port to scrape
+      port: 8080
+
+      # -- Additional service annotations
+      annotations: {}
 
     ## -- Extra environment variables to add to container.
   extraEnv: []
@@ -259,6 +285,8 @@ certController:
     create: true
     # -- Annotations to add to the service account.
     annotations: {}
+    # -- Extra Labels to add to the service account.
+    extraLabels: {}
     # -- The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template.
     name: ""
@@ -297,11 +325,23 @@ certController:
     # -- Timeout if metrics can't be retrieved in given time interval
     scrapeTimeout: 25s
 
+  metrics:
+    service:
+      # -- Enable if you use another monitoring tool than Prometheus to scrape the metrics
+      enabled: false
+
+      # -- Metrics service port to scrape
+      port: 8080
+
+      # -- Additional service annotations
+      annotations: {}
+
     ## -- Extra environment variables to add to container.
   extraEnv: []
 
     ## -- Map of extra arguments to pass to container.
   extraArgs: {}
+
 
     ## -- Extra volumes to pass to pod.
   extraVolumes: []
@@ -332,3 +372,6 @@ certController:
       # requests:
       #   cpu: 10m
       #   memory: 32Mi
+
+# -- Specifies `dnsOptions` to deployment
+dnsConfig: {}

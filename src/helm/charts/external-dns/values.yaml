@@ -49,6 +49,10 @@ securityContext:
   capabilities:
     drop: ["ALL"]
 
+# Defaults to `ClusterFirst`.
+# Valid values are: `ClusterFirstWithHostNet`, `ClusterFirst`, `Default` or `None`.
+dnsPolicy:
+
 priorityClassName: ""
 
 terminationGracePeriodSeconds:
@@ -130,3 +134,6 @@ domainFilters: []
 provider: azure
 
 extraArgs: []
+
+deploymentStrategy:
+  type: Recreate
