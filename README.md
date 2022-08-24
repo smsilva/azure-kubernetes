@@ -18,15 +18,15 @@
 
 | Secret                                             | Description                                             | Example                                                              |
 | -------------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------- | 
-| `argocd-oidc-azuread-client-secret`                | Active Directory ArgoCD App Registration Client Secret  | `LkuxT*****************************`                                 |
-| `argocd-repo-creds-base64-encoded-private-key-ado` | Azure DevOps Base64 Encode SSH Private Key              | `LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzF...` |
-| `argocd-repo-creds-url-ado`                        | ArgoCD Credential Template URL for Azure DevOps Project | `git@github.com:smsilva/wasp-gitops.git`                             |
-| `new-relic-license-key`                            | New Relic License Key                                   | `157629bec2854d7aa8d65d0d5f5ed18b4d7aa8d6`                           |
+| `argocd-repo-creds-ssh-private-key-base64-encoded` | SSH Private Key Base64 Encode (without line breaks)     | `LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzF...` |
+| `argocd-repo-creds-url-ado`                        | ArgoCD Credential Template URL for Azure DevOps Project | `git@ssh.dev.azure.com:v3/smsilva/azure-platform/`                   |
+| `argocd-repo-creds-ado-url`                        | ArgoCD Credential Template URL for GitHub               | `git@github.com:smsilva/`                                            |
+| `new-relic-license-key`                            | New Relic License Key                                   | `157629bec2854d7aa8d65d0d5f5ed18b4d7aNRAL`                           |
 
-# Application Gateway Example
+# Application Gateway Example Execution
 
 ```bash
-cd azure-kubernetes/examples/cluster_with_argocd_ingress_azure
+cd examples/cluster_with_argocd_ingress_azure
 
 terraform init
 

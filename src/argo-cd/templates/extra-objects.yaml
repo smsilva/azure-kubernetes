@@ -61,8 +61,43 @@ extraObjects:
       data:
         - secretKey: "idrsabase64filecontent"
           remoteRef:
-            key: secret/argocd-repo-creds-github-ssh-private-key-base64-encoded
+            key: secret/argocd-repo-creds-ssh-private-key-base64-encoded
     
         - secretKey: "privaterepourl"
           remoteRef:
-            key: secret/argocd-repo-creds-github-url
+            key: secret/argocd-repo-creds-url-github
+
+  - apiVersion: external-secrets.io/v1alpha1
+    kind: ExternalSecret
+    metadata:
+      name: argocd-repo-creds-ado
+    spec:
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: azure-subscription-key-vault
+    
+      target:
+        name: argocd-repo-creds-ado
+        creationPolicy: Owner
+        template:
+          metadata:
+            annotations:
+              managed-by: argocd.argoproj.io
+            labels:
+              argocd.argoproj.io/secret-type: repo-creds
+          type: Opaque
+          data:
+            sshPrivateKey: |
+              {{`{{ .idrsabase64filecontent | base64decode | toString }}`}}
+            url: |
+              {{`{{ .privaterepourl | toString }}`}}
+    
+      data:
+        - secretKey: "idrsabase64filecontent"
+          remoteRef:
+            key: secret/argocd-repo-creds-ssh-private-key-base64-encoded
+    
+        - secretKey: "privaterepourl"
+          remoteRef:
+            key: secret/argocd-repo-creds-url-ado

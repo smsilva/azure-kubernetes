@@ -6,6 +6,7 @@ server:
         - git@github.com:smsilva/argocd.git
         - git@github.com:smsilva/helm.git
         - git@github.com:smsilva/wasp-gitops.git
+        - git@ssh.dev.azure.com:v3/smsilva/azure-platform/gitops
       destinations:
         - name: in-cluster
           namespace: '*'
