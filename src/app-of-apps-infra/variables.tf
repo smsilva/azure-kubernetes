@@ -8,15 +8,11 @@ variable "namespace" {
   default = "argocd"
 }
 
-variable "cluster_name" {
-  type = string
-}
-
-variable "domain" {
-  type = string
-}
-
 variable "environment_id" {
+  type = string
+}
+
+variable "environment_domain" {
   type = string
 }
 

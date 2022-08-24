@@ -12,12 +12,12 @@ resource "helm_release" "app_of_apps_infra" {
 
   set {
     name  = "environment.domain"
-    value = var.domain
+    value = var.environment_domain
   }
 
   set {
     name  = "environment.cluster"
-    value = var.cluster_name
+    value = var.environment_cluster
   }
 
   set {
