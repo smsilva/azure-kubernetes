@@ -3,7 +3,7 @@ locals {
   cluster_name                             = "wasp-${local.cluster_random_id}"
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
-  cluster_version                          = "1.21.14"
+  cluster_version                          = "1.23.8"
   cluster_node_pool_min_count              = 3
   cluster_node_pool_max_count              = 5
   cluster_node_pool_name                   = "system01"
@@ -125,8 +125,9 @@ module "app_of_apps_infra" {
   count  = local.install_app_of_apps_infra ? 1 : 0
   source = "../../src/app-of-apps-infra"
 
-  environment_id  = local.cluster_random_id
-  target_revision = local.argocd_app_of_apps_infra_target_revision
+  environment_id      = local.cluster_random_id
+  environment_cluster = local.cluster_name
+  target_revision     = local.argocd_app_of_apps_infra_target_revision
 
   depends_on = [
     module.argo_cd
