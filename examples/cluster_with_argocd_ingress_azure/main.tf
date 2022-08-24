@@ -147,6 +147,7 @@ module "app_of_apps_infra" {
 
   environment_id      = local.cluster_random_id
   environment_cluster = local.cluster_name
+  environment_domain  = local.dns_zone
   target_revision     = local.argocd_app_of_apps_infra_target_revision
 
   depends_on = [

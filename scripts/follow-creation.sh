@@ -33,7 +33,7 @@ check_if_dns_is_resolvable_locally() {
 }
 
 argocd_url_test_using_curl() {
-  TEMP_FILE=$(tempfile)
+  TEMP_FILE=$(mktemp)
   URL="$(printf "https://%s" ${ARGOCD_HOST})"
   printf "[curl] %s: " ${URL}
   curl -Isk --max-time 3 ${URL} > "${TEMP_FILE}"
