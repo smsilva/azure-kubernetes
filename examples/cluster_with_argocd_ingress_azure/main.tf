@@ -12,8 +12,8 @@ locals {
   install_external_secrets                 = true
   install_external_dns                     = true
   install_ingress_application_gateway      = true
-  install_argocd                           = false
-  install_app_of_apps_infra                = false
+  install_argocd                           = true
+  install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
@@ -145,8 +145,9 @@ module "app_of_apps_infra" {
   count  = local.install_app_of_apps_infra ? 1 : 0
   source = "../../src/app-of-apps-infra"
 
-  environment_id  = local.cluster_random_id
-  target_revision = local.argocd_app_of_apps_infra_target_revision
+  environment_id      = local.cluster_random_id
+  environment_cluster = local.cluster_name
+  target_revision     = local.argocd_app_of_apps_infra_target_revision
 
   depends_on = [
     module.argo_cd

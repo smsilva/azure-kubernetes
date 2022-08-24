@@ -12,6 +12,10 @@ variable "environment_id" {
   type = string
 }
 
+variable "environment_cluster" {
+  type = string
+}
+
 variable "target_revision" {
   type        = string
   description = "Git Target Revision"

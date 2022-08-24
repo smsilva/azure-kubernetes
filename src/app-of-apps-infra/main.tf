@@ -11,6 +11,11 @@ resource "helm_release" "app_of_apps_infra" {
   }
 
   set {
+    name  = "environment.cluster"
+    value = var.environment_cluster
+  }
+
+  set {
     name  = "source.targetRevision"
     value = var.target_revision
   }
