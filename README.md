@@ -18,10 +18,10 @@
 
 | Secret                                             | Description                                             | Example                                                              |
 | -------------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------- | 
-| `argocd-repo-creds-ssh-private-key-base64-encoded` | SSH Private Key Base64 Encode (without line breaks)     | `LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzF...` |
-| `argocd-repo-creds-url-ado`                        | ArgoCD Credential Template URL for Azure DevOps Project | `git@ssh.dev.azure.com:v3/smsilva/azure-platform/`                   |
-| `argocd-repo-creds-ado-url`                        | ArgoCD Credential Template URL for GitHub               | `git@github.com:smsilva/`                                            |
-| `new-relic-license-key`                            | New Relic License Key                                   | `157629bec2854d7aa8d65d0d5f5ed18b4d7aNRAL`                           |
+| `argocd-repo-creds-ssh-private-key-base64-encoded` | SSH Private Key Base 64 Encode (without line breaks)    | `LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzF...` |
+| `argocd-repo-creds-url-ado`                        | Credential Template URL for Azure DevOps Project        | `git@ssh.dev.azure.com:v3/smsilva/azure-platform/`                   |
+| `argocd-repo-creds-url-github`                     | Credential Template URL for GitHub                      | `git@github.com:smsilva/`                                            |
+| `new-relic-license-key`                            | New Relic License Key                                   | `157629bec2**************************NRAL`                           |
 
 # Application Gateway Example Execution
 
