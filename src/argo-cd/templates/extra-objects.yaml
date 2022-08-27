@@ -1,4 +1,23 @@
 extraObjects:
+  - apiVersion: argoproj.io/v1alpha1
+    kind: AppProject
+    metadata:
+      name: infra
+    spec:
+      sourceRepos:
+        - git@github.com:smsilva/argocd.git
+        - git@github.com:smsilva/helm.git
+        - git@github.com:smsilva/wasp-gitops.git
+        - git@ssh.dev.azure.com:v3/smsilva/azure-platform/gitops
+    
+      destinations:
+        - namespace: '*'
+          server: '*'
+    
+      clusterResourceWhitelist:
+        - group: '*'
+          kind: '*'
+
     # This is based on https://argo-cd.readthedocs.io/en/latest/operator-manual/upgrading/2.3-2.4/#workaround
     # This is for git provider(s) using SSH authentication that does not support algorithms newer than rsa-ssh
   - apiVersion: v1

@@ -1,13 +1,13 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Changed]: Update to app version 2.4.11"
+    - "[Added]: Add appHardResyncPeriod option for application controller"
 apiVersion: v2
 appVersion: v2.4.11
 dependencies:
 - condition: redis-ha.enabled
   name: redis-ha
   repository: https://dandydeveloper.github.io/charts/
-  version: 4.17.1
+  version: 4.22.1
 description: A Helm chart for Argo CD, a declarative, GitOps continuous delivery tool
   for Kubernetes.
 home: https://github.com/argoproj/argo-helm
@@ -17,9 +17,7 @@ keywords:
 - argocd
 - gitops
 maintainers:
-- name: alexec
-- name: alexmt
-- name: jessesuen
-- name: seanson
+- name: argoproj
+  url: https://argoproj.github.io/
 name: argo-cd
-version: 4.10.9
+version: 5.3.6

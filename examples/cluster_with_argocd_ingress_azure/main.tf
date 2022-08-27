@@ -4,7 +4,7 @@ locals {
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
   cluster_version                          = "1.23.8"
-  cluster_node_pool_min_count              = 3
+  cluster_node_pool_min_count              = 1
   cluster_node_pool_max_count              = 5
   cluster_node_pool_name                   = "system1"
   cluster_administrators_ids               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
@@ -12,8 +12,8 @@ locals {
   install_external_secrets                 = true
   install_external_dns                     = true
   install_ingress_application_gateway      = true
-  install_argocd                           = false
-  install_app_of_apps_infra                = false
+  install_argocd                           = true
+  install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
@@ -58,7 +58,7 @@ module "nodepool_user1" {
   source = "../../src/nodepool"
 
   name                 = "user1"
-  min_count            = 2
+  min_count            = 3
   max_count            = 15
   orchestrator_version = local.cluster_version
   cluster              = module.aks.instance
@@ -108,7 +108,8 @@ module "cert_manager" {
   source = "../../src/cert-manager"
 
   depends_on = [
-    module.aks
+    module.aks,
+    module.nodepool_user1
   ]
 }
 
@@ -122,7 +123,8 @@ module "external_secrets" {
   key_vault_name = data.azurerm_key_vault.default.name
 
   depends_on = [
-    module.aks
+    module.aks,
+    module.nodepool_user1
   ]
 }
 
@@ -146,6 +148,7 @@ module "ingress_azure" {
 
   depends_on = [
     module.aks,
+    module.nodepool_user1,
     module.application_gateway
   ]
 }

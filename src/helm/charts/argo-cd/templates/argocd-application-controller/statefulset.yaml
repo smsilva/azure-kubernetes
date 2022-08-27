@@ -1,6 +1,6 @@
 {{- $redisHa := (index .Values "redis-ha") -}}
 apiVersion: apps/v1
-kind: {{ .Values.controller.enableStatefulSet | ternary "StatefulSet" "Deployment" }}
+kind: StatefulSet
 metadata:
   name: {{ template "argo-cd.controller.fullname" . }}
   labels:
@@ -10,9 +10,7 @@ spec:
   selector:
     matchLabels:
       {{- include "argo-cd.selectorLabels" (dict "context" . "name" .Values.controller.name) | nindent 6 }}
-  {{- if  .Values.controller.enableStatefulSet }}
   serviceName: {{ template "argo-cd.controller.fullname" . }}
-  {{- end }}
   revisionHistoryLimit: 5
   replicas: {{ .Values.controller.replicas }}
   template:
@@ -46,6 +44,8 @@ spec:
         - {{ .Values.controller.args.operationProcessors | quote }}
         - --app-resync
         - {{ .Values.controller.args.appResyncPeriod | quote }}
+        - --app-hard-resync
+        - {{ .Values.controller.args.appHardResyncPeriod | quote }}
         - --self-heal-timeout-seconds
         - {{ .Values.controller.args.selfHealTimeout | quote }}
         - --repo-server
@@ -53,9 +53,9 @@ spec:
         - --repo-server-timeout-seconds
         - {{ .Values.controller.args.repoServerTimeoutSeconds | quote }}
         - --logformat
-        - {{ .Values.controller.logFormat }}
+        - {{ default .Values.global.logging.format .Values.controller.logFormat }}
         - --loglevel
-        - {{ .Values.controller.logLevel }}
+        - {{ default .Values.global.logging.level .Values.controller.logLevel }}
         {{- if .Values.controller.metrics.applicationLabels.enabled }}
         {{- range .Values.controller.metrics.applicationLabels.labels }}
         - --metrics-application-labels
@@ -70,23 +70,25 @@ spec:
         - {{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}
         {{- end }}
         {{- with .Values.controller.extraArgs }}
-        {{- . | toYaml | nindent 8 }}
+          {{- toYaml . | nindent 8 }}
         {{- end }}
         image: {{ default .Values.global.image.repository .Values.controller.image.repository }}:{{ default (include "argo-cd.defaultTag" .) .Values.controller.image.tag }}
         imagePullPolicy: {{ default .Values.global.image.imagePullPolicy .Values.controller.image.imagePullPolicy }}
         name: {{ .Values.controller.name }}
-        {{- if .Values.controller.containerSecurityContext }}
-        securityContext: {{- toYaml .Values.controller.containerSecurityContext | nindent 10 }}
+        {{- with .Values.controller.containerSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
         {{- end }}
-        {{- if or .Values.controller.env .Values.externalRedis.password .Values.externalRedis.existingSecret  }}
         env:
-          {{- include "argo-cd.redisPasswordEnv" . | nindent 8 }}
           {{- with .Values.controller.env }}
-          {{- toYaml . | nindent 8 }}
+            {{- toYaml . | nindent 10 }}
           {{- end }}
-        {{- end }}
+          - name: ARGOCD_CONTROLLER_REPLICAS
+            value: {{ .Values.controller.replicas | quote }}
+          {{- include "argo-cd.redisPasswordEnv" . | nindent 10 }}
         {{- with .Values.controller.envFrom }}
-        envFrom: {{- toYaml . | nindent 8 }}
+        envFrom:
+          {{- toYaml . | nindent 10 }}
         {{- end }}
         ports:
         - name: controller
@@ -123,29 +125,29 @@ spec:
       {{- with .Values.controller.extraContainers }}
         {{- toYaml . | nindent 6 }}
       {{- end }}
-    {{- if .Values.controller.nodeSelector }}
+      {{- with .Values.controller.nodeSelector }}
       nodeSelector:
-{{- toYaml .Values.controller.nodeSelector | nindent 8 }}
-    {{- end }}
-    {{- if .Values.controller.tolerations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.tolerations }}
       tolerations:
-{{- toYaml .Values.controller.tolerations | nindent 8 }}
-    {{- end }}
-    {{- if .Values.controller.affinity }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.affinity }}
       affinity:
-{{- toYaml .Values.controller.affinity | nindent 8 }}
-    {{- end }}
-    {{- with .Values.controller.topologySpreadConstraints }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.topologySpreadConstraints }}
       topologySpreadConstraints:
-      {{- range $constraint := . }}
+        {{- range $constraint := . }}
       - {{ toYaml $constraint | nindent 8 | trim }}
-        {{- if not $constraint.labelSelector }}
+          {{- if not $constraint.labelSelector }}
         labelSelector:
           matchLabels:
             {{- include "argo-cd.selectorLabels" (dict "context" $ "name" $.Values.controller.name) | nindent 12 }}
+          {{- end }}
         {{- end }}
       {{- end }}
-    {{- end }}
       serviceAccountName: {{ template "argo-cd.controllerServiceAccountName" . }}
       {{- with .Values.global.hostAliases }}
       hostAliases:
@@ -166,12 +168,12 @@ spec:
           optional: true
           secretName: argocd-repo-server-tls
       {{- with .Values.controller.volumes }}
-      {{- toYaml . | nindent 6 }}
+        {{- toYaml . | nindent 6 }}
       {{- end }}
-      {{- if .Values.controller.initContainers }}
+      {{- with .Values.controller.initContainers }}
       initContainers:
-      {{- toYaml .Values.controller.initContainers | nindent 6 }}
+        {{- toYaml . | nindent 6 }}
       {{- end }}
-{{- if .Values.controller.priorityClassName }}
-      priorityClassName: {{ .Values.controller.priorityClassName }}
-{{- end }}
+      {{- with .Values.controller.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}

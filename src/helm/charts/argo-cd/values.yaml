@@ -9,6 +9,15 @@ fullnameOverride: ""
 # -- Override the Kubernetes version, which is used to evaluate certain manifests
 kubeVersionOverride: ""
 
+## Custom resource configuration
+crds:
+  # -- Install and upgrade CRDs
+  install: true
+  # -- Keep CRDs on chart uninstall
+  keep: true
+  # -- Annotations to be added to all CRDs
+  annotations: {}
+
 global:
   image:
     # -- If defined, a repository applied to all Argo CD deployments
@@ -17,6 +26,11 @@ global:
     tag: ""
     # -- If defined, a imagePullPolicy applied to all Argo CD deployments
     imagePullPolicy: IfNotPresent
+  logging:
+    # -- Set the global logging format. Either: `text` or `json`
+    format: text
+    # -- Set the global logging level. One of: `debug`, `info`, `warn` or `error`
+    level: info
   # -- Annotations for the all deployed pods
   podAnnotations: {}
   # -- Labels for the all deployed pods
@@ -105,11 +119,8 @@ controller:
     imagePullPolicy: ""
 
   # -- The number of application controller pods to run.
-  # If changing the number of replicas you must pass the number as `ARGOCD_CONTROLLER_REPLICAS` as an environment variable
+  # Additional replicas will cause sharding of managed clusters across number of replicas.
   replicas: 1
-
-  # -- Deploy the application controller as a StatefulSet instead of a Deployment, this is required for HA capability.
-  enableStatefulSet: true
 
   ## Application controller commandline flags
   args:
@@ -117,6 +128,8 @@ controller:
     statusProcessors: "20"
     # -- define the application controller `--operation-processors`
     operationProcessors: "10"
+    # -- define the application controller `--app-hard-resync`
+    appHardResyncPeriod: "0"
     # -- define the application controller `--app-resync`
     appResyncPeriod: "180"
     # -- define the application controller `--self-heal-timeout-seconds`
@@ -125,18 +138,17 @@ controller:
     repoServerTimeoutSeconds: "60"
 
   # -- Application controller log format. Either `text` or `json`
-  logFormat: text
-  # -- Application controller log level
-  logLevel: info
+  # @default -- `""` (defaults to global.logging.format)
+  logFormat: ""
+  # -- Application controller log level. One of: `debug`, `info`, `warn` or `error`
+  # @default -- `""` (defaults to global.logging.level)
+  logLevel: ""
 
   # -- Additional command line arguments to pass to application controller
   extraArgs: []
 
   # -- Environment variables to pass to application controller
-  env:
-    []
-    # - name: "ARGOCD_CONTROLLER_REPLICAS"
-    #   value: ""
+  env: []
 
   # -- envFrom to pass to application controller
   # @default -- `[]` (See [values.yaml])
@@ -853,7 +865,21 @@ server:
     targetCPUUtilizationPercentage: 50
     # -- Average memory utilization percentage for the Argo CD server [HPA]
     targetMemoryUtilizationPercentage: 50
-
+    # -- Configures the scaling behavior of the target in both Up and Down directions.
+    # This is only available on HPA apiVersion `autoscaling/v2beta2` and newer
+    behavior: {}
+      # scaleDown:
+      #  stabilizationWindowSeconds: 300
+      #  policies:
+      #   - type: Pods
+      #     value: 1
+      #     periodSeconds: 180
+      # scaleUp:
+      #   stabilizationWindowSeconds: 300
+      #   policies:
+      #   - type: Pods
+      #     value: 2
+      #     periodSeconds: 60
   image:
     # -- Repository to use for the Argo CD server
     # @default -- `""` (defaults to global.image.repository)
@@ -889,9 +915,11 @@ server:
   lifecycle: {}
 
   # -- Argo CD server log format: Either `text` or `json`
-  logFormat: text
-  # -- Argo CD server log level
-  logLevel: info
+  # @default -- `""` (defaults to global.logging.format)
+  logFormat: ""
+  # -- Argo CD server log level. One of: `debug`, `info`, `warn` or `error`
+  # @default -- `""` (defaults to global.logging.level)
+  logLevel: ""
 
   # -- Annotations to be added to server pods
   podAnnotations: {}
@@ -1221,19 +1249,6 @@ server:
     # Ref: https://argo-cd.readthedocs.io/en/latest/operator-manual/rbac/#exec-resource
     exec.enabled: "false"
 
-    # DEPRECATED: Please instead use configs.credentialTemplates and configs.repositories
-    # repositories: |
-    #   - url: git@github.com:group/repo.git
-    #     sshPrivateKeySecret:
-    #       name: secret-name
-    #       key: sshPrivateKey
-    #   - type: helm
-    #     url: https://charts.helm.sh/stable
-    #     name: stable
-    #   - type: helm
-    #     url: https://argoproj.github.io/argo-helm
-    #     name: argo
-
     # admin.enabled indicates whether the admin user is enabled. It is enabled by default.
     # https://argo-cd.readthedocs.io/en/latest/faq/#how-to-disable-admin-user
     admin.enabled: "true"
@@ -1295,83 +1310,6 @@ server:
   # -- Whether or not to create the configmap. If false, it is expected the configmap will be created
   # by something else. Argo CD will not work if there is no configMap created with the name above.
   rbacConfigCreate: true
-
-  # -- Deploy Argo CD Applications within this helm release
-  # @default -- `[]` (See [values.yaml])
-  ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/
-  additionalApplications: []
-  # - name: guestbook
-  #   namespace: argocd
-  #   additionalLabels: {}
-  #   additionalAnnotations: {}
-  #   finalizers:
-  #   - resources-finalizer.argocd.argoproj.io
-  #   project: guestbook
-  #   source:
-  #     repoURL: https://github.com/argoproj/argocd-example-apps.git
-  #     targetRevision: HEAD
-  #     path: guestbook
-  #     directory:
-  #       recurse: true
-  #   destination:
-  #     server: https://kubernetes.default.svc
-  #     namespace: guestbook
-  #   syncPolicy:
-  #     automated:
-  #       prune: false
-  #       selfHeal: false
-  #   ignoreDifferences:
-  #   - group: apps
-  #     kind: Deployment
-  #     jsonPointers:
-  #     - /spec/replicas
-  #   info:
-  #   - name: url
-  #     value: https://argoproj.github.io/
-
-  # -- Deploy Argo CD Projects within this helm release
-  # @default -- `[]` (See [values.yaml])
-  ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/
-  additionalProjects: []
-  # - name: guestbook
-  #   namespace: argocd
-  #   additionalLabels: {}
-  #   additionalAnnotations: {}
-  #   finalizers:
-  #   - resources-finalizer.argocd.argoproj.io
-  #   description: Example Project
-  #   sourceRepos:
-  #   - '*'
-  #   destinations:
-  #   - namespace: guestbook
-  #     server: https://kubernetes.default.svc
-  #   clusterResourceWhitelist: []
-  #   clusterResourceBlacklist: []
-  #   namespaceResourceBlacklist:
-  #   - group: ''
-  #     kind: ResourceQuota
-  #   - group: ''
-  #     kind: LimitRange
-  #   - group: ''
-  #     kind: NetworkPolicy
-  #     orphanedResources: {}
-  #     roles: []
-  #   namespaceResourceWhitelist:
-  #   - group: 'apps'
-  #     kind: Deployment
-  #   - group: 'apps'
-  #     kind: StatefulSet
-  #   orphanedResources: {}
-  #   roles: []
-  #   syncWindows:
-  #   - kind: allow
-  #     schedule: '10 1 * * *'
-  #     duration: 1h
-  #     applications:
-  #     - '*-prod'
-  #     manualSync: true
-  #   signatureKeys:
-  #   - keyID: ABCDEF1234567890
 
   ## Enable Admin ClusterRole resources.
   ## Enable if you would like to grant rights to Argo CD to deploy to the local Kubernetes cluster.
@@ -1514,6 +1452,21 @@ repoServer:
     targetCPUUtilizationPercentage: 50
     # -- Average memory utilization percentage for the repo server [HPA]
     targetMemoryUtilizationPercentage: 50
+    # -- Configures the scaling behavior of the target in both Up and Down directions.
+    # This is only available on HPA apiVersion `autoscaling/v2beta2` and newer
+    behavior: {}
+      # scaleDown:
+      #  stabilizationWindowSeconds: 300
+      #  policies:
+      #   - type: Pods
+      #     value: 1
+      #     periodSeconds: 180
+      # scaleUp:
+      #   stabilizationWindowSeconds: 300
+      #   policies:
+      #   - type: Pods
+      #     value: 2
+      #     periodSeconds: 60
 
   image:
     # -- Repository to use for the repo server
@@ -1541,9 +1494,11 @@ repoServer:
   #     name: secret-name
 
   # -- Repo server log format: Either `text` or `json`
-  logFormat: text
-  # -- Repo server log level
-  logLevel: info
+  # @default -- `""` (defaults to global.logging.level)
+  logFormat: ""
+  # -- Repo server log level. One of: `debug`, `info`, `warn` or `error`
+  # @default -- `""` (defaults to global.logging.format)
+  logLevel: ""
 
   # -- Annotations to be added to repo server pods
   podAnnotations: {}
@@ -1865,9 +1820,6 @@ configs:
     #     XWyb96wrUlv+E8I=
     #     -----END CERTIFICATE-----
 
-  # -- *DEPRECATED:* Instead, use `configs.credentialTemplates` and/or `configs.repositories`
-  repositoryCredentials: {}
-
   # -- Repository credentials to be used as Templates for other repos
   ## Creates a secret for each key/value specified below to create repository credentials
   credentialTemplates: {}
@@ -2008,6 +1960,13 @@ applicationSet:
     # -- Enable dry run mode
     dryRun: false
 
+  # -- ApplicationSet controller log format. Either `text` or `json`
+  # @default -- `""` (defaults to global.logging.format)
+  logFormat: ""
+  # -- ApplicationSet controller log level. One of: `debug`, `info`, `warn`, `error`
+  # @default -- `""` (defaults to global.logging.level)
+  logLevel: ""
+
   # -- Additional containers to be added to the applicationset controller pod
   extraContainers: []
 
@@ -2125,7 +2084,6 @@ applicationSet:
 
   # -- List of extra cli args to add
   extraArgs: []
-    # - --loglevel=warn
 
   # -- Environment variables to pass to the controller
   extraEnv: []
@@ -2232,10 +2190,6 @@ notifications:
     # -- key:value pairs of annotations to be added to the secret
     annotations: {}
 
-    # -- The name of the secret to use.
-    ## If not set and create is true, the default name 'argocd-notifications-secret' is used
-    name: ""
-
     # -- Generic key:value pairs to be inserted into the secret
     ## Can be used for templates, notification services etc. Some examples given below.
     ## For more information: https://argocd-notifications.readthedocs.io/en/stable/services/overview/
@@ -2252,10 +2206,12 @@ notifications:
       # email-password:
         # For more information: https://argocd-notifications.readthedocs.io/en/stable/services/email/
 
-  # -- Set the logging level. (One of: `debug`, `info`, `warn`, `error`)
-  logLevel: info
   # -- Application controller log format. Either `text` or `json`
-  logFormat: text
+  # @default -- `""` (defaults to global.logging.format)
+  logFormat: ""
+  # -- Application controller log level. One of: `debug`, `info`, `warn`, `error`
+  # @default -- `""` (defaults to global.logging.level)
+  logLevel: ""
 
   # -- Extra arguments to provide to the controller
   extraArgs: []
@@ -2344,10 +2300,6 @@ notifications:
   cm:
     # -- Whether helm chart creates controller config map
     create: true
-
-    # -- The name of the config map to use.
-    ## If not set and create is true, the default name 'argocd-notifications-cm' is used
-    name: ""
 
   # -- Contains centrally managed global application subscriptions
   ## For more information: https://argocd-notifications.readthedocs.io/en/stable/subscriptions/
