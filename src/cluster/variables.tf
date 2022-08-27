@@ -40,6 +40,11 @@ variable "node_pool_vm_size" {
   default     = "Standard_D2_v2"
 }
 
+variable "node_pool_os_disk_type" {
+  type    = string
+  default = "Managed"
+}
+
 variable "node_pool_os_disk_size_gb" {
   type    = string
   default = "100"
@@ -64,4 +69,14 @@ variable "node_pool_kubernetes_version" {
   type        = string
   description = "Default Node Pool Kubernetes Version"
   default     = null
+}
+
+variable "node_pool_only_critical_addons_enabled" {
+  description = "When set to false, Default Node Pool will be used to Deploy User Pods"
+  default     = true
+}
+
+variable "sku_tier" {
+  type    = string
+  default = "Free"
 }

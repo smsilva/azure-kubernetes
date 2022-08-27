@@ -13,6 +13,7 @@ resource "azurerm_kubernetes_cluster" "default" {
   resource_group_name               = data.azurerm_resource_group.default.name
   node_resource_group               = local.node_resource_group_name
   kubernetes_version                = var.orchestrator_version
+  sku_tier                          = var.sku_tier
   role_based_access_control_enabled = true
 
   default_node_pool {
@@ -22,12 +23,12 @@ resource "azurerm_kubernetes_cluster" "default" {
     min_count                    = var.node_pool_min_count
     max_count                    = var.node_pool_max_count
     max_pods                     = var.node_pool_max_pods
-    os_disk_size_gb              = var.node_pool_os_disk_size_gb
     vnet_subnet_id               = local.cluster_subnet_id
-    only_critical_addons_enabled = false # Default Node Pool will be used to Deploy User Pods
+    only_critical_addons_enabled = var.node_pool_only_critical_addons_enabled
+    os_disk_type                 = var.node_pool_os_disk_type
+    os_disk_size_gb              = var.node_pool_os_disk_size_gb
     enable_auto_scaling          = true
     type                         = "VirtualMachineScaleSets"
-    os_disk_type                 = "Managed"
 
     upgrade_settings {
       max_surge = "33%"
