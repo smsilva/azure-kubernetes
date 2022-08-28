@@ -5,7 +5,7 @@ locals {
   cluster_resource_group_location = "eastus2"
   cluster_version                 = "1.23.8"
   cluster_node_pool_min_count     = 1
-  cluster_node_pool_max_count     = 5
+  cluster_node_pool_max_count     = 3
   cluster_node_pool_name          = "system1"
   cluster_administrators_ids      = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
   virtual_network_name            = local.cluster_name
@@ -29,7 +29,6 @@ module "aks" {
   node_pool_max_count  = local.cluster_node_pool_max_count
   resource_group       = azurerm_resource_group.default
   subnet               = module.vnet.subnets["aks"].instance
-  sku_tier             = "Free"
 
   depends_on = [
     module.vnet
@@ -40,8 +39,8 @@ module "nodepool_userpool1" {
   source = "../../src/nodepool"
 
   name                 = "user1"
-  min_count            = 1
-  max_count            = 15
+  min_count            = 3
+  max_count            = 5
   orchestrator_version = local.cluster_version
   cluster              = module.aks.instance
   subnet_id            = module.vnet.subnets["aks"].instance.id

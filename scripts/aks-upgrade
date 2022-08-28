@@ -1,0 +1,19 @@
+#!/bin/bash
+export AKS_CLUSTER_NAME="${AKS_CLUSTER_NAME-wasp-u38crU3t}"
+export AKS_CLUSTER_RESOURCE_GROUP_NAME="${AKS_CLUSTER_RESOURCE_GROUP_NAME-wasp-u38crU3t}"
+export AKS_VERSION="${AKS_VERSION-1.24.3}"
+
+az aks upgrade \
+  --name ${AKS_CLUSTER_NAME} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+  --control-plane-only \
+  --kubernetes-version "${AKS_VERSION}" \
+  --only-show-errors \
+  --yes
+
+az aks nodepool upgrade \
+  --cluster-name "${AKS_CLUSTER_NAME}" \
+  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+  --name user1 \
+  --kubernetes-version "${AKS_VERSION}" \
+  --only-show-errors

@@ -1,12 +1,11 @@
 #!/bin/bash
 show_usage() {
   cat <<EOF
-Calculate new limits:
 
-  ./aks-nodepool-limits \\
-    --count 110 \\
-    --min 100 \\
-    --max 120
+  ./aks-nodepool-decrease-calc \\
+    --count 3 \\
+    --min 3 \\
+    --max 5
 
 EOF
 }
@@ -51,6 +50,7 @@ if [ "${CURRENT_RANGE}" -gt 0 ] && \
     NEW_MIN_COUNT=0
   fi
 
-  echo "export AKS_NODEPOOL_LIMITS_MAX_COUNT=${NODEPOOL_MAX_COUNT}"
-  echo "export AKS_NODEPOOL_LIMITS_MIN_COUNT=${NODEPOOL_MIN_COUNT}"
+  echo "export AKS_NODEPOOL_DECREASE_MAX_COUNT=${NEW_MAX_COUNT}"
+  echo "export AKS_NODEPOOL_DECREASE_MIN_COUNT=${NEW_MIN_COUNT}"
+  echo "export AKS_NODEPOOL_DECREASE_CURRENT_RANGE=${CURRENT_RANGE}"
 fi

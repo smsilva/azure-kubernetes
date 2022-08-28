@@ -1,0 +1,72 @@
+#!/bin/bash
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  ./aks-nodepool-decrease \\
+    --cluster-name wasp-359ded9s \\
+    --resource-group wasp-359ded9s \\
+    --name user1
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+  -n | --name )
+    shift; AKS_CLUSTER_NODEPOOL_NAME=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${AKS_CLUSTER_NAME}"     ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
+   [ -z "${AKS_CLUSTER_NODEPOOL_NAME}" ]; then
+  echo "You must use ALL parameters."
+  echo ""
+  show_usage
+  exit 1
+fi
+
+eval $(
+  aks-nodepool-info \
+    --cluster-name ${AKS_CLUSTER_NAME} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+    --name ${AKS_CLUSTER_NODEPOOL_NAME}
+)
+
+eval $(
+  aks-nodepool-decrease-calc \
+    --count ${AKS_NODEPOOL_COUNT} \
+    --min ${AKS_NODEPOOL_MIN_COUNT} \
+    --max ${AKS_NODEPOOL_MAX_COUNT}
+)
+
+if [ -n "${AKS_NODEPOOL_DECREASE_CURRENT_RANGE}" ]; then
+  echo "AKS_NODEPOOL_NAME......: ${AKS_CLUSTER_NODEPOOL_NAME}"
+  echo "AKS_NODEPOOL_COUNT.....: ${AKS_NODEPOOL_COUNT} -> MAX"
+  echo "AKS_NODEPOOL_MAX_COUNT.: ${AKS_NODEPOOL_MAX_COUNT} -> ${AKS_NODEPOOL_DECREASE_MAX_COUNT}"
+  echo "AKS_NODEPOOL_MIN_COUNT.: ${AKS_NODEPOOL_MIN_COUNT} -> ${AKS_NODEPOOL_DECREASE_MIN_COUNT}"
+
+  az aks nodepool update \
+    --cluster-name "${AKS_CLUSTER_NAME}" \
+    --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+    --name "${AKS_CLUSTER_NODEPOOL_NAME}" \
+    --update-cluster-autoscaler \
+    --min-count ${AKS_NODEPOOL_DECREASE_MIN_COUNT} \
+    --max-count ${AKS_NODEPOOL_DECREASE_MAX_COUNT} \
+    --only-show-errors &> /dev/null
+fi

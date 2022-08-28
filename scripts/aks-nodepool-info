@@ -1,0 +1,54 @@
+#!/bin/bash
+show_usage() {
+  cat <<EOF
+
+  ./aks-nodepool-info \\
+    --cluster-name wasp-359ded9s \\
+    --resource-group wasp-359ded9s \\
+    --name user1
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+  -n | --name )
+    shift; AKS_CLUSTER_NODEPOOL_NAME=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${AKS_CLUSTER_NAME}"     ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
+   [ -z "${AKS_CLUSTER_NODEPOOL_NAME}" ]; then
+  echo "You must use ALL parameters."
+  echo ""
+  show_usage
+  exit 1
+fi
+
+COLUMN_LIST_MAPPING="{\
+AKS_NODEPOOL_COUNT: .count,\
+AKS_NODEPOOL_MIN_COUNT: .minCount,\
+AKS_NODEPOOL_MAX_COUNT: .maxCount\
+}"
+
+JQ_COMMAND=$(printf '.[] | %s | to_entries|map("export \(.key)=\(.value|tostring)")|.[]' "${COLUMN_LIST_MAPPING}")
+AKS_SHOW_QUERY=$(printf "agentPoolProfiles[?name == '%s']" "${AKS_CLUSTER_NODEPOOL_NAME}")
+
+az aks show \
+  --name "${AKS_CLUSTER_NAME}" \
+  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+  --query "${AKS_SHOW_QUERY}" \
+  --output json | jq -r "${JQ_COMMAND}"

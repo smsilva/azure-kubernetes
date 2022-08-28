@@ -1,0 +1,42 @@
+#!/bin/bash
+export AKS_CLUSTER_NAME="${AKS_CLUSTER_NAME-wasp-u38crU3t}"
+export AKS_CLUSTER_RESOURCE_GROUP_NAME="${AKS_CLUSTER_RESOURCE_GROUP_NAME-wasp-u38crU3t}"
+export AKS_NODEPOOL_OLD="${AKS_NODEPOOL_OLD-user1}"
+export AKS_NODEPOOL_NEW="${AKS_NODEPOOL_NEW-user2}"
+
+az aks nodepool list \
+  --cluster-name ${AKS_CLUSTER_NAME} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+  --output table
+
+echo ""
+
+./aks-nodepool-decrease \
+  --cluster-name ${AKS_CLUSTER_NAME} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+  --name ${AKS_NODEPOOL_OLD}
+
+./aks-nodepool-increase \
+  --cluster-name ${AKS_CLUSTER_NAME} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+  --nodepool-name-old ${AKS_NODEPOOL_OLD} \
+  --nodepool-name-new ${AKS_NODEPOOL_NEW} \
+  --hard-limit-min 3 \
+  --hard-limit-max 5
+
+(
+echo "Name Min Max Count"
+echo "------- ------- ------- -------"
+
+eval $(./aks-nodepool-info \
+  --cluster-name ${AKS_CLUSTER_NAME} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+  --name ${AKS_NODEPOOL_OLD})
+echo "${AKS_NODEPOOL_OLD} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT}"
+
+eval $(./aks-nodepool-info \
+  --cluster-name ${AKS_CLUSTER_NAME} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+  --name ${AKS_NODEPOOL_NEW})
+echo "${AKS_NODEPOOL_NEW} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT}"
+) | column -t
