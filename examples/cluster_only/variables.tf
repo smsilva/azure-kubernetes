@@ -1,8 +1,8 @@
 data "azurerm_client_config" "current" {}
 
 resource "random_string" "id" {
-  length      = 6
-  min_lower   = 3
+  length      = 8
+  min_lower   = 4
   min_numeric = 3
   lower       = true
   special     = false

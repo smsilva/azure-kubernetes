@@ -1,0 +1,56 @@
+#!/bin/bash
+show_usage() {
+  cat <<EOF
+Calculate new limits:
+
+  ./aks-nodepool-limits \\
+    --count 110 \\
+    --min 100 \\
+    --max 120
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+  -c | --count )
+    shift; NODEPOOL_COUNT=$1
+    ;;
+  -mi | --min )
+    shift; NODEPOOL_MIN_COUNT=$1
+    ;;
+  -mx | --max )
+    shift; NODEPOOL_MAX_COUNT=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${NODEPOOL_COUNT}"     ] || \
+   [ -z "${NODEPOOL_MIN_COUNT}" ] || \
+   [ -z "${NODEPOOL_MAX_COUNT}" ]; then
+  echo "You must use ALL parameters."
+  echo ""
+  show_usage
+  exit 1
+fi
+
+CURRENT_RANGE=$((${NODEPOOL_MAX_COUNT} - ${NODEPOOL_MIN_COUNT}))
+DIFFERENCE=$((${NODEPOOL_MAX_COUNT} - ${NODEPOOL_COUNT}))
+
+if [ "${CURRENT_RANGE}" -gt 0 ] && \
+   [ "${DIFFERENCE}"    -gt 0 ]; then
+  NEW_MAX_COUNT=$((${NODEPOOL_COUNT}))
+  NEW_MIN_COUNT=$((${NODEPOOL_COUNT} - ${CURRENT_RANGE}))
+
+  if [ "${NEW_MIN_COUNT}" -lt 0 ]; then
+    NEW_MIN_COUNT=0
+  fi
+
+  echo "export AKS_NODEPOOL_LIMITS_MAX_COUNT=${NODEPOOL_MAX_COUNT}"
+  echo "export AKS_NODEPOOL_LIMITS_MIN_COUNT=${NODEPOOL_MIN_COUNT}"
+fi
