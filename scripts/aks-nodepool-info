@@ -3,8 +3,8 @@ show_usage() {
   cat <<EOF
 
   ./aks-nodepool-info \\
-    --cluster-name wasp-359ded9s \\
-    --resource-group wasp-359ded9s \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example \\
     --name user1
 
 EOF
@@ -29,9 +29,9 @@ esac; shift; done
 
 if [[ "$1" == '--' ]]; then shift; fi
 
-if [ -z "${AKS_CLUSTER_NAME}"     ] || \
+if [ -z "${AKS_CLUSTER_NAME}"                ] || \
    [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
-   [ -z "${AKS_CLUSTER_NODEPOOL_NAME}" ]; then
+   [ -z "${AKS_CLUSTER_NODEPOOL_NAME}"       ]; then
   echo "You must use ALL parameters."
   echo ""
   show_usage
@@ -39,12 +39,23 @@ if [ -z "${AKS_CLUSTER_NAME}"     ] || \
 fi
 
 COLUMN_LIST_MAPPING="{\
+AKS_NODEPOOL_ORCHESTRATOR_VERSION: .orchestratorVersion,\
+AKS_NODEPOOL_PROVISIONING_STATE: .provisioningState,\
+AKS_NODEPOOL_POWER_STATE_CODE: .powerState.code,\
+AKS_NODEPOOL_AVAILABILITY_ZONES: .availabilityZones,\
+AKS_NODEPOOL_VNET_SUBNET_ID: .vnetSubnetId,\
+AKS_NODEPOOL_VM_SIZE: .vmSize,\
+AKS_NODEPOOL_OS_DISK_SIZE_GB: .osDiskSizeGb,\
+AKS_NODEPOOL_OS_DISK_SIZE_TYPE: .osDiskType,\
+AKS_NODEPOOL_MAX_PODS: .maxPods,\
 AKS_NODEPOOL_COUNT: .count,\
 AKS_NODEPOOL_MIN_COUNT: .minCount,\
-AKS_NODEPOOL_MAX_COUNT: .maxCount\
+AKS_NODEPOOL_MAX_COUNT: .maxCount,\
+AKS_NODEPOOL_ENABLE_AUTOS_SCALING: .enableAutoScaling\
 }"
 
 JQ_COMMAND=$(printf '.[] | %s | to_entries|map("export \(.key)=\(.value|tostring)")|.[]' "${COLUMN_LIST_MAPPING}")
+
 AKS_SHOW_QUERY=$(printf "agentPoolProfiles[?name == '%s']" "${AKS_CLUSTER_NODEPOOL_NAME}")
 
 az aks show \

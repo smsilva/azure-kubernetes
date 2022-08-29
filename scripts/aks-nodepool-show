@@ -1,0 +1,37 @@
+#!/bin/bash
+az aks list \
+  --output table \
+| grep -E "Name|${AKS_CLUSTER_NAME?}"
+
+echo ""
+
+az aks nodepool list \
+  --cluster-name ${AKS_CLUSTER_NAME?} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
+  --output table
+
+echo ""
+
+(
+  echo "Name    Min     Max     Count   KubernetesVersion"
+  echo "------- ------- ------- ------- -------------------"
+
+  eval $(
+    ./aks-nodepool-info \
+      --cluster-name ${AKS_CLUSTER_NAME} \
+      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+      --name ${AKS_NODEPOOL_SOURCE}
+  )
+
+  echo "${AKS_NODEPOOL_SOURCE} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT} ${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
+
+  eval $(
+    ./aks-nodepool-info \
+      --cluster-name ${AKS_CLUSTER_NAME} \
+      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+      --name ${AKS_NODEPOOL_TARGET}
+  )
+
+  echo "${AKS_NODEPOOL_TARGET} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT} ${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
+) \
+| column -t

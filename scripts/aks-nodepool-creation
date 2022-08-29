@@ -1,0 +1,105 @@
+#!/bin/bash
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  ./aks-nodepool-creation \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example \\
+    --source user1 \\
+    --name user2 \\
+    --kubernetes-version 1.23.8 \\
+    --min 0 \\
+    --max 0 \\
+    --dry-run
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+  -s | --source )
+    shift; AKS_NODEPOOL_NAME_SOURCE=$1
+    ;;
+  -n | --name )
+    shift; AKS_NODEPOOL_NAME=$1
+    ;;
+  -v | --kubernetes-version )
+    shift; AKS_NODEPOOL_KUBERNETES_VERSION=$1
+    ;;
+  -mi | --min )
+    shift; AKS_CLUSTER_NODEPOOL_MIN_COUNT=$1
+    ;;
+  -mx | --max )
+    shift; AKS_CLUSTER_NODEPOOL_MAX_COUNT=$1
+    ;;
+  --dry-run )
+    shift; DRY_RUN="y"
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+DRY_RUN=${DRY_RUN-n}
+
+if [ -z "${AKS_CLUSTER_NAME}"                ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
+   [ -z "${AKS_NODEPOOL_NAME_SOURCE}"        ] || \
+   [ -z "${AKS_NODEPOOL_NAME}"               ] || \
+   [ -z "${AKS_CLUSTER_NODEPOOL_MIN_COUNT}"  ] || \
+   [ -z "${AKS_CLUSTER_NODEPOOL_MAX_COUNT}"  ]; then
+  show_usage
+  exit 1
+fi
+
+eval $(
+  aks-nodepool-info \
+    --cluster-name ${AKS_CLUSTER_NAME} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+    --name ${AKS_NODEPOOL_NAME_SOURCE}
+)
+
+echo ""
+echo "AKS_NODEPOOL_NAME_SOURCE........: ${AKS_NODEPOOL_NAME_SOURCE}"
+echo "AKS_NODEPOOL_AVAILABILITY_ZONES.: ${AKS_NODEPOOL_AVAILABILITY_ZONES}"
+echo "AKS_NODEPOOL_VNET_SUBNET_ID.....: ${AKS_NODEPOOL_VNET_SUBNET_ID##*\/}"
+echo "AKS_NODEPOOL_VM_SIZE............: ${AKS_NODEPOOL_VM_SIZE}"
+echo "AKS_NODEPOOL_OS_DISK_SIZE_GB....: ${AKS_NODEPOOL_OS_DISK_SIZE_GB}"
+echo "AKS_NODEPOOL_OS_DISK_SIZE_TYPE..: ${AKS_NODEPOOL_OS_DISK_SIZE_TYPE}"
+echo "AKS_NODEPOOL_MIN_COUNT..........: ${AKS_CLUSTER_NODEPOOL_MIN_COUNT}"
+echo "AKS_NODEPOOL_MAX_COUNT..........: ${AKS_CLUSTER_NODEPOOL_MAX_COUNT}"
+echo "AKS_NODEPOOL_MAX_PODS...........: ${AKS_NODEPOOL_MAX_PODS}"
+echo ""
+
+if [ "${DRY_RUN}" == "y" ]; then
+  exit 0
+fi
+
+az aks nodepool add \
+  --mode "User" \
+  --cluster-name "${AKS_CLUSTER_NAME?}" \
+  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME?}" \
+  --name "${AKS_NODEPOOL_NAME}" \
+  --kubernetes-version "${AKS_NODEPOOL_KUBERNETES_VERSION?}" \
+  --zones 1 2 \
+  --node-vm-size "${AKS_NODEPOOL_VM_SIZE?}" \
+  --max-pods "${AKS_NODEPOOL_MAX_PODS?}" \
+  --node-count ${AKS_CLUSTER_NODEPOOL_MIN_COUNT} \
+  --min-count ${AKS_CLUSTER_NODEPOOL_MIN_COUNT} \
+  --max-count ${AKS_CLUSTER_NODEPOOL_MAX_COUNT} \
+  --node-osdisk-size "${AKS_NODEPOOL_OS_DISK_SIZE_GB}" \
+  --node-osdisk-type "${AKS_NODEPOOL_OS_DISK_SIZE_TYPE?}" \
+  --vnet-subnet-id "${AKS_NODEPOOL_VNET_SUBNET_ID}" \
+  --enable-cluster-autoscaler
