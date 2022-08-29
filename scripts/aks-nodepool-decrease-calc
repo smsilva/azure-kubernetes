@@ -47,8 +47,8 @@ if [ "${CURRENT_RANGE}" -gt 0 ] && \
   NEW_MIN_COUNT=$((${NODEPOOL_COUNT} - ${CURRENT_RANGE}))
   NEW_MAX_COUNT=$((${NODEPOOL_COUNT}))
 
-  if [ "${NEW_MIN_COUNT}" -lt 0 ]; then
-    NEW_MIN_COUNT=0
+  if [ "${NEW_MIN_COUNT}" -lt 1 ]; then
+    NEW_MIN_COUNT=1
   fi
 
   echo "export AKS_NODEPOOL_DECREASE_MIN_COUNT=${NEW_MIN_COUNT}"
