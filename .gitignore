@@ -2,12 +2,13 @@
 *_override.tf.json
 *.tfstate
 *.tfstate.*
-**/backend.conf
 **/.terraform.*
 **/.terraform/
 **/.terraform/*
-**/examples/**/deploy
+**/*.env
+**/backend.conf
 **/docker_build_temp
+**/examples/**/deploy
 crash.log
 kubectl
 override.tf

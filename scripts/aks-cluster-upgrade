@@ -1,0 +1,24 @@
+#!/bin/bash
+AKS_CLUSTER_CURRENT_VERSION=$(az aks show \
+  --name ${AKS_CLUSTER_NAME?} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
+  --query 'kubernetesVersion' \
+  --output tsv)
+
+AKS_KUBERNETES_VERSION_LATEST=$(echo -e "${AKS_KUBERNETES_VERSION}\n${AKS_CLUSTER_CURRENT_VERSION}" \
+| sort --version-sort \
+| tail -1)
+
+echo "AKS_KUBERNETES_VERSION........: ${AKS_KUBERNETES_VERSION}"
+echo "AKS_CLUSTER_CURRENT_VERSION...: ${AKS_CLUSTER_CURRENT_VERSION}"
+echo "AKS_KUBERNETES_VERSION_LATEST.: ${AKS_KUBERNETES_VERSION_LATEST}"
+
+if [ "${AKS_CLUSTER_CURRENT_VERSION}" != "${AKS_KUBERNETES_VERSION_LATEST}" ]; then
+  az aks upgrade \
+    --name ${AKS_CLUSTER_NAME?} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
+    --control-plane-only \
+    --kubernetes-version "${AKS_KUBERNETES_VERSION_LATEST?}" \
+    --only-show-errors \
+    --yes
+fi

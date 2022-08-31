@@ -8,8 +8,8 @@ show_usage() {
   ./aks-nodepool-upgrade \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
-    --source user1 \\
-    --target user2 \\
+    --nodepool user1 \\
+    --nodepool user2 \\
     --hard-limit-min 3 \\
     --hard-limit-max 5
 
@@ -28,11 +28,8 @@ case $1 in
   -rg | --resource-group )
     shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
     ;;
-  -s | --source )
-    shift; AKS_NODEPOOL_SOURCE=$1
-    ;;
-  -t | --target )
-    shift; AKS_NODEPOOL_TARGET=$1
+  --nodepool )
+    shift; [ -z "${AKS_NODEPOOLS}" ] && AKS_NODEPOOLS="$1" || AKS_NODEPOOLS="${AKS_NODEPOOLS},$1"
     ;;
   -min | --hard-limit-min )
     shift; HARD_LIMIT_MIN=$1
@@ -46,8 +43,7 @@ if [[ "$1" == '--' ]]; then shift; fi
 
 if [ -z "${AKS_CLUSTER_NAME}"                ] || \
    [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
-   [ -z "${AKS_NODEPOOL_SOURCE}"             ] || \
-   [ -z "${AKS_NODEPOOL_TARGET}"             ] || \
+   [ -z "${AKS_NODEPOOLS}"                   ] || \
    [ -z "${HARD_LIMIT_MIN}"                  ] || \
    [ -z "${HARD_LIMIT_MAX}"                  ]; then
   echo "You must use ALL parameters."
@@ -55,6 +51,30 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
   show_usage
   exit 1
 fi
+
+for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
+  echo "NODEPOOL_NAME.: ${NODEPOOL_NAME}"
+
+  aks-nodepool-info \
+    --cluster-name ${AKS_CLUSTER_NAME} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+    --name ${NODEPOOL_NAME} | tee "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+done
+
+AKS_NODEPOOL_SOURCE=""
+AKS_NODEPOOL_TARGET=""
+AKS_LATEST_VERSION=""
+
+for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
+  echo "NODEPOOL_NAME.: ${NODEPOOL_NAME}"
+  source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+
+  # if current_version is older than the version
+  # the nodepool is the source
+  # otherwise, the nodepool is the target 
+done
+
+exit 0
 
 ./aks-nodepool-decrease \
   --cluster-name ${AKS_CLUSTER_NAME} \

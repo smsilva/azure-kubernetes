@@ -1,17 +1,4 @@
 #!/bin/bash
-az aks list \
-  --output table \
-| grep -E "Name|${AKS_CLUSTER_NAME?}"
-
-echo ""
-
-az aks nodepool list \
-  --cluster-name ${AKS_CLUSTER_NAME?} \
-  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
-  --output table
-
-echo ""
-
 (
   echo "Name    Min     Max     Count   KubernetesVersion"
   echo "------- ------- ------- ------- -------------------"
