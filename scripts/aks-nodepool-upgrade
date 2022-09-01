@@ -69,9 +69,17 @@ for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
   echo "NODEPOOL_NAME.: ${NODEPOOL_NAME}"
   source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
 
-  # if current_version is older than the version
-  # the nodepool is the source
-  # otherwise, the nodepool is the target 
+  if [ -z "${AKS_LATEST_VERSION}" ]; then
+    AKS_LATEST_VERSION=${AKS_NODEPOOL_ORCHESTRATOR_VERSION}
+  else
+    AKS_LATEST_VERSION=$(echo -e "${AKS_LATEST_VERSION}\n${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" \
+    | sort --version-sort \
+    | tail -1)
+
+    if [ "${AKS_LATEST_VERSION}" == "${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" ]; then
+      AKS_NODEPOOL_TARGET="${NODEPOOL_NAME}"
+    fi
+  fi
 done
 
 exit 0
