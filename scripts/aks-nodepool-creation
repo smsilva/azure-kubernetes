@@ -64,6 +64,16 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
   exit 1
 fi
 
+az aks nodepool list \
+  --cluster-name "${AKS_CLUSTER_NAME?}" \
+  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME?}" \
+  --output table | grep ${AKS_NODEPOOL_NAME} 
+
+if [ "$?" -eq 0 ]; then
+  echo "Nodepool ${AKS_NODEPOOL_NAME} already exists."
+  exit 1
+fi
+
 eval $(
   aks-nodepool-info \
     --cluster-name ${AKS_CLUSTER_NAME} \
