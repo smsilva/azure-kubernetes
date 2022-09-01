@@ -58,6 +58,8 @@ JQ_COMMAND=$(printf '.[] | %s | to_entries|map("export \(.key)=\(.value|tostring
 
 AKS_SHOW_QUERY=$(printf "agentPoolProfiles[?name == '%s']" "${AKS_CLUSTER_NODEPOOL_NAME}")
 
+unset AKS_NODEPOOL_PROVISIONING_STATE
+
 az aks show \
   --name "${AKS_CLUSTER_NAME}" \
   --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \

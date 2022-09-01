@@ -53,46 +53,68 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
 fi
 
 for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
-  echo "NODEPOOL_NAME.: ${NODEPOOL_NAME}"
-
   aks-nodepool-info \
     --cluster-name ${AKS_CLUSTER_NAME} \
     --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-    --name ${NODEPOOL_NAME} | tee "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+    --name ${NODEPOOL_NAME} > "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
 done
 
-AKS_NODEPOOL_SOURCE=""
-AKS_NODEPOOL_TARGET=""
 AKS_LATEST_VERSION=""
+AKS_NODEPOOL_SOURCE_NAME=""
+AKS_NODEPOOL_SOURCE_VERSION=""
+AKS_NODEPOOL_TARGET_NAME=""
+AKS_NODEPOOL_TARGET_VERSION=""
 
 for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
-  echo "NODEPOOL_NAME.: ${NODEPOOL_NAME}"
+  unset AKS_NODEPOOL_PROVISIONING_STATE
+  unset AKS_NODEPOOL_POWER_STATE_CODE
+
   source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+
+  if [ "${AKS_NODEPOOL_PROVISIONING_STATE}" != "Succeeded" ]; then
+    echo "[ERROR] Node Pool ${NODEPOOL_NAME} provisioning state must be \"Succeeded\" instead of \"${AKS_NODEPOOL_PROVISIONING_STATE}\"."
+    exit 1
+  fi
+
+  if [ "${AKS_NODEPOOL_POWER_STATE_CODE}" != "Running" ]; then
+    echo "[ERROR] Node Pool ${NODEPOOL_NAME} Power State must be \"Running\" instead of \"${AKS_NODEPOOL_POWER_STATE_CODE}\"."
+    exit 1
+  fi
 
   if [ -z "${AKS_LATEST_VERSION}" ]; then
     AKS_LATEST_VERSION=${AKS_NODEPOOL_ORCHESTRATOR_VERSION}
-  else
-    AKS_LATEST_VERSION=$(echo -e "${AKS_LATEST_VERSION}\n${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" \
-    | sort --version-sort \
-    | tail -1)
+  fi
 
-    if [ "${AKS_LATEST_VERSION}" == "${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" ]; then
-      AKS_NODEPOOL_TARGET="${NODEPOOL_NAME}"
-    fi
+  AKS_LATEST_VERSION=$(echo -e "${AKS_LATEST_VERSION}\n${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" \
+  | sort --version-sort \
+  | tail -1)
+done
+
+for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
+  source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+
+  if [ "${AKS_LATEST_VERSION}" == "${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" ]; then
+    AKS_NODEPOOL_TARGET_NAME="${NODEPOOL_NAME}"
+    AKS_NODEPOOL_TARGET_VERSION="${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
+  else
+    AKS_NODEPOOL_SOURCE_NAME="${NODEPOOL_NAME}"
+    AKS_NODEPOOL_SOURCE_VERSION="${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
   fi
 done
 
-exit 0
+if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; then
+  ./aks-nodepool-decrease \
+    --cluster-name ${AKS_CLUSTER_NAME} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+    --name ${AKS_NODEPOOL_SOURCE_NAME}
 
-./aks-nodepool-decrease \
-  --cluster-name ${AKS_CLUSTER_NAME} \
-  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-  --name ${AKS_NODEPOOL_SOURCE}
-
-./aks-nodepool-increase \
-  --cluster-name ${AKS_CLUSTER_NAME} \
-  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-  --source ${AKS_NODEPOOL_SOURCE} \
-  --target ${AKS_NODEPOOL_TARGET} \
-  --hard-limit-min ${HARD_LIMIT_MIN} \
-  --hard-limit-max ${HARD_LIMIT_MAX}
+  ./aks-nodepool-increase \
+    --cluster-name ${AKS_CLUSTER_NAME} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+    --source ${AKS_NODEPOOL_SOURCE_NAME} \
+    --target ${AKS_NODEPOOL_TARGET_NAME} \
+    --hard-limit-min ${HARD_LIMIT_MIN} \
+    --hard-limit-max ${HARD_LIMIT_MAX}
+else
+  echo "Nothing to do."
+fi
