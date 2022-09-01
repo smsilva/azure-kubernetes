@@ -10,8 +10,8 @@ show_usage() {
     --resource-group aks-cluster-example \\
     --nodepool user1 \\
     --nodepool user2 \\
-    --hard-limit-min 3 \\
-    --hard-limit-max 5
+    --hard-limit-min 5 \\
+    --hard-limit-max 10
 
 EOF
 }
@@ -52,13 +52,6 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
   exit 1
 fi
 
-for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
-  aks-nodepool-info \
-    --cluster-name ${AKS_CLUSTER_NAME} \
-    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-    --name ${NODEPOOL_NAME} > "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
-done
-
 AKS_LATEST_VERSION=""
 AKS_NODEPOOL_SOURCE_NAME=""
 AKS_NODEPOOL_SOURCE_VERSION=""
@@ -68,6 +61,11 @@ AKS_NODEPOOL_TARGET_VERSION=""
 for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
   unset AKS_NODEPOOL_PROVISIONING_STATE
   unset AKS_NODEPOOL_POWER_STATE_CODE
+
+  aks-nodepool-info \
+    --cluster-name ${AKS_CLUSTER_NAME} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+    --name ${NODEPOOL_NAME} > "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
 
   source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
 

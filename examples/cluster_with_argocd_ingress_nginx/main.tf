@@ -36,14 +36,15 @@ resource "azurerm_resource_group" "default" {
 module "aks" {
   source = "../../src/cluster"
 
-  name                 = local.cluster_name
-  orchestrator_version = local.cluster_version
-  administrators_ids   = local.cluster_administrators_ids
-  node_pool_name       = local.cluster_node_pool_name
-  node_pool_min_count  = local.cluster_node_pool_min_count
-  node_pool_max_count  = local.cluster_node_pool_max_count
-  resource_group       = azurerm_resource_group.default
-  subnet               = module.vnet.subnets["aks"].instance
+  name                                   = local.cluster_name
+  orchestrator_version                   = local.cluster_version
+  administrators_ids                     = local.cluster_administrators_ids
+  node_pool_name                         = local.cluster_node_pool_name
+  node_pool_min_count                    = local.cluster_node_pool_min_count
+  node_pool_max_count                    = local.cluster_node_pool_max_count
+  resource_group                         = azurerm_resource_group.default
+  subnet                                 = module.vnet.subnets["aks"].instance
+  node_pool_only_critical_addons_enabled = false
 
   depends_on = [
     module.vnet
