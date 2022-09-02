@@ -1,6 +1,6 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Added]: Add appHardResyncPeriod option for application controller"
+    - "[Changed]: Remove version labels to avoid invalid characters"
 apiVersion: v2
 appVersion: v2.4.11
 dependencies:
@@ -20,4 +20,4 @@ maintainers:
 - name: argoproj
   url: https://argoproj.github.io/
 name: argo-cd
-version: 5.3.6
+version: 5.4.0
