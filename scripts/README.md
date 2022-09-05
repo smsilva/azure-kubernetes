@@ -58,7 +58,8 @@ Create a Node Pool using the parameters from an existing one.
   --name ${AKS_NODEPOOL_TARGET?} \
   --kubernetes-version "${AKS_KUBERNETES_VERSION?}" \
   --min 0 \
-  --max 0
+  --max 0 \
+  --dry-run
 ```
 
 ## Node Pool Node Limits Upgrade
@@ -70,7 +71,8 @@ Create a Node Pool using the parameters from an existing one.
   --nodepool ${AKS_NODEPOOL_SOURCE?} \
   --nodepool ${AKS_NODEPOOL_TARGET?} \
   --hard-limit-min 3 \
-  --hard-limit-max 5
+  --hard-limit-max 5 \
+  --dry-run
 ```
 
 ## AKS Node Pool Upgrade
