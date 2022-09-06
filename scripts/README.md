@@ -7,7 +7,7 @@ az aks list \
   --output table
 ```
 
-## Initial Configuration
+### Initial Configuration
 
 ```bash
 cat <<EOF > cluster.env
@@ -21,7 +21,7 @@ EOF
 source cluster.env
 ```
 
-## Node Pool List
+### Node Pool List
 
 ```bash
 az aks nodepool list \
@@ -40,13 +40,13 @@ az aks nodepool list \
   --name ${AKS_NODEPOOL_TARGET}
 ```
 
-## AKS Cluster Upgrade Control Plane Only
+### AKS Cluster Upgrade Control Plane Only
 
 ```bash
 ./aks-cluster-upgrade
 ```
 
-## Node Pool Creation
+### Node Pool Creation
 
 Create a Node Pool using the parameters from an existing one.
 
@@ -62,7 +62,7 @@ Create a Node Pool using the parameters from an existing one.
   --dry-run
 ```
 
-## Node Pool Node Limits Upgrade
+### Node Pool Node Limits Upgrade
 
 ```bash
 ./aks-nodepool-upgrade \
@@ -75,7 +75,7 @@ Create a Node Pool using the parameters from an existing one.
   --dry-run
 ```
 
-## AKS Node Pool Upgrade
+### AKS Node Pool Upgrade
 
 ```bash
 az aks nodepool upgrade \
@@ -84,4 +84,19 @@ az aks nodepool upgrade \
   --name ${AKS_NODEPOOL_SOURCE?} \
   --kubernetes-version "${AKS_KUBERNETES_VERSION?}" \
   --only-show-errors
+```
+
+## Node Rollout Restart
+
+### Creating namespaces
+
+```bash
+kubectl create namespace red
+kubectl create namespace blue
+kubectl create namespace green
+
+kubectl create deployment --image nginx --replicas 1 tango --namespace red
+kubectl create deployment --image nginx --replicas 3 delta --namespace red
+kubectl create deployment --image nginx --replicas 1 bravo --namespace green
+kubectl create deployment --image nginx --replicas 3 lima  --namespace blue
 ```
