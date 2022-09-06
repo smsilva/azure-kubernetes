@@ -13,7 +13,7 @@ locals {
   install_external_dns                     = true
   install_ingress_nginx                    = true
   install_argocd                           = true
-  install_app_of_apps_infra                = false
+  install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
@@ -94,7 +94,7 @@ module "ingress_nginx" {
   count  = local.install_ingress_nginx ? 1 : 0
   source = "../../src/ingress-nginx"
 
-  cname = module.aks.instance.name
+  cname = replace(local.cluster_name, "-", "")
 
   depends_on = [
     module.aks
@@ -128,6 +128,7 @@ module "app_of_apps_infra" {
 
   environment_id      = local.cluster_random_id
   environment_cluster = local.cluster_name
+  environment_domain  = local.dns_zone
   target_revision     = local.argocd_app_of_apps_infra_target_revision
 
   depends_on = [

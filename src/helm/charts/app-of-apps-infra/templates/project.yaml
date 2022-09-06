@@ -1,0 +1,19 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infra
+spec:
+  sourceRepos:
+    - git@github.com:smsilva/argocd.git
+    - git@github.com:smsilva/helm.git
+    - git@github.com:smsilva/wasp-gitops.git
+    - git@ssh.dev.azure.com:v3/smsilva/azure-platform/gitops
+
+  destinations:
+    - namespace: '*'
+      server: '*'
+
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

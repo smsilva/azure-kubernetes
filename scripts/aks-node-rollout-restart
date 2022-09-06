@@ -1,4 +1,11 @@
 #!/bin/bash
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+export EXECUTION_ID="$(uuidgen)"
+export CACHE_DIRECTORY="${THIS_SCRIPT_DIRECTORY}/.cache/${EXECUTION_ID}"
+
+mkdir -p "${CACHE_DIRECTORY}"
+
 show_usage() {
   cat <<EOF
 
@@ -65,40 +72,41 @@ if [ "${KUBECTL_CONFIG_CONTEXT_EXISTS}" == "0" ]; then
     --admin
 fi
 
-function rollout_restart() {
-  RESOURCE_TYPE=$1
-  NODE_NAME=$2
+deployment_file() {
+  DEPLOYMENT_NAMESPACE=$1
+  DEPLOYMENT_NAME=$2
 
-  kubectl get ${RESOURCE_TYPE?} \
-    -A \
+  mkdir -p "${CACHE_DIRECTORY}/${DEPLOYMENT_NAMESPACE}"
+
+  FILE_NAME="${CACHE_DIRECTORY}/${DEPLOYMENT_NAMESPACE}/${DEPLOYMENT_NAME}"
+
+  echo "${FILE_NAME}"
+}
+
+function collect_deployments_info() {
+  kubectl get deployments \
+    --all-namespaces \
     --no-headers \
     --output wide \
   | while read LINE; do
-    RESOURCE_NAMESPACE=$(awk '{ print $1 }' <<< "${LINE}")
-    RESOURCE_NAME=$(     awk '{ print $2 }' <<< "${LINE}")
-    RESOURCE_SELECTORS=$(awk '{ print $9 }' <<< "${LINE}")
+    DEPLOYMENT_NAMESPACE=$(awk '{ print $1 }' <<< "${LINE}")
+    DEPLOYMENT_NAME=$(     awk '{ print $2 }' <<< "${LINE}")
+    DEPLOYMENT_SELECTORS=$(awk '{ print $9 }' <<< "${LINE}")
 
-    OBJECT_POD_LIST=$(kubectl get pod \
+    kubectl get pod \
       --output wide \
       --no-headers \
-      --namespace ${RESOURCE_NAMESPACE} \
-      --selector "${RESOURCE_SELECTORS}" \
-      | grep ${NODE_NAME} \
-      | awk '{print $1}' \
-      | sed 's| |\n|g')
+      --namespace "${DEPLOYMENT_NAMESPACE}" \
+      --selector  "${DEPLOYMENT_SELECTORS}" \
+      | awk '{ print $1, $7 }' \
+      | while read POD_LINE; do
+          POD_NAME=$(     awk '{ print $1 }' <<< "${POD_LINE}")
+          POD_NODE_NAME=$(awk '{ print $7 }' <<< "${POD_LINE}")
 
-    if [ "${OBJECT_POD_LIST}" != "" ]; then
-      echo "${NODE_NAME} :: ${RESOURCE_TYPE} :: ${RESOURCE_NAMESPACE} :: ${RESOURCE_NAME}"
-      echo ""
-      echo ${OBJECT_POD_LIST} | xargs -I {} echo "  {}" 
-
-      if [ "${DRY_RUN}" != "y" ]; then
-        kubectl \
-          --namespace ${RESOURCE_NAMESPACE} \
-          rollout restart ${RESOURCE_TYPE} ${RESOURCE_NAME}
-      fi
-      echo ""
-    fi
+          FILE_NAME=$(deployment_file "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME}")
+          echo "${POD_NODE_NAME} ${POD_NAME}" >> "${FILE_NAME}"
+          echo "${POD_NODE_NAME} :: ${DEPLOYMENT_NAMESPACE} :: ${DEPLOYMENT_NAME} :: ${POD_NAME}"
+    done
   done
 }
 
@@ -107,22 +115,33 @@ node_cordon() {
 
   if [ "${DRY_RUN}" != "y" ]; then
     kubectl cordon ${NODE_NAME}
+  else
+    echo "${NODE_NAME} :: cordoned"
   fi
 }
 
-if [ -n "${AKS_NODE_NAME}" ]; then
+node_list() {
+  NODE_NAME=$1
+
   kubectl get nodes \
     --output jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' \
-  | grep ${AKS_NODE_NAME} \
-  | while read NODE_NAME; do
+  | grep "${NODE_NAME}"
+}
+
+node_read() {
+  while read -r NODE_NAME; do
     node_cordon ${NODE_NAME?}
-    rollout_restart deploy ${NODE_NAME?}
   done
+}
+
+collect_deployments_info
+
+exit 0
+
+if [ -n "${AKS_NODE_NAME}" ]; then
+  node_list ${AKS_NODE_NAME} \
+  | node_read
 else
-  kubectl get nodes \
-    --output jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' \
-  | head -${AKS_NODE_COUNT} \
-  | while read NODE_NAME; do
-    rollout_restart deploy ${NODE_NAME?}
-  done
+  node_list | head -${AKS_NODE_COUNT} \
+  | node_read
 fi

@@ -5,7 +5,7 @@ locals {
   cluster_resource_group_location          = "eastus2"
   cluster_version                          = "1.23.8"
   cluster_node_pool_min_count              = 1
-  cluster_node_pool_max_count              = 5
+  cluster_node_pool_max_count              = 3
   cluster_node_pool_name                   = "system1"
   cluster_administrators_ids               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
   install_cert_manager                     = true

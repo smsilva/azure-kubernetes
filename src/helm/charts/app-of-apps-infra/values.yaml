@@ -11,7 +11,7 @@ project: infra
 
 source:
   repoURL: git@github.com:smsilva/wasp-gitops.git
-  path: infrastructure/bootstrap/applications
+  path: infrastructure/charts/applications
   targetRevision: development
 
 destination:
