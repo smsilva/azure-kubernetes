@@ -3,6 +3,8 @@ export THIS_SCRIPT_DIRECTORY=$(dirname $0)
 export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 export EXECUTION_ID="$(date +"%Y-%m-%d_%H-%M-%S")_$(uuidgen)"
 export CACHE_DIRECTORY="${THIS_SCRIPT_DIRECTORY}/.cache/${EXECUTION_ID}"
+export ALL_PODS_FILE="${THIS_SCRIPT_DIRECTORY}/all-pods.txt"
+export ALL_REPLICASETS_FILE="${THIS_SCRIPT_DIRECTORY}/all-replicasets.txt"
 
 mkdir -p "${CACHE_DIRECTORY}"
 
@@ -84,38 +86,30 @@ deployment_file() {
   echo "${FILE_NAME}"
 }
 
-collect_deployments_info() {
-  kubectl get deployments \
-    --all-namespaces \
-    --no-headers \
-    --output wide \
-  | sort \
-  | while read LINE; do
-    DEPLOYMENT_NAMESPACE=$(awk '{ print $1 }' <<< "${LINE}")
-    DEPLOYMENT_NAME=$(     awk '{ print $2 }' <<< "${LINE}")
-    DEPLOYMENT_SELECTORS=$(awk '{ print $9 }' <<< "${LINE}")
+get_all_replicasets() {
+  if ! [ -e "${ALL_REPLICASETS_FILE?}" ]; then
+    kubectl get replicasets \
+      --all-namespaces \
+      --output jsonpath='{range .items[*]}{.metadata.namespace} {.metadata.name} {.metadata.ownerReferences[0].kind} {.metadata.ownerReferences[0].name}{"\n"}{end}' > "${ALL_REPLICASETS_FILE?}"
+  fi
+}
 
-    if [ "${DEBUG_LEVEL}" -gt 1 ]; then
-      log "[${DEPLOYMENT_NAMESPACE}] ${DEPLOYMENT_NAME} [${DEPLOYMENT_SELECTORS}]"
-    else
-      if [ "${DEBUG_LEVEL}" -gt 0 ]; then
-        log "[${DEPLOYMENT_NAMESPACE}] ${DEPLOYMENT_NAME}"
-      fi
-    fi
+get_all_pods() {
+  if ! [ -e "${ALL_PODS_FILE?}" ]; then
+    kubectl get pods \
+      --all-namespaces \
+      --output jsonpath='{range .items[*]}{.spec.nodeName} {.metadata.namespace} {.metadata.name} {.metadata.ownerReferences[0].kind} {.metadata.ownerReferences[0].name}{"\n"}{end}' > "${ALL_PODS_FILE?}"
+  fi
 
-    kubectl get pod \
-      --namespace "${DEPLOYMENT_NAMESPACE}" \
-      --selector  "${DEPLOYMENT_SELECTORS}" \
-      --output jsonpath='{range .items[*]}{.metadata.name} {.spec.nodeName}{"\n"}{end}' \
-      | while read POD_LINE; do
-          POD_NAME=$(     awk '{ print $1 }' <<< "${POD_LINE}")
-          POD_NODE_NAME=$(awk '{ print $2 }' <<< "${POD_LINE}")
+  grep ReplicaSet "${ALL_PODS_FILE?}"
+}
 
-          FILE_NAME=$(deployment_file "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME}")
+get_deployment_name() {
+  REPLICASET_NAMESPACE=$1
+  REPLICASET_NAME=$2
 
-          echo "${POD_NODE_NAME?} ${POD_NAME?}" >> "${FILE_NAME}"
-    done
-  done
+  grep "${REPLICASET_NAMESPACE?} ${REPLICASET_NAME?} Deployment" "${ALL_REPLICASETS_FILE?}" \
+  | awk '{ print $4 }'
 }
 
 node_cordon() {
@@ -149,7 +143,7 @@ rollout_restart_deployments() {
     if ! [ -e "${DEPLOYMENT_MARK}" ]; then
       echo "${NODE_NAME?}" $(date +"%Y-%m-%d %H:%M:%S") > "${DEPLOYMENT_MARK}"
 
-      log "[${NODE_NAME?}] rollout restart deployment ${DEPLOYMENT_NAMESPACE?}.${DEPLOYMENT_NAME?}"
+      log "[${NODE_NAME?}] [${DEPLOYMENT_NAMESPACE?}] rollout restart deployment ${DEPLOYMENT_NAME?}"
 
       if [ "${DRY_RUN}" != "y" ]; then
         kubectl \
@@ -167,9 +161,30 @@ node_rollout_restart_deployments() {
   done
 }
 
-log "Collecting Deployments Info..."
+log "Collecting all ReplicaSets data..."
 
-collect_deployments_info
+get_all_replicasets
+
+log "Collecting all Pods/Deployments data..."
+
+get_all_pods | while read LINE; do
+  POD_NODE_NAME=$(awk '{ print $1 }' <<< "${LINE}")
+  POD_NAMESPACE=$(awk '{ print $2 }' <<< "${LINE}")
+  POD_NAME=$(     awk '{ print $3 }' <<< "${LINE}")
+  POD_OWNER=$(    awk '{ print $5 }' <<< "${LINE}")
+
+  REPLICASET_DEPLOYMENT_NAME="$(get_deployment_name "${POD_NAMESPACE}" "${POD_OWNER}")"
+
+  if [ "${DEBUG_LEVEL}" -gt "0" ]; then
+    log "[${POD_NODE_NAME}] ${POD_NAMESPACE} ${POD_OWNER} ${POD_NAME} [${REPLICASET_DEPLOYMENT_NAME}]"
+  fi
+
+  if [ -n "${REPLICASET_DEPLOYMENT_NAME}" ]; then
+    FILE_NAME=$(deployment_file "${POD_NAMESPACE}" "${REPLICASET_DEPLOYMENT_NAME}")
+
+    echo "${POD_NODE_NAME?} ${POD_NAME?}" >> "${FILE_NAME}"
+  fi
+done
 
 log ""
 log "Initiating Deployments Rollout Restart..."
@@ -185,4 +200,4 @@ else
 fi
 
 log ""
-log "Done"
+log "Finish"

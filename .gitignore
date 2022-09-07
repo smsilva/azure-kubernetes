@@ -7,6 +7,8 @@
 **/.terraform/
 **/.terraform/*
 **/*.env
+**/*.log
+**/all-*.txt
 **/backend.conf
 **/docker_build_temp
 **/examples/**/deploy
