@@ -1,7 +1,7 @@
 #!/bin/bash
 export THIS_SCRIPT_DIRECTORY=$(dirname $0)
 export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
-export EXECUTION_ID="$(uuidgen)"
+export EXECUTION_ID="$(date +"%Y-%m-%d_%H-%M-%S")_$(uuidgen)"
 export CACHE_DIRECTORY="${THIS_SCRIPT_DIRECTORY}/.cache/${EXECUTION_ID}"
 
 mkdir -p "${CACHE_DIRECTORY}"
@@ -33,6 +33,9 @@ case $1 in
   -n | --name )
     shift; AKS_NODE_NAME=$1
     ;;
+  -d | --debug )
+    shift; DEBUG_LEVEL=$1
+    ;;
   --dry-run )
     shift; DRY_RUN="y"
     ;;
@@ -41,6 +44,7 @@ esac; shift; done
 if [[ "$1" == '--' ]]; then shift; fi
 
 DRY_RUN=${DRY_RUN-n}
+DEBUG_LEVEL=${DEBUG_LEVEL-1}
 
 if [ -z "${AKS_CLUSTER_NAME}"                ] || \
    [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
@@ -62,6 +66,12 @@ if [ "${KUBECTL_CONFIG_CONTEXT_EXISTS}" == "0" ]; then
     --overwrite-existing \
     --admin
 fi
+
+log() {
+  MESSAGE="$1"
+
+  echo "$(date +"%Y-%m-%d %H:%M:%S") ${MESSAGE}"
+}
 
 deployment_file() {
   DEPLOYMENT_NAMESPACE=$1
@@ -85,16 +95,21 @@ collect_deployments_info() {
     DEPLOYMENT_NAME=$(     awk '{ print $2 }' <<< "${LINE}")
     DEPLOYMENT_SELECTORS=$(awk '{ print $9 }' <<< "${LINE}")
 
-    echo "[${DEPLOYMENT_NAMESPACE}] ${DEPLOYMENT_NAME}"
+    if [ "${DEBUG_LEVEL}" -gt 1 ]; then
+      log "[${DEPLOYMENT_NAMESPACE}] ${DEPLOYMENT_NAME} [${DEPLOYMENT_SELECTORS}]"
+    else
+      if [ "${DEBUG_LEVEL}" -gt 0 ]; then
+        log "[${DEPLOYMENT_NAMESPACE}] ${DEPLOYMENT_NAME}"
+      fi
+    fi
 
     kubectl get pod \
-      --output wide \
-      --no-headers \
       --namespace "${DEPLOYMENT_NAMESPACE}" \
       --selector  "${DEPLOYMENT_SELECTORS}" \
+      --output jsonpath='{range .items[*]}{.metadata.name} {.spec.nodeName}{"\n"}{end}' \
       | while read POD_LINE; do
           POD_NAME=$(     awk '{ print $1 }' <<< "${POD_LINE}")
-          POD_NODE_NAME=$(awk '{ print $7 }' <<< "${POD_LINE}")
+          POD_NODE_NAME=$(awk '{ print $2 }' <<< "${POD_LINE}")
 
           FILE_NAME=$(deployment_file "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME}")
 
@@ -109,7 +124,7 @@ node_cordon() {
   if [ "${DRY_RUN}" != "y" ]; then
     kubectl cordon ${NODE_NAME?}
   else
-    echo "[${NODE_NAME?}] cordoned"
+    log "[${NODE_NAME?}] cordoned"
   fi
 }
 
@@ -134,7 +149,7 @@ rollout_restart_deployments() {
     if ! [ -e "${DEPLOYMENT_MARK}" ]; then
       echo "${NODE_NAME?}" $(date +"%Y-%m-%d %H:%M:%S") > "${DEPLOYMENT_MARK}"
 
-      echo "[${NODE_NAME?}] rollout restart deployment ${DEPLOYMENT_NAMESPACE?}.${DEPLOYMENT_NAME?}"
+      log "[${NODE_NAME?}] rollout restart deployment ${DEPLOYMENT_NAMESPACE?}.${DEPLOYMENT_NAME?}"
 
       if [ "${DRY_RUN}" != "y" ]; then
         kubectl \
@@ -152,13 +167,13 @@ node_rollout_restart_deployments() {
   done
 }
 
-echo "Collecting Deployments Info..."
+log "Collecting Deployments Info..."
 
 collect_deployments_info
 
-echo ""
-echo "Initiating Deployments Rollout Restart..."
-echo ""
+log ""
+log "Initiating Deployments Rollout Restart..."
+log ""
 
 if [ -n "${AKS_NODE_NAME}" ]; then
   node_list "${AKS_NODE_NAME}" \
@@ -169,5 +184,5 @@ else
   | node_rollout_restart_deployments
 fi
 
-echo ""
-echo "Done."
+log ""
+log "Done"
