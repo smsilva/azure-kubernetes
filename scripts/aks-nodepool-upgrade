@@ -1,0 +1,50 @@
+#!/bin/bash
+show_usage() {
+  cat <<EOF
+
+  ./aks-nodepool-upgrade \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example \\
+    --version 1.22.11 \\
+    --name user1
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+  -n | --name )
+    shift; AKS_CLUSTER_NODEPOOL_NAME=$1
+    ;;
+  -v | --version )
+    shift; AKS_KUBERNETES_VERSION=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${AKS_CLUSTER_NAME}"                ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
+   [ -z "${AKS_CLUSTER_NODEPOOL_NAME}"       ] || \
+   [ -z "${AKS_KUBERNETES_VERSION}"          ]; then
+  echo "You must use ALL parameters."
+  show_usage
+  exit 1
+fi
+
+az aks nodepool upgrade \
+  --cluster-name "${AKS_CLUSTER_NAME}" \
+  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+  --name "${AKS_CLUSTER_NODEPOOL_NAME}" \
+  --kubernetes-version "${AKS_KUBERNETES_VERSION?}" \
+  --only-show-errors
