@@ -1,0 +1,70 @@
+#!/bin/bash
+show_usage() {
+  cat <<EOF
+
+  ./aks-cluster-upgrade-control-plane-only \\
+    --cluster-name   aks-cluster-example \\
+    --resource-group aks-cluster-example \\
+    --version 1.22.11 \\
+    --dry-run
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+  -v | --version )
+    shift; AKS_KUBERNETES_VERSION=$1
+    ;;
+  --dry-run )
+    shift; DRY_RUN="y"
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+DRY_RUN=${DRY_RUN-n}
+
+if [ -z "${AKS_CLUSTER_NAME}"                ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
+   [ -z "${AKS_KUBERNETES_VERSION}"          ]; then
+  echo "You must use ALL parameters."
+  show_usage
+  exit 1
+fi
+
+AKS_CLUSTER_CURRENT_VERSION=$(az aks show \
+  --name ${AKS_CLUSTER_NAME?} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
+  --query 'kubernetesVersion' \
+  --output tsv)
+
+AKS_KUBERNETES_VERSION_LATEST=$(echo -e "${AKS_KUBERNETES_VERSION?}\n${AKS_CLUSTER_CURRENT_VERSION?}" \
+| sort --version-sort \
+| tail -1)
+
+if [ "${AKS_CLUSTER_CURRENT_VERSION}" != "${AKS_KUBERNETES_VERSION_LATEST}" ]; then
+  echo "Upgrade from ${AKS_CLUSTER_CURRENT_VERSION} to ${AKS_KUBERNETES_VERSION_LATEST}"
+
+  if [ "${DRY_RUN}" == "n" ]; then
+    az aks upgrade \
+      --name ${AKS_CLUSTER_NAME?} \
+      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
+      --kubernetes-version "${AKS_KUBERNETES_VERSION_LATEST?}" \
+      --control-plane-only \
+      --only-show-errors \
+      --yes
+  fi
+else
+  echo "Cluster is already on version ${AKS_CLUSTER_CURRENT_VERSION}"
+fi
