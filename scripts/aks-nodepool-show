@@ -1,31 +1,68 @@
 #!/bin/bash
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  ./aks-nodepool-show \\
+    --cluster-name   aks-cluster-example \\
+    --resource-group aks-cluster-example
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+DRY_RUN=${DRY_RUN-n}
+DEBUG_LEVEL=${DEBUG_LEVEL-1}
+
+if [ -z "${AKS_CLUSTER_NAME}"                ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ]; then
+  show_usage
+  exit 1
+fi
+
+get_nodepool_list() {
+  az aks nodepool list \
+    --cluster-name ${AKS_CLUSTER_NAME?} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
+    --output tsv \
+    --query '[].name'
+}
+
 (
-  echo "Name    Min     Max     Count   KubernetesVersion"
-  echo "------- ------- ------- ------- -------------------"
+  echo "Name        Min     Max     Count   KubernetesVersion"
+  echo "----------- ------- ------- ------- -------------------"
 
-  eval $(
-    ./aks-nodepool-info \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --name ${AKS_NODEPOOL_SOURCE}
-  )
+  get_nodepool_list | while read NODEPOOL_NAME; do
+    unset AKS_NODEPOOL_MIN_COUNT
+    unset AKS_NODEPOOL_MAX_COUNT
+    unset AKS_NODEPOOL_COUNT
+    unset AKS_NODEPOOL_ORCHESTRATOR_VERSION
 
-  echo "${AKS_NODEPOOL_SOURCE} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT} ${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
-  
-  unset AKS_NODEPOOL_MIN_COUNT
-  unset AKS_NODEPOOL_MAX_COUNT
-  unset AKS_NODEPOOL_COUNT
-  unset AKS_NODEPOOL_ORCHESTRATOR_VERSION
+    eval $(
+      aks-nodepool-info \
+        --cluster-name ${AKS_CLUSTER_NAME?} \
+        --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
+        --name ${NODEPOOL_NAME?}
+    )
 
-  eval $(
-    ./aks-nodepool-info \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --name ${AKS_NODEPOOL_TARGET}
-  )
-
-  if [ -n "${AKS_NODEPOOL_COUNT}" ]; then
-    echo "${AKS_NODEPOOL_TARGET} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT} ${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
-  fi
+    echo "${NODEPOOL_NAME} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT} ${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
+  done
 ) \
 | column -t

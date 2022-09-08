@@ -5,7 +5,7 @@ export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 show_usage() {
   cat <<EOF
 
-  ./aks-nodepool-upgrade \\
+  aks-nodepool-update-limits \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --nodepool user1 \\
@@ -109,12 +109,12 @@ done
 if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; then
 
   if [ "${DRY_RUN}" == "n" ]; then
-    ./aks-nodepool-decrease \
+    aks-nodepool-decrease \
       --cluster-name ${AKS_CLUSTER_NAME} \
       --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
       --name ${AKS_NODEPOOL_SOURCE_NAME}
 
-    ./aks-nodepool-increase \
+    aks-nodepool-increase \
       --cluster-name ${AKS_CLUSTER_NAME} \
       --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
       --source ${AKS_NODEPOOL_SOURCE_NAME} \
@@ -122,13 +122,13 @@ if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; the
       --hard-limit-min ${HARD_LIMIT_MIN} \
       --hard-limit-max ${HARD_LIMIT_MAX}
   else
-    ./aks-nodepool-decrease \
+    aks-nodepool-decrease \
       --cluster-name ${AKS_CLUSTER_NAME} \
       --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
       --name ${AKS_NODEPOOL_SOURCE_NAME} \
       --dry-run
 
-    ./aks-nodepool-increase \
+    aks-nodepool-increase \
       --cluster-name ${AKS_CLUSTER_NAME} \
       --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
       --source ${AKS_NODEPOOL_SOURCE_NAME} \
