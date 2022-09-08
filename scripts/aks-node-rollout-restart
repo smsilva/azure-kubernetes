@@ -175,8 +175,12 @@ get_all_pods | while read LINE; do
 
   REPLICASET_DEPLOYMENT_NAME="$(get_deployment_name "${POD_NAMESPACE}" "${POD_OWNER}")"
 
-  if [ "${DEBUG_LEVEL}" -gt "0" ]; then
-    log "[${POD_NODE_NAME}] ${POD_NAMESPACE} ${POD_OWNER} ${POD_NAME} [${REPLICASET_DEPLOYMENT_NAME}]"
+  if [ "${DEBUG_LEVEL}" == "1" ]; then
+    log "[${POD_NODE_NAME}] [${POD_NAMESPACE}] ${POD_OWNER} ${POD_NAME}"
+  else
+    if [ "${DEBUG_LEVEL}" -gt "2" ]; then
+      log "[${POD_NODE_NAME}] [${POD_NAMESPACE}] ${POD_OWNER} ${POD_NAME} [${REPLICASET_DEPLOYMENT_NAME}]"
+    fi
   fi
 
   if [ -n "${REPLICASET_DEPLOYMENT_NAME}" ]; then
