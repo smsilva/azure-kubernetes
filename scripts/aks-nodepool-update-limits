@@ -8,10 +8,10 @@ show_usage() {
   ./aks-nodepool-update-limits \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
-    --nodepool user1 \\
-    --nodepool user2 \\
-    --hard-limit-min 5 \\
-    --hard-limit-max 10 \\
+    --source user1 \\
+    --target user2 \\
+    --hard-limit-min 3 \\
+    --hard-limit-max 5 \\
     --dry-run
 
 EOF
@@ -29,8 +29,11 @@ case $1 in
   -rg | --resource-group )
     shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
     ;;
-  --nodepool )
-    shift; [ -z "${AKS_NODEPOOLS}" ] && AKS_NODEPOOLS="$1" || AKS_NODEPOOLS="${AKS_NODEPOOLS},$1"
+  -s | --source )
+    shift; AKS_CLUSTER_NODEPOOL_NAME_SOURCE=$1
+    ;;
+  -t | --target )
+    shift; AKS_CLUSTER_NODEPOOL_NAME_TARGET=$1
     ;;
   -min | --hard-limit-min )
     shift; HARD_LIMIT_MIN=$1
@@ -47,99 +50,55 @@ if [[ "$1" == '--' ]]; then shift; fi
 
 DRY_RUN=${DRY_RUN-n}
 
-if [ -z "${AKS_CLUSTER_NAME}"                ] || \
-   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
-   [ -z "${AKS_NODEPOOLS}"                   ] || \
-   [ -z "${HARD_LIMIT_MIN}"                  ] || \
-   [ -z "${HARD_LIMIT_MAX}"                  ]; then
+if [ -z "${AKS_CLUSTER_NAME}"                 ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}"  ] || \
+   [ -z "${AKS_CLUSTER_NODEPOOL_NAME_SOURCE}" ] || \
+   [ -z "${AKS_CLUSTER_NODEPOOL_NAME_TARGET}" ] || \
+   [ -z "${HARD_LIMIT_MIN}"                   ] || \
+   [ -z "${HARD_LIMIT_MAX}"                   ]; then
   echo "You must use ALL parameters."
   show_usage
   exit 1
 fi
 
-AKS_LATEST_VERSION=""
-AKS_NODEPOOL_SOURCE_NAME=""
-AKS_NODEPOOL_SOURCE_VERSION=""
-AKS_NODEPOOL_TARGET_NAME=""
-AKS_NODEPOOL_TARGET_VERSION=""
-
-for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
-  unset AKS_NODEPOOL_PROVISIONING_STATE
-  unset AKS_NODEPOOL_POWER_STATE_CODE
-
+eval $(
   aks-nodepool-info \
     --cluster-name ${AKS_CLUSTER_NAME} \
     --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-    --name ${NODEPOOL_NAME} > "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+    --name ${AKS_CLUSTER_NODEPOOL_NAME_SOURCE}
+)
 
-  source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+export TOTAL_MIN=${AKS_NODEPOOL_MIN_COUNT}
+export TOTAL_MAX=${AKS_NODEPOOL_MAX_COUNT}
 
-  if [ "${AKS_NODEPOOL_PROVISIONING_STATE}" != "Succeeded" ]; then
-    echo "[ERROR] Node Pool ${NODEPOOL_NAME} provisioning state must be \"Succeeded\" instead of \"${AKS_NODEPOOL_PROVISIONING_STATE}\"."
-    exit 1
-  fi
+eval $(
+  aks-nodepool-info \
+    --cluster-name ${AKS_CLUSTER_NAME} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+    --name ${AKS_CLUSTER_NODEPOOL_NAME_TARGET}
+)
 
-  if [ "${AKS_NODEPOOL_POWER_STATE_CODE}" != "Running" ]; then
-    echo "[ERROR] Node Pool ${NODEPOOL_NAME} Power State must be \"Running\" instead of \"${AKS_NODEPOOL_POWER_STATE_CODE}\"."
-    exit 1
-  fi
+export TOTAL_MIN=$((${TOTAL_MIN} + ${AKS_NODEPOOL_MIN_COUNT}))
+export TOTAL_MAX=$((${TOTAL_MAX} + ${AKS_NODEPOOL_MAX_COUNT}))
 
-  if [ -z "${AKS_LATEST_VERSION}" ]; then
-    AKS_LATEST_VERSION=${AKS_NODEPOOL_ORCHESTRATOR_VERSION}
-  fi
+export AKS_NODEPOOL_MIN_COUNT_INCREASE=$((${HARD_LIMIT_MIN} - ${TOTAL_MIN}))
+export AKS_NODEPOOL_MAX_COUNT_INCREASE=$((${HARD_LIMIT_MAX} - ${TOTAL_MAX}))
 
-  AKS_LATEST_VERSION=$(echo -e "${AKS_LATEST_VERSION}\n${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" \
-  | sort --version-sort \
-  | tail -1)
-done
+if [ "${AKS_NODEPOOL_MIN_COUNT_INCREASE}" -ne 0 ] || \
+   [ "${AKS_NODEPOOL_MAX_COUNT_INCREASE}" -ne 0 ]; then
+  export AKS_NODEPOOL_MIN_COUNT_UPDATE=$((${AKS_NODEPOOL_MIN_COUNT} + ${AKS_NODEPOOL_MIN_COUNT_INCREASE}))
+  export AKS_NODEPOOL_MAX_COUNT_UPDATE=$((${AKS_NODEPOOL_MAX_COUNT} + ${AKS_NODEPOOL_MAX_COUNT_INCREASE}))
 
-for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
-  source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+  echo "[${AKS_CLUSTER_NODEPOOL_NAME_TARGET}] Update [${AKS_NODEPOOL_MIN_COUNT_UPDATE}..${AKS_NODEPOOL_MAX_COUNT_UPDATE}]"
 
-  if [ "${AKS_LATEST_VERSION}" == "${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" ]; then
-    AKS_NODEPOOL_TARGET_NAME="${NODEPOOL_NAME}"
-    AKS_NODEPOOL_TARGET_VERSION="${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
-  else
-    AKS_NODEPOOL_SOURCE_NAME="${NODEPOOL_NAME}"
-    AKS_NODEPOOL_SOURCE_VERSION="${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
-  fi
-done
-
-if [ -z "${AKS_NODEPOOL_SOURCE_NAME}" ]; then
-  echo "No Node Pool Source was discovered."
-  exit 0
-fi
-
-if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; then
   if [ "${DRY_RUN}" == "n" ]; then
-    aks-nodepool-decrease \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --name ${AKS_NODEPOOL_SOURCE_NAME}
-
-    aks-nodepool-increase \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --source ${AKS_NODEPOOL_SOURCE_NAME} \
-      --target ${AKS_NODEPOOL_TARGET_NAME} \
-      --hard-limit-min ${HARD_LIMIT_MIN} \
-      --hard-limit-max ${HARD_LIMIT_MAX}
-  else
-    aks-nodepool-decrease \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --name ${AKS_NODEPOOL_SOURCE_NAME} \
-      --dry-run
-
-    aks-nodepool-increase \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --source ${AKS_NODEPOOL_SOURCE_NAME} \
-      --target ${AKS_NODEPOOL_TARGET_NAME} \
-      --hard-limit-min ${HARD_LIMIT_MIN} \
-      --hard-limit-max ${HARD_LIMIT_MAX} \
-      --dry-run
+    az aks nodepool update \
+      --update-cluster-autoscaler \
+      --cluster-name "${AKS_CLUSTER_NAME}" \
+      --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+      --name "${AKS_CLUSTER_NODEPOOL_NAME_TARGET}" \
+      --min-count ${AKS_NODEPOOL_MIN_COUNT_UPDATE} \
+      --max-count ${AKS_NODEPOOL_MAX_COUNT_UPDATE} \
+      --only-show-errors &> /dev/null
   fi
-else
-  echo "Nothing to do."
 fi
