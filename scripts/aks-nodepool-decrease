@@ -64,6 +64,10 @@ eval $(
 if [ -n "${AKS_NODEPOOL_DECREASE_CURRENT_RANGE}" ]; then
   echo "[${AKS_CLUSTER_NODEPOOL_NAME}] Decrease [${AKS_NODEPOOL_DECREASE_MIN_COUNT}..${AKS_NODEPOOL_DECREASE_MAX_COUNT}]"
 
+  if [ "${AKS_NODEPOOL_DECREASE_MIN_COUNT}" == "0" ] && [ "${AKS_NODEPOOL_MODE?}" == "System" ]; then
+    export AKS_NODEPOOL_DECREASE_MIN_COUNT=1
+  fi
+
   if [ "${DRY_RUN}" == "n" ]; then
     az aks nodepool update \
       --cluster-name "${AKS_CLUSTER_NAME}" \

@@ -1,0 +1,33 @@
+#!/bin/bash
+show_usage() {
+  cat <<EOF
+
+  ./aks-nodepool-drain \\
+    --name aks-user1-69591119-vmss000000
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+  -n | --name )
+    shift; AKS_NODE_NAME=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${AKS_NODE_NAME}" ]; then
+  echo "You must use ALL parameters."
+  show_usage
+  exit 1
+fi
+
+kubectl drain \
+  ${AKS_NODE_NAME?} \
+  --ignore-daemonsets \
+  --delete-emptydir-data

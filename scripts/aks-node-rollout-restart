@@ -87,19 +87,15 @@ deployment_file() {
 }
 
 get_all_replicasets() {
-  if ! [ -e "${ALL_REPLICASETS_FILE?}" ]; then
-    kubectl get replicasets \
-      --all-namespaces \
-      --output jsonpath='{range .items[*]}{.metadata.namespace} {.metadata.name} {.metadata.ownerReferences[0].kind} {.metadata.ownerReferences[0].name}{"\n"}{end}' > "${ALL_REPLICASETS_FILE?}"
-  fi
+  kubectl get replicasets \
+    --all-namespaces \
+    --output jsonpath='{range .items[*]}{.metadata.namespace} {.metadata.name} {.metadata.ownerReferences[0].kind} {.metadata.ownerReferences[0].name}{"\n"}{end}' > "${ALL_REPLICASETS_FILE?}"
 }
 
 get_all_pods() {
-  if ! [ -e "${ALL_PODS_FILE?}" ]; then
-    kubectl get pods \
-      --all-namespaces \
-      --output jsonpath='{range .items[*]}{.spec.nodeName} {.metadata.namespace} {.metadata.name} {.metadata.ownerReferences[0].kind} {.metadata.ownerReferences[0].name}{"\n"}{end}' > "${ALL_PODS_FILE?}"
-  fi
+  kubectl get pods \
+    --all-namespaces \
+    --output jsonpath='{range .items[*]}{.spec.nodeName} {.metadata.namespace} {.metadata.name} {.metadata.ownerReferences[0].kind} {.metadata.ownerReferences[0].name}{"\n"}{end}' > "${ALL_PODS_FILE?}"
 
   grep ReplicaSet "${ALL_PODS_FILE?}"
 }

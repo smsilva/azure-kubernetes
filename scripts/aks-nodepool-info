@@ -39,19 +39,20 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
 fi
 
 COLUMN_LIST_MAPPING="{\
-AKS_NODEPOOL_ORCHESTRATOR_VERSION: .orchestratorVersion,\
-AKS_NODEPOOL_PROVISIONING_STATE: .provisioningState,\
-AKS_NODEPOOL_POWER_STATE_CODE: .powerState.code,\
 AKS_NODEPOOL_AVAILABILITY_ZONES: .availabilityZones,\
-AKS_NODEPOOL_VNET_SUBNET_ID: .vnetSubnetId,\
-AKS_NODEPOOL_VM_SIZE: .vmSize,\
+AKS_NODEPOOL_COUNT: .count,\
+AKS_NODEPOOL_ENABLE_AUTOS_SCALING: .enableAutoScaling,\
+AKS_NODEPOOL_MAX_COUNT: .maxCount,\
+AKS_NODEPOOL_MAX_PODS: .maxPods,\
+AKS_NODEPOOL_MIN_COUNT: .minCount,\
+AKS_NODEPOOL_MODE: .mode,\
+AKS_NODEPOOL_ORCHESTRATOR_VERSION: .orchestratorVersion,\
 AKS_NODEPOOL_OS_DISK_SIZE_GB: .osDiskSizeGb,\
 AKS_NODEPOOL_OS_DISK_SIZE_TYPE: .osDiskType,\
-AKS_NODEPOOL_MAX_PODS: .maxPods,\
-AKS_NODEPOOL_COUNT: .count,\
-AKS_NODEPOOL_MIN_COUNT: .minCount,\
-AKS_NODEPOOL_MAX_COUNT: .maxCount,\
-AKS_NODEPOOL_ENABLE_AUTOS_SCALING: .enableAutoScaling\
+AKS_NODEPOOL_POWER_STATE_CODE: .powerState.code,\
+AKS_NODEPOOL_PROVISIONING_STATE: .provisioningState,\
+AKS_NODEPOOL_VM_SIZE: .vmSize,\
+AKS_NODEPOOL_VNET_SUBNET_ID: .vnetSubnetId\
 }"
 
 JQ_COMMAND=$(printf '.[] | %s | to_entries|map("export \(.key)=\(.value|tostring)")|.[]' "${COLUMN_LIST_MAPPING}")

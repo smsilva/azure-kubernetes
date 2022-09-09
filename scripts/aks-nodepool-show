@@ -46,8 +46,8 @@ get_nodepool_list() {
 }
 
 (
-  echo "Name        Min     Max     Count   KubernetesVersion"
-  echo "----------- ------- ------- ------- -------------------"
+  echo "Name        Min     Max     Count   KubernetesVersion  ProvisioningState "
+  echo "----------- ------- ------- ------- ------------------ ----------------- "
 
   get_nodepool_list | while read NODEPOOL_NAME; do
     unset AKS_NODEPOOL_MIN_COUNT
@@ -62,7 +62,7 @@ get_nodepool_list() {
         --name ${NODEPOOL_NAME?}
     )
 
-    echo "${NODEPOOL_NAME} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT} ${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
+    echo "${NODEPOOL_NAME} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT} ${AKS_NODEPOOL_ORCHESTRATOR_VERSION} ${AKS_NODEPOOL_PROVISIONING_STATE}"
   done
 ) \
 | column -t

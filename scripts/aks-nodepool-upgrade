@@ -5,8 +5,8 @@ show_usage() {
   ./aks-nodepool-upgrade \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
-    --version 1.22.11 \\
-    --name user1
+    --name user1 \\
+    --version 1.22.11
 
 EOF
 }
@@ -41,6 +41,8 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
   show_usage
   exit 1
 fi
+
+echo "Upgrade to ${AKS_KUBERNETES_VERSION}"
 
 az aks nodepool upgrade \
   --cluster-name "${AKS_CLUSTER_NAME}" \
