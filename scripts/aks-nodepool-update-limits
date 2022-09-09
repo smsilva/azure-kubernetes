@@ -105,8 +105,12 @@ for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
   fi
 done
 
-if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; then
+if [ -z "${AKS_NODEPOOL_SOURCE_NAME}" ]; then
+  echo "No Node Pool Source was discovered."
+  exit 0
+fi
 
+if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; then
   if [ "${DRY_RUN}" == "n" ]; then
     aks-nodepool-decrease \
       --cluster-name ${AKS_CLUSTER_NAME} \
