@@ -33,7 +33,6 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
    [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
    [ -z "${AKS_CLUSTER_NODEPOOL_NAME}"       ]; then
   echo "You must use ALL parameters."
-  echo ""
   show_usage
   exit 1
 fi

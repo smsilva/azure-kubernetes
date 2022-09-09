@@ -14,7 +14,7 @@ show_usage() {
   ./aks-node-rollout-restart \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
-    --name aks-systempool-37832835-vmss000000 \\
+    --name aks-system1-37832835-vmss000000 \\
     --dry-run
 
 EOF

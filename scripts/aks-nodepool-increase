@@ -57,7 +57,6 @@ if [ -z "${AKS_CLUSTER_NAME}"                 ] || \
    [ -z "${HARD_LIMIT_MIN}"                   ] || \
    [ -z "${HARD_LIMIT_MAX}"                   ]; then
   echo "You must use ALL parameters."
-  echo ""
   show_usage
   exit 1
 fi
@@ -94,10 +93,10 @@ if [ "${AKS_NODEPOOL_MIN_COUNT_INCREASE}" -gt 0 ] || \
 
   if [ "${DRY_RUN}" == "n" ]; then
     az aks nodepool update \
-      --name "${AKS_CLUSTER_NODEPOOL_NAME_TARGET}" \
+      --update-cluster-autoscaler \
       --cluster-name "${AKS_CLUSTER_NAME}" \
       --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
-      --update-cluster-autoscaler \
+      --name "${AKS_CLUSTER_NODEPOOL_NAME_TARGET}" \
       --min-count ${AKS_NODEPOOL_MIN_COUNT_UPDATE} \
       --max-count ${AKS_NODEPOOL_MAX_COUNT_UPDATE} \
       --only-show-errors &> /dev/null

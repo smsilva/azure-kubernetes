@@ -53,7 +53,6 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
    [ -z "${HARD_LIMIT_MIN}"                  ] || \
    [ -z "${HARD_LIMIT_MAX}"                  ]; then
   echo "You must use ALL parameters."
-  echo ""
   show_usage
   exit 1
 fi

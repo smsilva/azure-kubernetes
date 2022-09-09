@@ -3,7 +3,7 @@ show_usage() {
   cat <<EOF
 
   ./aks-cluster-upgrade-control-plane-only \\
-    --cluster-name   aks-cluster-example \\
+    --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --version 1.22.11 \\
     --dry-run

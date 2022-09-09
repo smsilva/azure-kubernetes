@@ -33,7 +33,6 @@ if [ -z "${NODEPOOL_COUNT}"     ] || \
    [ -z "${NODEPOOL_MIN_COUNT}" ] || \
    [ -z "${NODEPOOL_MAX_COUNT}" ]; then
   echo "You must use ALL parameters."
-  echo ""
   show_usage
   exit 1
 fi
