@@ -54,7 +54,7 @@ AKS_KUBERNETES_VERSION_LATEST=$(echo -e "${AKS_KUBERNETES_VERSION?}\n${AKS_CLUST
 | tail -1)
 
 if [ "${AKS_CLUSTER_CURRENT_VERSION}" != "${AKS_KUBERNETES_VERSION_LATEST}" ]; then
-  echo "Upgrade from ${AKS_CLUSTER_CURRENT_VERSION} to ${AKS_KUBERNETES_VERSION_LATEST}"
+  echo "Upgrade Control Plane from ${AKS_CLUSTER_CURRENT_VERSION} to ${AKS_KUBERNETES_VERSION_LATEST}"
 
   if [ "${DRY_RUN}" == "n" ]; then
     az aks upgrade \

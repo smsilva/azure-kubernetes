@@ -42,7 +42,7 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
   exit 1
 fi
 
-echo "Upgrade to ${AKS_KUBERNETES_VERSION}"
+echo "Upgrade Node Pool ${AKS_CLUSTER_NODEPOOL_NAME} to ${AKS_KUBERNETES_VERSION}"
 
 az aks nodepool upgrade \
   --cluster-name "${AKS_CLUSTER_NAME}" \
