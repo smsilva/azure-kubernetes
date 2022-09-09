@@ -5,7 +5,7 @@ export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 show_usage() {
   cat <<EOF
 
-  aks-nodepool-update-limits \\
+  ./aks-nodepool-update-limits \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --nodepool user1 \\
