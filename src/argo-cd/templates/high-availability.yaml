@@ -1,15 +1,15 @@
 redis-ha:
-  enabled: true
+  enabled: false
 
 controller:
-  enableStatefulSet: true
+  enableStatefulSet: false
 
 server:
   autoscaling:
-    enabled: true
+    enabled: false
     minReplicas: 2
 
 repoServer:
   autoscaling:
-    enabled: true
+    enabled: false
     minReplicas: 2

@@ -3,10 +3,10 @@ locals {
   cluster_name                             = "wasp-${local.cluster_random_id}"
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
-  cluster_version                          = "1.23.8"
+  cluster_version                          = "1.22.11"
   cluster_node_pool_min_count              = 3
   cluster_node_pool_max_count              = 5
-  cluster_node_pool_name                   = "system01"
+  cluster_node_pool_name                   = "system1"
   cluster_administrators_ids               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
   install_cert_manager                     = true
   install_external_secrets                 = true
@@ -15,12 +15,13 @@ locals {
   install_argocd                           = true
   install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
+  nginx_load_balancer_public_ip_cname      = "ingress.${local.cluster_random_id}"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
   argocd_administrators_ids                = local.cluster_administrators_ids
   argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
   argocd_app_of_apps_infra_target_revision = "development"
-  argocd_ingress_issuer_name               = "letsencrypt-nginx-staging"
+  argocd_ingress_issuer_name               = "letsencrypt-nginx-staging" # letsencrypt-nginx-production
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
   virtual_network_name                     = local.cluster_name
@@ -94,10 +95,11 @@ module "ingress_nginx" {
   count  = local.install_ingress_nginx ? 1 : 0
   source = "../../src/ingress-nginx"
 
-  cname = replace(local.cluster_name, "-", "")
+  cname  = local.nginx_load_balancer_public_ip_cname
+  domain = local.dns_zone
 
   depends_on = [
-    module.aks
+    module.external_dns
   ]
 }
 
