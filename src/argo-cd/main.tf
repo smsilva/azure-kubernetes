@@ -35,7 +35,7 @@ locals {
     argocd_sso_application_id = var.sso_application_id
   })
 
-  ingress_template = length(regexall(".*application-gateway.*", var.ingress_issuer_name)) > 0 ? data.template_file.ingress_azure.rendered : data.template_file.ingress_nginx.rendered
+  ingress_template = length(regexall(".*azure.*", var.ingress_issuer_name)) > 0 ? data.template_file.ingress_azure.rendered : data.template_file.ingress_nginx.rendered
 }
 
 resource "helm_release" "argocd" {
