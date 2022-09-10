@@ -11,13 +11,13 @@ locals {
   install_cert_manager                     = true
   install_external_secrets                 = true
   install_external_dns                     = true
-  install_ingress_application_gateway      = true
+  install_ingress_azure                    = true
   install_argocd                           = true
   install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
-  cluster_ingress_type                     = "azure" # [ nginx | azure ]
+  cluster_ingress_type                     = "azure"
   cert_manager_issuer_type                 = "letsencrypt"
-  cert_manager_issuer_server               = "staging" # [ staging | production ]
+  cert_manager_issuer_server               = "staging"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
   argocd_administrators_ids                = local.cluster_administrators_ids
@@ -141,7 +141,7 @@ module "external_dns" {
 }
 
 module "ingress_azure" {
-  count  = local.install_ingress_application_gateway ? 1 : 0
+  count  = local.install_ingress_azure ? 1 : 0
   source = "../../src/ingress-azure"
 
   application_gateway  = module.application_gateway.instance

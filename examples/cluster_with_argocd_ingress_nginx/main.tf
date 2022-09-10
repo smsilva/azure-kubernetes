@@ -15,11 +15,9 @@ locals {
   install_argocd                           = true
   install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
-  cluster_ingress_type                     = "nginx" # [ nginx | azure ]
+  cluster_ingress_type                     = "nginx"
   cert_manager_issuer_type                 = "letsencrypt"
-  cert_manager_issuer_server               = "staging" # [ staging | production ]
-  cert_manager_issuer_class                = local.cluster_ingress_type
-  nginx_load_balancer_public_ip_cname      = "ingress.${local.cluster_random_id}"
+  cert_manager_issuer_server               = "staging"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
   argocd_administrators_ids                = local.cluster_administrators_ids
@@ -28,6 +26,7 @@ locals {
   argocd_ingress_issuer_name               = "${local.cert_manager_issuer_type}-${local.cert_manager_issuer_server}-${local.cluster_ingress_type}"
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
+  nginx_load_balancer_public_ip_cname      = "ingress.${local.cluster_random_id}"
   virtual_network_name                     = local.cluster_name
   virtual_network_cidrs                    = ["10.244.0.0/14"]
   virtual_network_subnets                  = [{ cidr = "10.246.0.0/16", name = "aks" }]
