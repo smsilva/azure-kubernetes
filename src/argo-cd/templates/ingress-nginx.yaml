@@ -4,6 +4,7 @@ server:
     https: true
     hosts:
       - ${server_ingress_host}.${server_ingress_domain}
+    ingressClassName: "nginx"
     pathType: ImplementationSpecific
     paths:
       - /
