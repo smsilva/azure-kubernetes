@@ -18,7 +18,7 @@ locals {
   cluster_ingress_type                     = "nginx" # [ nginx | azure ]
   cert_manager_issuer_type                 = "letsencrypt"
   cert_manager_issuer_server               = "staging" # [ staging | production ]
-  cert_manager_issuer_class                = "${local.cluster_ingress_type}"  
+  cert_manager_issuer_class                = local.cluster_ingress_type
   nginx_load_balancer_public_ip_cname      = "ingress.${local.cluster_random_id}"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
@@ -132,11 +132,13 @@ module "app_of_apps_infra" {
   count  = local.install_app_of_apps_infra ? 1 : 0
   source = "../../src/app-of-apps-infra"
 
-  environment_id                   = local.cluster_random_id
-  environment_cluster_name         = local.cluster_name
-  environment_cluster_ingress_type = local.cluster_ingress_type
-  environment_domain               = local.dns_zone
-  target_revision                  = local.argocd_app_of_apps_infra_target_revision
+  environment_id                          = local.cluster_random_id
+  environment_cluster_name                = local.cluster_name
+  environment_cluster_ingress_type        = local.cluster_ingress_type
+  environment_cluster_certificates_type   = local.cert_manager_issuer_type
+  environment_cluster_certificates_server = local.cert_manager_issuer_server
+  environment_domain                      = local.dns_zone
+  target_revision                         = local.argocd_app_of_apps_infra_target_revision
 
   depends_on = [
     module.argo_cd

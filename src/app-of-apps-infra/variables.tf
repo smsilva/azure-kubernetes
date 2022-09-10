@@ -24,6 +24,14 @@ variable "environment_cluster_ingress_type" {
   type = string
 }
 
+variable "environment_cluster_certificates_type" {
+  type = string
+}
+
+variable "environment_cluster_certificates_server" {
+  type = string
+}
+
 variable "target_revision" {
   type        = string
   description = "Git Target Revision"

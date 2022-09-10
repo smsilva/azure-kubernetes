@@ -26,6 +26,16 @@ resource "helm_release" "app_of_apps_infra" {
   }
 
   set {
+    name = "environment.cluster.certificates.type"
+    value = var.environment_cluster_certificates_type
+  }
+
+  set {
+    name = "environment.cluster.certificates.server"
+    value = var.environment_cluster_certificates_server
+  }
+
+  set {
     name  = "source.targetRevision"
     value = var.target_revision
   }
