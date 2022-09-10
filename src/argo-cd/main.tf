@@ -51,6 +51,7 @@ resource "helm_release" "argocd" {
     file("${path.module}/templates/configs-known-hosts.yaml"),
     file("${path.module}/templates/extra-volumes.yaml"),
     file("${path.module}/templates/high-availability.yaml"),
+    file("${path.module}/templates/metrics.yaml"),
     file("${path.module}/templates/resource-customizations.yaml"),
     local.extra_objects,
     local.ingress_template,
