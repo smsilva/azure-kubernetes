@@ -15,13 +15,17 @@ locals {
   install_argocd                           = true
   install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
+  cluster_ingress_type                     = "nginx" # [ nginx | azure ]
+  cert_manager_issuer_type                 = "letsencrypt"
+  cert_manager_issuer_server               = "staging" # [ staging | production ]
+  cert_manager_issuer_class                = "${local.cluster_ingress_type}"  
   nginx_load_balancer_public_ip_cname      = "ingress.${local.cluster_random_id}"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
   argocd_administrators_ids                = local.cluster_administrators_ids
   argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
   argocd_app_of_apps_infra_target_revision = "development"
-  argocd_ingress_issuer_name               = "letsencrypt-nginx-staging" # letsencrypt-nginx-production
+  argocd_ingress_issuer_name               = "${local.cert_manager_issuer_type}-${local.cert_manager_issuer_server}-${local.cluster_ingress_type}"
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
   virtual_network_name                     = local.cluster_name
@@ -128,10 +132,11 @@ module "app_of_apps_infra" {
   count  = local.install_app_of_apps_infra ? 1 : 0
   source = "../../src/app-of-apps-infra"
 
-  environment_id      = local.cluster_random_id
-  environment_cluster = local.cluster_name
-  environment_domain  = local.dns_zone
-  target_revision     = local.argocd_app_of_apps_infra_target_revision
+  environment_id                   = local.cluster_random_id
+  environment_cluster_name         = local.cluster_name
+  environment_cluster_ingress_type = local.cluster_ingress_type
+  environment_domain               = local.dns_zone
+  target_revision                  = local.argocd_app_of_apps_infra_target_revision
 
   depends_on = [
     module.argo_cd

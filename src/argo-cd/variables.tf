@@ -13,10 +13,10 @@ variable "ingress_issuer_name" {
 
   validation {
     condition = contains([
-      "letsencrypt-application-gateway-production",
-      "letsencrypt-application-gateway-staging",
-      "letsencrypt-nginx-production",
-      "letsencrypt-nginx-staging",
+      "letsencrypt-production-azure",
+      "letsencrypt-staging-azure",
+      "letsencrypt-production-nginx",
+      "letsencrypt-staging-nginx",
     ], var.ingress_issuer_name)
     error_message = "This is not an available cert-manager ClusterIssuer."
   }

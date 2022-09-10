@@ -1,7 +1,13 @@
 environment:
   id: undefined-id
   domain: sandbox.wasp.silvios.me
-  cluster: undefined-cluster-name
+  cluster:
+    name: undefined-cluster-name
+    ingress:
+      type: nginx
+    certificates:
+      type: letsencrypt
+      server: staging
 
 helm:
   files:

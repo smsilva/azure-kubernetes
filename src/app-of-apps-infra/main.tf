@@ -16,8 +16,13 @@ resource "helm_release" "app_of_apps_infra" {
   }
 
   set {
-    name  = "environment.cluster"
-    value = var.environment_cluster
+    name  = "environment.cluster.name"
+    value = var.environment_cluster_name
+  }
+
+  set {
+    name  = "environment.cluster.ingress.type"
+    value = var.environment_cluster_ingress_type
   }
 
   set {

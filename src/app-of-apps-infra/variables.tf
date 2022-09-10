@@ -16,7 +16,11 @@ variable "environment_domain" {
   type = string
 }
 
-variable "environment_cluster" {
+variable "environment_cluster_name" {
+  type = string
+}
+
+variable "environment_cluster_ingress_type" {
   type = string
 }
 

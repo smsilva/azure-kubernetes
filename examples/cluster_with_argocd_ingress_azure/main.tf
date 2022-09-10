@@ -20,7 +20,7 @@ locals {
   argocd_administrators_ids                = local.cluster_administrators_ids
   argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
   argocd_app_of_apps_infra_target_revision = "development"
-  argocd_ingress_issuer_name               = "letsencrypt-application-gateway-staging" # letsencrypt-application-gateway-production
+  argocd_ingress_issuer_name               = "letsencrypt-azure-staging" # letsencrypt-azure-production
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
   application_gateway_name                 = local.cluster_name

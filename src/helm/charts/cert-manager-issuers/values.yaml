@@ -9,7 +9,7 @@ letsencrypt:
       host: acme-staging-v02
 
   issuers:
-    - name:  application-gateway
+    - name:  azure
       class: azure/application-gateway
 
     - name:  nginx
