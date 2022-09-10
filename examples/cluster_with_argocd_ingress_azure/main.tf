@@ -4,8 +4,8 @@ locals {
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
   cluster_version                          = "1.23.8"
-  cluster_node_pool_min_count              = 1
-  cluster_node_pool_max_count              = 3
+  cluster_node_pool_min_count              = 3
+  cluster_node_pool_max_count              = 5
   cluster_node_pool_name                   = "system1"
   cluster_administrators_ids               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
   install_cert_manager                     = true
@@ -43,47 +43,18 @@ resource "azurerm_resource_group" "default" {
 module "aks" {
   source = "../../src/cluster"
 
-  name                 = local.cluster_name
-  orchestrator_version = local.cluster_version
-  administrators_ids   = local.cluster_administrators_ids
-  node_pool_name       = local.cluster_node_pool_name
-  node_pool_min_count  = local.cluster_node_pool_min_count
-  node_pool_max_count  = local.cluster_node_pool_max_count
-  resource_group       = azurerm_resource_group.default
-  subnet               = module.vnet.subnets["aks"].instance
+  name                                   = local.cluster_name
+  orchestrator_version                   = local.cluster_version
+  administrators_ids                     = local.cluster_administrators_ids
+  node_pool_name                         = local.cluster_node_pool_name
+  node_pool_min_count                    = local.cluster_node_pool_min_count
+  node_pool_max_count                    = local.cluster_node_pool_max_count
+  resource_group                         = azurerm_resource_group.default
+  subnet                                 = module.vnet.subnets["aks"].instance
+  node_pool_only_critical_addons_enabled = false
 
   depends_on = [
     module.vnet
-  ]
-}
-
-module "nodepool_user1" {
-  source = "../../src/nodepool"
-
-  name                 = "user1"
-  min_count            = 3
-  max_count            = 15
-  orchestrator_version = local.cluster_version
-  cluster              = module.aks.instance
-  subnet_id            = module.vnet.subnets["aks"].instance.id
-
-  depends_on = [
-    module.aks
-  ]
-}
-
-module "nodepool_user2" {
-  source = "../../src/nodepool"
-
-  name                 = "user2"
-  min_count            = 0
-  max_count            = 0
-  orchestrator_version = local.cluster_version
-  cluster              = module.aks.instance
-  subnet_id            = module.vnet.subnets["aks"].instance.id
-
-  depends_on = [
-    module.aks
   ]
 }
 
@@ -111,8 +82,7 @@ module "cert_manager" {
   source = "../../src/cert-manager"
 
   depends_on = [
-    module.aks,
-    module.nodepool_user1
+    module.aks
   ]
 }
 
@@ -126,8 +96,7 @@ module "external_secrets" {
   key_vault_name = data.azurerm_key_vault.default.name
 
   depends_on = [
-    module.aks,
-    module.nodepool_user1
+    module.aks
   ]
 }
 
@@ -151,7 +120,6 @@ module "ingress_azure" {
 
   depends_on = [
     module.aks,
-    module.nodepool_user1,
     module.application_gateway
   ]
 }
