@@ -35,6 +35,9 @@ case $1 in
   -n | --name )
     shift; AKS_NODE_NAME=$1
     ;;
+  -c | --count )
+    shift; AKS_NODE_COUNT=$1
+    ;;
   -d | --debug )
     shift; DEBUG_LEVEL=$1
     ;;
@@ -47,10 +50,11 @@ if [[ "$1" == '--' ]]; then shift; fi
 
 DRY_RUN=${DRY_RUN-n}
 DEBUG_LEVEL=${DEBUG_LEVEL-1}
+AKS_NODE_COUNT=${AKS_NODE_COUNT-0}
 
 if [ -z "${AKS_CLUSTER_NAME}"                ] || \
    [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
-   [ -z "${AKS_NODE_NAME}"                   ]; then
+   [ -z "${AKS_NODE_NAME}${AKS_NODE_COUNT}"  ]; then
   show_usage
   exit 1
 fi
@@ -123,18 +127,33 @@ node_list() {
 
   kubectl get nodes \
     --output jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' \
+    --selector '!rollout-restarted' \
   | grep -E "${NODE_NAME}"
 }
 
 rollout_restart_deployments() {
   NODE_NAME=$1
 
+  if [ "${DEBUG_LEVEL}" -gt "2" ]; then
+    log "[NODE_NAME=${NODE_NAME?}] [CACHE_DIRECTORY=${CACHE_DIRECTORY}]"
+  fi
+
   grep -rl "${NODE_NAME?}" "${CACHE_DIRECTORY}" \
-  | while read LINE; do
-    DEPLOYMENT_DIRECTORY=$(dirname "${LINE}")
-    DEPLOYMENT_NAMESPACE=$(awk -F '/' '{ print $4 }' <<< "${LINE}")
-    DEPLOYMENT_NAME=$(     awk -F '/' '{ print $5 }' <<< "${LINE}")
+  | while read -r FILENAME; do
+    LINE="${FILENAME#$CACHE_DIRECTORY/}"
+    DEPLOYMENT_DIRECTORY=$(dirname "${FILENAME}")
+    DEPLOYMENT_NAMESPACE=$(awk -F '/' '{ print $1 }' <<< "${LINE}")
+    DEPLOYMENT_NAME=$(     awk -F '/' '{ print $2 }' <<< "${LINE}")
     DEPLOYMENT_MARK="${DEPLOYMENT_DIRECTORY?}/${DEPLOYMENT_NAME?}.rollout"
+
+    if [ "${DEBUG_LEVEL}" -gt "2" ]; then
+      log "[FILENAME=${FILENAME}]"
+      log "[LINE=${LINE}]"
+      log "DEPLOYMENT_DIRECTORY.: ${DEPLOYMENT_DIRECTORY}"
+      log "DEPLOYMENT_NAMESPACE.: ${DEPLOYMENT_NAMESPACE}"
+      log "DEPLOYMENT_NAME......: ${DEPLOYMENT_NAME}"
+      log "DEPLOYMENT_MARK......: ${DEPLOYMENT_MARK}"
+    fi
 
     if ! [ -e "${DEPLOYMENT_MARK}" ]; then
       echo "${NODE_NAME?}" $(date +"%Y-%m-%d %H:%M:%S") > "${DEPLOYMENT_MARK}"
@@ -148,13 +167,8 @@ rollout_restart_deployments() {
       fi
     fi
   done
-}
 
-node_rollout_restart_deployments() {
-  while read -r NODE_NAME; do
-    node_cordon ${NODE_NAME?}
-    rollout_restart_deployments ${NODE_NAME?}
-  done
+  kubectl label node ${NODE_NAME?} rollout-restarted=true 1> /dev/null
 }
 
 log "Collecting all ReplicaSets data..."
@@ -174,8 +188,12 @@ get_all_pods | while read LINE; do
   if [ "${DEBUG_LEVEL}" == "1" ]; then
     log "[${POD_NODE_NAME}] [${POD_NAMESPACE}] ${POD_OWNER} ${POD_NAME}"
   else
-    if [ "${DEBUG_LEVEL}" -gt "2" ]; then
+    if [ "${DEBUG_LEVEL}" -gt "1" ]; then
       log "[${POD_NODE_NAME}] [${POD_NAMESPACE}] ${POD_OWNER} ${POD_NAME} [${REPLICASET_DEPLOYMENT_NAME}]"
+    else
+      if [ "${DEBUG_LEVEL}" -gt "2" ]; then
+        log "[${LINE}]"
+      fi
     fi
   fi
 
@@ -190,14 +208,19 @@ log ""
 log "Initiating Deployments Rollout Restart..."
 log ""
 
-if [ -n "${AKS_NODE_NAME}" ]; then
-  node_list "${AKS_NODE_NAME}" \
-  | node_rollout_restart_deployments
+if [ "${AKS_NODE_COUNT}" == "0" ]; then
+  NODE_LIST_NAMES=$(node_list "${AKS_NODE_NAME}")
 else
-  node_list \
-  | head -${AKS_NODE_COUNT} \
-  | node_rollout_restart_deployments
+  NODE_LIST_NAMES=$(node_list "${AKS_NODE_NAME}" | head -${AKS_NODE_COUNT})
 fi
+
+while read NODE_NAME; do
+  node_cordon "${NODE_NAME}"
+done <<< "${NODE_LIST_NAMES}"
+
+while read NODE_NAME; do
+  rollout_restart_deployments ${NODE_NAME?}
+done <<< "${NODE_LIST_NAMES}"
 
 log ""
 log "Finish"

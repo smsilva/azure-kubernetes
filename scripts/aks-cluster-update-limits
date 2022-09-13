@@ -110,12 +110,16 @@ if [ -z "${AKS_NODEPOOL_SOURCE_NAME}" ]; then
   exit 0
 fi
 
+NODES_TO_ROLLOUT_RESTART=5
+
 if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; then
   if [ "${DRY_RUN}" == "n" ]; then
     aks-nodepool-decrease \
       --cluster-name ${AKS_CLUSTER_NAME} \
       --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
       --name ${AKS_NODEPOOL_SOURCE_NAME}
+
+    DECREASE_RESULT=$?
 
     aks-nodepool-update-limits \
       --cluster-name ${AKS_CLUSTER_NAME} \
@@ -124,6 +128,19 @@ if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; the
       --target ${AKS_NODEPOOL_TARGET_NAME} \
       --hard-limit-min ${HARD_LIMIT_MIN} \
       --hard-limit-max ${HARD_LIMIT_MAX}
+
+    UPDATE_RESULT=$?
+
+    if [ "${DECREASE_RESULT}" == "100" ] && [ "${UPDATE_RESULT}" == "100" ]; then
+      echo "Rollout Restart Deployments for ${NODES_TO_ROLLOUT_RESTART?} Nodes"
+
+      aks-node-rollout-restart \
+        --cluster-name ${AKS_CLUSTER_NAME} \
+        --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+        --name ${AKS_NODEPOOL_SOURCE_NAME} \
+        --count ${NODES_TO_ROLLOUT_RESTART?} \
+        --debug 1
+    fi
   else
     aks-nodepool-decrease \
       --cluster-name ${AKS_CLUSTER_NAME} \
@@ -138,6 +155,13 @@ if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; the
       --target ${AKS_NODEPOOL_TARGET_NAME} \
       --hard-limit-min ${HARD_LIMIT_MIN} \
       --hard-limit-max ${HARD_LIMIT_MAX} \
+      --dry-run
+
+    aks-node-rollout-restart \
+      --cluster-name ${AKS_CLUSTER_NAME} \
+      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+      --debug 1 \
+      --count 2 \
       --dry-run
   fi
 else

@@ -75,6 +75,10 @@ if [ -n "${AKS_NODEPOOL_DECREASE_CURRENT_RANGE}" ]; then
       --name "${AKS_CLUSTER_NODEPOOL_NAME}" \
       --min-count ${AKS_NODEPOOL_DECREASE_MIN_COUNT} \
       --max-count ${AKS_NODEPOOL_DECREASE_MAX_COUNT} \
-      --only-show-errors &> /dev/null
+      --only-show-errors 1> /dev/null
+    
+    exit $?
   fi
 fi
+
+exit 100
