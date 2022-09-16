@@ -46,10 +46,16 @@ get_nodepool_list() {
 }
 
 (
-  echo "Name        Min     Max     Count   KubernetesVersion  Mode     ProvisioningState "
-  echo "----------- ------- ------- ------- ------------------ -------- ----------------- "
+  DOTED_LINE="----------- ------- ------- ------- ------------------ -------- ----------------- "
 
-  get_nodepool_list | while read NODEPOOL_NAME; do
+  echo "Name        Min     Max     Count   KubernetesVersion  Mode     ProvisioningState "
+  echo "${DOTED_LINE?}"
+
+  TOTAL_MIN=0
+  TOTAL_MAX=0
+  TOTAL_COUNT=0
+
+  while read NODEPOOL_NAME; do
     unset AKS_NODEPOOL_MIN_COUNT
     unset AKS_NODEPOOL_MAX_COUNT
     unset AKS_NODEPOOL_COUNT
@@ -64,6 +70,13 @@ get_nodepool_list() {
     )
 
     echo "${NODEPOOL_NAME} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT} ${AKS_NODEPOOL_ORCHESTRATOR_VERSION} ${AKS_NODEPOOL_MODE} ${AKS_NODEPOOL_PROVISIONING_STATE}"
-  done
+    
+    TOTAL_MIN=$((${TOTAL_MIN} + ${AKS_NODEPOOL_MIN_COUNT-0}))
+    TOTAL_MAX=$((${TOTAL_MAX} + ${AKS_NODEPOOL_MAX_COUNT-0}))
+    TOTAL_COUNT=$((${TOTAL_COUNT} + ${AKS_NODEPOOL_COUNT-0}))
+  done <<< "$(get_nodepool_list)"
+  
+  echo "${DOTED_LINE?}"
+  echo "Total ${TOTAL_MIN} ${TOTAL_MAX} ${TOTAL_COUNT}"
 ) \
 | column -t

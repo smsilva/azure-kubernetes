@@ -1,0 +1,21 @@
+#!/bin/bash
+AKS_CLUSTER_NAME="aks-cluster-example"
+AKS_CLUSTER_RESOURCE_GROUP_NAME="aks-cluster-example"
+
+./aks-nodepool-show \
+  --cluster-name "${AKS_CLUSTER_NAME?}" \
+  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME?}"
+
+echo ""
+
+(
+echo "RolloutRestartedNode                CandidateToDelete  ScheduledToDelete "
+echo "----------------------------------- ------------------ ------------------"
+
+kubectl get nodes \
+  --selector rollout-restarted \
+  --output jsonpath='{range .items[*]}{.metadata.name} {.spec.taints[?(@.key == "DeletionCandidateOfClusterAutoscaler")].key} {.spec.taints[?(@.key == "ToBeDeletedByClusterAutoscaler")].key}{"\n"}{end}' \
+| sed 's/DeletionCandidateOfClusterAutoscaler/Yes/g' \
+| sed 's/ToBeDeletedByClusterAutoscaler/Yes/g'
+) \
+| column -t

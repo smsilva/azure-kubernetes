@@ -5,6 +5,7 @@ export EXECUTION_ID="$(date +"%Y-%m-%d_%H-%M-%S")_$(uuidgen)"
 export CACHE_DIRECTORY="${THIS_SCRIPT_DIRECTORY}/.cache/${EXECUTION_ID}"
 export ALL_PODS_FILE="${THIS_SCRIPT_DIRECTORY}/all-pods.txt"
 export ALL_REPLICASETS_FILE="${THIS_SCRIPT_DIRECTORY}/all-replicasets.txt"
+export SELECTED_NODES_FILE="${THIS_SCRIPT_DIRECTORY}/all-selected-nodes.txt"
 
 mkdir -p "${CACHE_DIRECTORY}"
 
@@ -14,7 +15,23 @@ show_usage() {
   ./aks-node-rollout-restart \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
+    --name agentpool \\
+    --count 3 \\
+    --debug 1 \\
+    --dry-run
+
+  ./aks-node-rollout-restart \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example \\
     --name aks-system1-37832835-vmss000000 \\
+    --debug 1 \\
+    --dry-run
+
+  ./aks-node-rollout-restart \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example \\
+    --count 3 \\
+    --debug 1 \\
     --dry-run
 
 EOF
@@ -117,9 +134,9 @@ node_cordon() {
 
   if [ "${DRY_RUN}" != "y" ]; then
     kubectl cordon ${NODE_NAME?}
-  else
-    log "[${NODE_NAME?}] cordoned"
   fi
+
+  log "[${NODE_NAME?}] cordoned"
 }
 
 node_list() {
@@ -168,15 +185,74 @@ rollout_restart_deployments() {
     fi
   done
 
-  kubectl label node ${NODE_NAME?} rollout-restarted=true 1> /dev/null
+  if [ "${DRY_RUN}" != "y" ]; then
+    kubectl label node ${NODE_NAME?} rollout-restarted=true &> /dev/null
+  fi
+
+  log "[${NODE_NAME?}] labeled with 'rollout-restarted=true'"
 }
 
-log "Collecting all ReplicaSets data..."
+find_nodes() {
+  if [ "${DEBUG_LEVEL}" -gt "2" ]; then
+    log "Node List filter:"
+    log "AKS_NODE_NAME.......: ${AKS_NODE_NAME}"
+    log "AKS_NODE_COUNT......: ${AKS_NODE_COUNT}"
+    log "SELECTED_NODES_FILE.: ${AKS_NODE_COUNT}"
+  fi
 
+  if [ "${AKS_NODE_COUNT}" == "0" ]; then
+    node_list "${AKS_NODE_NAME}" > "${SELECTED_NODES_FILE?}"
+  else
+    node_list "${AKS_NODE_NAME}" | head -${AKS_NODE_COUNT} > "${SELECTED_NODES_FILE?}"
+  fi
+
+  if [ "${DEBUG_LEVEL}" -gt "2" ]; then
+    log ""
+    log "[${SELECTED_NODES_FILE?}]"
+    cat "${SELECTED_NODES_FILE?}"
+    log ""
+  fi
+
+  if ! [ -s "${SELECTED_NODES_FILE?}" ]; then
+    log "No Nodes selected without 'rollout-restarted' label."
+    exit 1
+  fi
+
+  log ""
+  while read NODE_NAME; do
+    log "  ${NODE_NAME}"
+  done < "${SELECTED_NODES_FILE?}"
+  log ""
+}
+
+find_not_deleted_nodes() {
+  NODES_NOT_DELETED=$(kubectl get nodes \
+    --selector rollout-restarted \
+    --output name \
+  | wc -l)
+
+  if [ "${NODES_NOT_DELETED}" -eq "${AKS_NODE_COUNT}" ] || \
+     [ "${NODES_NOT_DELETED}" -gt "${AKS_NODE_COUNT}" ]; then
+    log "There are Nodes (${NODES_NOT_DELETED}) not deleted yet.".
+    log ""
+
+    kubectl get nodes \
+      --selector rollout-restarted
+
+    exit 1
+  fi
+}
+
+log "Check if there are Nodes not deleted yet..."
+find_not_deleted_nodes
+
+log "Finding Nodes..."
+find_nodes
+
+log "Collecting all ReplicaSets data..."
 get_all_replicasets
 
 log "Collecting all Pods/Deployments data..."
-
 get_all_pods | while read LINE; do
   POD_NODE_NAME=$(awk '{ print $1 }' <<< "${LINE}")
   POD_NAMESPACE=$(awk '{ print $2 }' <<< "${LINE}")
@@ -200,7 +276,9 @@ get_all_pods | while read LINE; do
   if [ -n "${REPLICASET_DEPLOYMENT_NAME}" ]; then
     FILE_NAME=$(deployment_file "${POD_NAMESPACE}" "${REPLICASET_DEPLOYMENT_NAME}")
 
-    echo "${POD_NODE_NAME?} ${POD_NAME?}" >> "${FILE_NAME}"
+    if [ -n "${FILE_NAME}" ]; then
+      echo "${POD_NODE_NAME?} ${POD_NAME?}" >> "${FILE_NAME}"
+    fi
   fi
 done
 
@@ -208,19 +286,13 @@ log ""
 log "Initiating Deployments Rollout Restart..."
 log ""
 
-if [ "${AKS_NODE_COUNT}" == "0" ]; then
-  NODE_LIST_NAMES=$(node_list "${AKS_NODE_NAME}")
-else
-  NODE_LIST_NAMES=$(node_list "${AKS_NODE_NAME}" | head -${AKS_NODE_COUNT})
-fi
-
 while read NODE_NAME; do
   node_cordon "${NODE_NAME}"
-done <<< "${NODE_LIST_NAMES}"
+done < "${SELECTED_NODES_FILE?}"
 
 while read NODE_NAME; do
   rollout_restart_deployments ${NODE_NAME?}
-done <<< "${NODE_LIST_NAMES}"
+done < "${SELECTED_NODES_FILE?}"
 
 log ""
 log "Finish"
