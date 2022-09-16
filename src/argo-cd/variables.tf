@@ -17,6 +17,8 @@ variable "ingress_issuer_name" {
       "letsencrypt-staging-azure",
       "letsencrypt-production-nginx",
       "letsencrypt-staging-nginx",
+      "letsencrypt-production-istio",
+      "letsencrypt-staging-istio",
     ], var.ingress_issuer_name)
     error_message = "This is not an available cert-manager ClusterIssuer."
   }

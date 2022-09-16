@@ -1,0 +1,6 @@
+apiVersion: v2
+name: istio-discovery
+description: Istio Discovery
+type: application
+version: 0.2.1
+appVersion: 1.14.3
