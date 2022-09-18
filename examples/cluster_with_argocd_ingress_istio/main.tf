@@ -26,7 +26,7 @@ locals {
   argocd_ingress_issuer_name               = "${local.cert_manager_issuer_type}-${local.cert_manager_issuer_server}-${local.cluster_ingress_type}"
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
-  istio_load_balancer_public_ip_cname      = "ingress.${local.cluster_random_id}"
+  istio_load_balancer_public_ip_cname      = "gateway.${local.cluster_random_id}"
   virtual_network_name                     = local.cluster_name
   virtual_network_cidrs                    = ["10.244.0.0/14"]
   virtual_network_subnets                  = [{ cidr = "10.246.0.0/16", name = "aks" }]

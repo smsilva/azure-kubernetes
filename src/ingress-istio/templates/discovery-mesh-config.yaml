@@ -6,5 +6,5 @@
 
 istiod:
   meshConfig:
-    ingressService: ingress-istio
-    ingressSelector: ingress-istio
+    ingressService: istio-ingress
+    ingressSelector: ingress

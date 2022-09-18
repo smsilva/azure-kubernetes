@@ -32,8 +32,8 @@ data "template_file" "istio_gateway_service_values" {
 
 resource "helm_release" "istio_gateway" {
   chart            = "${path.module}/../helm/charts/istio-gateway"
-  name             = var.name
-  namespace        = var.namespace
+  name             = "istio-ingress"
+  namespace        = "istio-ingress"
   create_namespace = false
   atomic           = true
 
