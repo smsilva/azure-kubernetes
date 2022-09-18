@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+EXPRESSION=${1-wasp}
+
+az_group_list() {
+  LOCAL_EXPRESSION=${1}
+  az aks list --output table | grep -E "Name|^----|${LOCAL_EXPRESSION}"
+}
+
+if [ -n "${EXPRESSION}" ]; then
+  az_group_list "${EXPRESSION}"
+else
+  az_group_list ".*"
+fi
