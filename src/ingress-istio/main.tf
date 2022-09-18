@@ -30,12 +30,44 @@ data "template_file" "istio_gateway_service_values" {
   }
 }
 
+resource "kubernetes_namespace" "istio_ingress" {
+  
+  metadata {
+    name = "istio-ingress"
+
+    labels = {
+      istio-injection = "enabled"
+    }
+  }
+
+}
+
 resource "helm_release" "istio_gateway" {
   chart            = "${path.module}/../helm/charts/istio-gateway"
   name             = "istio-ingress"
-  namespace        = "istio-ingress"
+  namespace        = kubernetes_namespace.istio_ingress.metadata[0].name
   create_namespace = false
   atomic           = true
+
+  set {
+    name = "dns.cname"
+    value = var.cname
+  }
+
+  set {
+    name = "dns.domain"
+    value = var.domain
+  }
+
+  set {
+    name = "certificate.type"
+    value = var.certificate_type
+  }
+
+  set {
+    name = "certificate.server"
+    value = var.certificate_server
+  }
 
   values = [
     data.template_file.istio_gateway_service_values.rendered

@@ -25,6 +25,10 @@ data "template_file" "ingress_azure" {
   }
 }
 
+data "template_file" "ingress_istio" {
+  template = file("${path.module}/templates/ingress-istio.yaml")
+}
+
 locals {
   rbac = templatefile("${path.module}/templates/rbac-config.yaml", {
     server_rbac_config_group_contributors   = var.contributors_ids
@@ -35,7 +39,8 @@ locals {
     argocd_sso_application_id = var.sso_application_id
   })
 
-  ingress_template = length(regexall(".*azure.*", var.ingress_issuer_name)) > 0 ? data.template_file.ingress_azure.rendered : data.template_file.ingress_nginx.rendered
+  ingress_template_first = length(regexall(".*azure.*", var.ingress_issuer_name)) > 0 ? data.template_file.ingress_azure.rendered : data.template_file.ingress_nginx.rendered
+  ingress_template_final = length(regexall(".*istio.*", var.ingress_issuer_name)) > 0 ? data.template_file.ingress_istio.rendered : local.ingress_template_first
 }
 
 resource "helm_release" "argocd" {
@@ -54,7 +59,7 @@ resource "helm_release" "argocd" {
     file("${path.module}/templates/metrics.yaml"),
     file("${path.module}/templates/resource-customizations.yaml"),
     local.extra_objects,
-    local.ingress_template,
+    local.ingress_template_final,
     local.rbac,
   ]
 

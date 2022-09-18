@@ -1,0 +1,24 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: httpbin-virtual-service-mesh
+spec:
+  hosts:
+    - httpbin.{{ .Release.Namespace }}.svc.cluster.local
+
+  gateways:
+    - mesh
+
+  http:
+    - name: httpbin
+      headers:
+        request:
+          add:
+            X-A1-origin-2: httpbin-gateway-mesh
+
+      route:
+        - destination:
+            host: httpbin.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.service.port }}

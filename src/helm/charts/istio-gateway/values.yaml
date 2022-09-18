@@ -1,0 +1,14 @@
+dns:
+  cname: undefined-cnadme
+  domain: subdomain.silvios.me
+
+certificate:
+  type: letsencrypt
+  server: staging
+  list:
+    - apps
+    - argocd
+    - httpbin
+
+secret:
+  prefix: ingress-tls-

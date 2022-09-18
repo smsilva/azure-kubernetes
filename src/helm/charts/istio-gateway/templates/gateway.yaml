@@ -1,0 +1,55 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: public-ingress-gateway
+spec:
+  selector:
+    istio: ingress
+
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "gateway.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
+
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: {{ $.Values.secret.prefix }}gateway
+      hosts:
+        - "gateway.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
+
+{{- range .Values.certificate.list }}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: public-ingress-{{ . }}
+spec:
+  selector:
+    istio: ingress
+
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "{{ . }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
+
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: {{ $.Values.secret.prefix }}{{ . }}
+      hosts:
+        - "{{ . }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
+{{- end }}

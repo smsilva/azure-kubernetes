@@ -1,0 +1,35 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ingress-gateway
+spec:
+  commonName: gateway.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
+  
+  dnsNames:
+    - gateway.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
+
+  secretName: {{ $.Values.secret.prefix }}gateway
+
+  issuerRef:
+    kind: ClusterIssuer
+    name: {{ $.Values.certificate.type }}-{{ $.Values.certificate.server }}-istio
+
+{{- range .Values.certificate.list }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ingress-{{ . }}
+spec:
+  commonName: {{ . }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
+  
+  dnsNames:
+    - {{ . }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
+
+  secretName: {{ $.Values.secret.prefix }}{{ . }}
+
+  issuerRef:
+    kind: ClusterIssuer
+    name: {{ $.Values.certificate.type }}-{{ $.Values.certificate.server }}-istio
+{{- end }}

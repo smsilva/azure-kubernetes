@@ -1,0 +1,24 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: httpbin-virtual-service-public
+spec:
+  hosts:
+    - httpbin.{{ .Values.dns.cname }}.{{ .Values.dns.domain }}
+
+  gateways:
+    - istio-ingress/public-ingress-httpbin
+
+  http:
+    - name: httpbin
+      headers:
+        request:
+          add:
+            X-A1-origin-1: public-ingress-httpbin
+
+      route:
+        - destination:
+            host: httpbin.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.service.port }}

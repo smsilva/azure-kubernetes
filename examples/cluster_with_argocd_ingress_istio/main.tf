@@ -12,7 +12,8 @@ locals {
   install_external_secrets                 = true
   install_external_dns                     = true
   install_ingress_istio                    = true
-  install_argocd                           = false
+  install_httpbin                          = true
+  install_argocd                           = true
   install_app_of_apps_infra                = false
   dns_zone                                 = "sandbox.wasp.silvios.me"
   cluster_ingress_type                     = "istio"
@@ -26,7 +27,6 @@ locals {
   argocd_ingress_issuer_name               = "${local.cert_manager_issuer_type}-${local.cert_manager_issuer_server}-${local.cluster_ingress_type}"
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
-  istio_load_balancer_public_ip_cname      = "gateway.${local.cluster_random_id}"
   virtual_network_name                     = local.cluster_name
   virtual_network_cidrs                    = ["10.244.0.0/14"]
   virtual_network_subnets                  = [{ cidr = "10.246.0.0/16", name = "aks" }]
@@ -98,11 +98,26 @@ module "ingress_istio" {
   count  = local.install_ingress_istio ? 1 : 0
   source = "../../src/ingress-istio"
 
-  cname  = local.istio_load_balancer_public_ip_cname
+  cname              = local.cluster_random_id
+  domain             = local.dns_zone
+  certificate_type   = local.cert_manager_issuer_type
+  certificate_server = local.cert_manager_issuer_server
+
+  depends_on = [
+    module.external_dns,
+    module.cert_manager
+  ]
+}
+
+module "httpbin" {
+  count  = local.install_httpbin ? 1 : 0
+  source = "../../src/httpbin"
+
+  cname  = local.cluster_random_id
   domain = local.dns_zone
 
   depends_on = [
-    module.external_dns
+    module.ingress_istio
   ]
 }
 
@@ -121,8 +136,8 @@ module "argo_cd" {
   depends_on = [
     module.argocd_app_registration,
     module.cert_manager,
-    module.external_secrets,
     module.external_dns,
+    module.external_secrets,
     module.ingress_istio,
   ]
 }
