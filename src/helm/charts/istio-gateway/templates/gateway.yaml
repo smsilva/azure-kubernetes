@@ -42,6 +42,8 @@ spec:
         protocol: HTTP
       hosts:
         - "{{ . }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
+      tls:
+        httpsRedirect: true # sends 301 redirect for http requests
 
     - port:
         number: 443
