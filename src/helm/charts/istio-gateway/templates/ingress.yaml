@@ -1,16 +1,16 @@
-{{- range .Values.certificate.list }}
+{{- range $cname := .Values.certificate.list }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-{{ . }}
+  name: ingress-{{ $cname }}
   annotations:
     external-dns.alpha.kubernetes.io/target: gateway.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
 spec:
   ingressClassName: istio
 
   rules:
-    - host: {{ . }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
+    - host: {{ $cname }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
       http:
         paths:
           - path: /.well-known/not-used-path/

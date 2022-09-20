@@ -11,6 +11,15 @@ spec:
     - istio-ingress/public-ingress-httpbin
 
   http:
+    - match:
+        - scheme:
+            exact: http
+          uri:
+            regex: "^/(([^\\.].*)|(\\.[^w].*)|(\\.w[^e].*)|(\\.we[^l].*)|(\\.wel[^l].*)|(\\.well[^\\-].*))"
+      redirect:
+        scheme: https
+        redirectCode: 302 # 302 to not mess with risky permanent redirections since a workaround
+
     - name: httpbin
       headers:
         request:

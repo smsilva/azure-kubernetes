@@ -15,19 +15,19 @@ spec:
     kind: ClusterIssuer
     name: {{ $.Values.certificate.type }}-{{ $.Values.certificate.server }}-istio
 
-{{- range .Values.certificate.list }}
+{{- range $cname := .Values.certificate.list }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ingress-{{ . }}
+  name: ingress-{{ $cname }}
 spec:
-  commonName: {{ . }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
+  commonName: {{ $cname }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
   
   dnsNames:
-    - {{ . }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
+    - {{ $cname }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
 
-  secretName: {{ $.Values.secret.prefix }}{{ . }}
+  secretName: {{ $.Values.secret.prefix }}{{ $cname }}
 
   issuerRef:
     kind: ClusterIssuer

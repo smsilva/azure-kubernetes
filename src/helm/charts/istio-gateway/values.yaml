@@ -6,7 +6,6 @@ certificate:
   type: letsencrypt
   server: staging
   list:
-    - apps
     - argocd
     - httpbin
 
