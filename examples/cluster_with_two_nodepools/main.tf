@@ -39,7 +39,7 @@ module "nodepool_userpool1" {
   source = "../../src/nodepool"
 
   name                 = "user1"
-  min_count            = 3
+  min_count            = 1
   max_count            = 5
   orchestrator_version = local.cluster_version
   cluster              = module.aks.instance

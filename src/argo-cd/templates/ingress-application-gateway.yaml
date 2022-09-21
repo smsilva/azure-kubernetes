@@ -1,6 +1,7 @@
 server:
   extraArgs:
     - --insecure
+    - --enable-gzip
   ingress:
     enabled: true
     https: true
