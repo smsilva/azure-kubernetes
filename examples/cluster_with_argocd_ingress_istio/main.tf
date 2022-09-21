@@ -3,7 +3,7 @@ locals {
   cluster_name                             = "wasp-${local.cluster_random_id}"
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
-  cluster_version                          = "1.23.8"
+  cluster_version                          = "1.22.11"
   cluster_node_pool_min_count              = 1
   cluster_node_pool_max_count              = 5
   cluster_node_pool_name                   = "system1"
@@ -77,7 +77,7 @@ module "external_secrets" {
 
   tenant_id      = data.azurerm_client_config.current.tenant_id
   client_id      = data.azurerm_client_config.current.client_id
-  client_secret  = var.arm_client_secret
+  client_secret  = local.arm_client_secret
   key_vault_name = data.azurerm_key_vault.default.name
 
   depends_on = [

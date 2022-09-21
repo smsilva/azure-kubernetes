@@ -13,8 +13,11 @@ resource "random_string" "id" {
   special     = false
 }
 
-variable "arm_client_secret" {
-  type        = string
-  description = "(Required) Azure Resource Manager Service Principal Client Secret (ARM_CLIENT_SECRET)"
-  sensitive   = true
+module "variables" {
+  source = "../../src/variables"
+  script = "azure"
+}
+
+locals {
+  arm_client_secret = module.variables.values.arm_client_secret
 }

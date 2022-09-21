@@ -92,7 +92,7 @@ module "external_secrets" {
 
   tenant_id      = data.azurerm_client_config.current.tenant_id
   client_id      = data.azurerm_client_config.current.client_id
-  client_secret  = var.arm_client_secret
+  client_secret  = local.arm_client_secret
   key_vault_name = data.azurerm_key_vault.default.name
 
   depends_on = [
