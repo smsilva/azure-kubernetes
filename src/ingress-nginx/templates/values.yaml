@@ -1,5 +1,11 @@
+defaultBackend:
+  enabled: false
+
 controller:
   service:
+    externalTrafficPolicy: "Local"
     annotations:
       service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/healthz"
       external-dns.alpha.kubernetes.io/hostname: ${cname}.${domain}.
+  config:
+    proxy-buffer-size: "128k"

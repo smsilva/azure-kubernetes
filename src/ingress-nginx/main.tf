@@ -1,5 +1,5 @@
 data "template_file" "ingress_nginx" {
-  template = file("${path.module}/template-values.yaml")
+  template = file("${path.module}/templates/values.yaml")
   vars = {
     cname  = var.cname
     domain = var.domain
