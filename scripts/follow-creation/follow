@@ -8,7 +8,7 @@ CACHE_FILE=$(mktemp)
 
 # Resource Group
 while true; do
-  resource-groups | tee "${CACHE_FILE?}"
+  resource-groups ${ENVIRONMENT_ID?} | tee "${CACHE_FILE?}"
 
   if grep --quiet "${ENVIRONMENT_ID?}-nrg.*Succeeded" "${CACHE_FILE?}"; then
     break
@@ -33,13 +33,16 @@ while true; do
     break
   fi
 
-  sleep 10; clear
+  sleep 30; clear
 done
 
 echo ""
 
 # Namespaces
 while true; do
+  echo "Namespaces (cert-manager and external-secrets)"
+  echo ""
+
   namespaces | tee "${CACHE_FILE?}"
 
   NAMESPACE_COUNT=$(grep -E "cert-manager|external-secrets" "${CACHE_FILE?}" | wc -l)
@@ -55,6 +58,9 @@ echo ""
 
 # external-secrets
 while true; do
+  echo "external-secrets Cluster Secret Store"
+  echo ""
+
   kubectl get ClusterSecretStore | tee "${CACHE_FILE?}"
 
   if grep --quiet "Valid.*True" "${CACHE_FILE?}"; then
@@ -68,6 +74,9 @@ echo ""
 
 # external-secrets
 while true; do
+  echo "external-secrets External Secrets"
+  echo ""
+
   kubectl get ExternalSecret -A | tee "${CACHE_FILE?}"
 
   EXTERNAL_SECRETS_SYNCED_COUNT=$(grep -E "SecretSynced.*True" "${CACHE_FILE?}" | wc -l)
@@ -84,6 +93,9 @@ echo ""
 # argo-cd DNS check
 DNS_CHECK_COUNT=0
 DNS_CHECK_SUCCESS_COUNT=0
+
+echo "argo-cd DNS check"
+echo ""
 
 while true; do
   kubectl \
@@ -116,6 +128,9 @@ echo ""
 DNS_CHECK_COUNT=0
 DNS_CHECK_SUCCESS_COUNT=0
 
+echo "argo-cd curl check"
+echo ""
+
 while true; do
   curl -ks -o /dev/null -I -w "%{http_code}" https://${ARGOCD_HOST?} > "${CACHE_FILE?}"
 
@@ -127,9 +142,9 @@ while true; do
     DNS_CHECK_SUCCESS_COUNT=$((${DNS_CHECK_SUCCESS_COUNT} + 1))
   fi
 
-  echo "curl ${ARGOCD_HOST?} [TOTAL: ${DNS_CHECK_COUNT} / SUCCESS: ${DNS_CHECK_SUCCESS_COUNT}]"
+  echo "curl https://${ARGOCD_HOST?} [TOTAL: ${DNS_CHECK_COUNT} / SUCCESS: ${DNS_CHECK_SUCCESS_COUNT} (${HTTP_CODE})]"
 
-  if [ "${DNS_CHECK_COUNT}" -gt 2 ]; then
+  if [ "${DNS_CHECK_SUCCESS_COUNT}" -gt 2 ]; then
     break;
   fi
 
