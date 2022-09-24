@@ -1,0 +1,139 @@
+#!/bin/bash
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+ENVIRONMENT_ID="$1"
+
+CACHE_FILE=$(mktemp)
+
+# Resource Group
+while true; do
+  resource-groups | tee "${CACHE_FILE?}"
+
+  if grep --quiet "${ENVIRONMENT_ID?}-nrg.*Succeeded" "${CACHE_FILE?}"; then
+    break
+  fi
+
+  sleep 10; clear
+done
+
+echo ""
+
+# AKS
+while true; do
+  aks | tee "${CACHE_FILE?}"
+
+  if grep --quiet "${ENVIRONMENT_ID?}.*Succeeded" "${CACHE_FILE?}"; then
+    az aks get-credentials \
+      --name "wasp-${ENVIRONMENT_ID?}" \
+      --resource-group "wasp-${ENVIRONMENT_ID?}" \
+      --overwrite-existing \
+      --admin &> /dev/null
+  
+    break
+  fi
+
+  sleep 10; clear
+done
+
+echo ""
+
+# Namespaces
+while true; do
+  namespaces | tee "${CACHE_FILE?}"
+
+  NAMESPACE_COUNT=$(grep -E "cert-manager|external-secrets" "${CACHE_FILE?}" | wc -l)
+
+  if [ "${NAMESPACE_COUNT}" -gt 1 ]; then
+    break
+  fi
+
+  sleep 10; clear
+done
+
+echo ""
+
+# external-secrets
+while true; do
+  kubectl get ClusterSecretStore | tee "${CACHE_FILE?}"
+
+  if grep --quiet "Valid.*True" "${CACHE_FILE?}"; then
+    break
+  fi
+
+  sleep 10; clear
+done
+
+echo ""
+
+# external-secrets
+while true; do
+  kubectl get ExternalSecret -A | tee "${CACHE_FILE?}"
+
+  EXTERNAL_SECRETS_SYNCED_COUNT=$(grep -E "SecretSynced.*True" "${CACHE_FILE?}" | wc -l)
+
+  if [ "${EXTERNAL_SECRETS_SYNCED_COUNT}" -gt 3 ]; then
+    break
+  fi
+
+  sleep 5; clear
+done
+
+echo ""
+
+# argo-cd DNS check
+DNS_CHECK_COUNT=0
+DNS_CHECK_SUCCESS_COUNT=0
+
+while true; do
+  kubectl \
+    --namespace istio-ingress \
+    get VirtualService argocd-virtual-service-public \
+    --output jsonpath='{.spec.hosts[0]}' > "${CACHE_FILE?}"
+
+  ARGOCD_HOST=$(cat "${CACHE_FILE?}")
+  
+  dig "${ARGOCD_HOST?}" | grep "^${ARGOCD_HOST?}" > /dev/null
+
+  DNS_CHECK_COUNT=$((${DNS_CHECK_COUNT} + 1))
+
+  if [ "$?" == "0" ]; then
+    DNS_CHECK_SUCCESS_COUNT=$((${DNS_CHECK_SUCCESS_COUNT} + 1))
+  fi
+
+  echo "dig ${ARGOCD_HOST?} [TOTAL: ${DNS_CHECK_COUNT} / SUCCESS: ${DNS_CHECK_SUCCESS_COUNT}]"
+
+  if [ "${DNS_CHECK_COUNT}" -gt 2 ]; then
+    break;
+  fi
+
+  sleep 10;
+done
+
+echo ""
+
+# argo-cd curl check
+DNS_CHECK_COUNT=0
+DNS_CHECK_SUCCESS_COUNT=0
+
+while true; do
+  curl -ks -o /dev/null -I -w "%{http_code}" https://${ARGOCD_HOST?} > "${CACHE_FILE?}"
+
+  HTTP_CODE=$(cat "${CACHE_FILE?}")
+
+  DNS_CHECK_COUNT=$((${DNS_CHECK_COUNT} + 1))
+
+  if [ "${HTTP_CODE}" == "200" ]; then
+    DNS_CHECK_SUCCESS_COUNT=$((${DNS_CHECK_SUCCESS_COUNT} + 1))
+  fi
+
+  echo "curl ${ARGOCD_HOST?} [TOTAL: ${DNS_CHECK_COUNT} / SUCCESS: ${DNS_CHECK_SUCCESS_COUNT}]"
+
+  if [ "${DNS_CHECK_COUNT}" -gt 2 ]; then
+    break;
+  fi
+
+  sleep 10;
+done
+
+echo ""

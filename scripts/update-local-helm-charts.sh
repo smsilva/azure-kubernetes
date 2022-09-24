@@ -7,6 +7,7 @@ helm repo add external-dns     https://kubernetes-sigs.github.io/external-dns   
 helm repo add external-secrets https://charts.external-secrets.io                                     &> /dev/null
 helm repo add ingress-azure    https://appgwingress.blob.core.windows.net/ingress-azure-helm-package  &> /dev/null
 helm repo add ingress-nginx    https://kubernetes.github.io/ingress-nginx                             &> /dev/null
+helm repo add metrics-server   https://kubernetes-sigs.github.io/metrics-server                       &> /dev/null
 
 helm repo update &> /dev/null
 
@@ -35,4 +36,5 @@ check_helm_chart_version external-dns
 check_helm_chart_version external-secrets
 check_helm_chart_version ingress-azure
 check_helm_chart_version ingress-nginx
+check_helm_chart_version metrics-server
 ) | column -t
