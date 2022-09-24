@@ -1,0 +1,3 @@
+helm:
+  files:
+    - values-${environment_cluster_ingress_type}.yaml

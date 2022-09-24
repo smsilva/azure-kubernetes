@@ -1,3 +1,10 @@
+data "template_file" "values" {
+  template = file("${path.module}/templates/values.yaml")
+  vars = {
+    environment_cluster_ingress_type = var.environment_cluster_ingress_type
+  }
+}
+
 resource "helm_release" "app_of_apps_infra" {
   chart            = "${path.module}/../helm/charts/app-of-apps-infra"
   name             = var.name
@@ -39,4 +46,8 @@ resource "helm_release" "app_of_apps_infra" {
     name  = "source.targetRevision"
     value = var.target_revision
   }
+
+  values = [
+    data.template_file.values.rendered,
+  ]
 }

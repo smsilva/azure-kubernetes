@@ -14,7 +14,7 @@ locals {
   install_ingress_istio                    = true
   install_httpbin                          = true
   install_argocd                           = true
-  install_app_of_apps_infra                = false
+  install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
   cluster_ingress_type                     = "istio"
   cert_manager_issuer_type                 = "letsencrypt"
