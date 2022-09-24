@@ -1,0 +1,21 @@
+#!/bin/bash
+CACHE_FILE=$(mktemp)
+
+ARGOCD_HOST=$(argocd-host)
+
+curl \
+  --insecure \
+  --silent \
+  --output /dev/null \
+  --head \
+  --write-out "%{http_code}" \
+  https://${ARGOCD_HOST?} > "${CACHE_FILE?}"
+
+HTTP_CODE=$(cat "${CACHE_FILE?}")
+
+if [ "${HTTP_CODE}" == "200" ]; then
+  echo "${ARGOCD_HOST}"
+  exit 0
+fi
+
+exit 1

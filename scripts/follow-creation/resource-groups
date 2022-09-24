@@ -1,15 +1,17 @@
 #!/bin/bash
-set -e
+EXPRESSION="$1"
 
-EXPRESSION=${1-wasp}
+CACHE_FILE=$(mktemp)
 
-az_group_list() {
-  LOCAL_EXPRESSION=${1}
-  az group list --output table | grep -E "Name|^----|${LOCAL_EXPRESSION}"
-}
+echo "Resource Groups [${EXPRESSION}]"
+echo ""
 
-if [ -n "${EXPRESSION}" ]; then
-  az_group_list "${EXPRESSION}"
-else
-  az_group_list ".*"
-fi
+az group list \
+  --output table \
+| grep -E "Name|^----|${EXPRESSION}" \
+| tee "${CACHE_FILE?}"
+
+grep \
+  --quiet "${EXPRESSION}-nrg.*Succeeded" "${CACHE_FILE?}"
+
+exit $?

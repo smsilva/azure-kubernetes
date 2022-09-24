@@ -1,2 +1,17 @@
 #!/bin/bash
-kubectl get ns | grep -vE "^default|^kube"
+CACHE_FILE=$(mktemp)
+
+echo "Namespaces (cert-manager and external-secrets)"
+echo ""
+
+kubectl get namespaces \
+| grep -vE "^default|^kube" \
+| tee "${CACHE_FILE?}"
+
+NAMESPACE_COUNT=$(grep -E "cert-manager|external-secrets" "${CACHE_FILE?}" | wc -l)
+
+if [ "${NAMESPACE_COUNT}" -gt 1 ]; then
+  exit 0
+fi
+
+exit 1

@@ -1,0 +1,23 @@
+#!/bin/bash
+CACHE_FILE=$(mktemp)
+
+kubectl \
+  get namespace istio-ingress \
+  --ignore-not-found \
+| grep istio-ingress > /dev/null
+
+if [ "$?" == 0 ]; then
+  kubectl \
+    --namespace istio-ingress \
+    get ing ingress-argocd \
+    --output jsonpath='{.spec.rules[0].host}' \
+    --ignore-not-found > "${CACHE_FILE?}"
+else
+  kubectl \
+    --namespace argocd \
+    get ing argocd-server \
+    --output jsonpath='{.spec.rules[0].host}' \
+    --ignore-not-found > "${CACHE_FILE?}"
+fi
+
+cat "${CACHE_FILE?}"

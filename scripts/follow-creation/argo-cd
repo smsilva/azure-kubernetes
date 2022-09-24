@@ -1,5 +1,0 @@
-#!/bin/bash
-kubectl \
-  --namespace argocd \
-  get pods,svc \
-  --output wide
