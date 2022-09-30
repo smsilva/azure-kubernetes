@@ -46,10 +46,11 @@ get_nodepool_list() {
 }
 
 (
-  DOTED_LINE="----------- ------- ------- ------- ------------------ -------- ----------------- "
+  HEADER_LINE_1="Name         Min      Max      Count    MaxPods  KubernetesVersion   Mode      NodeSize            ProvisioningState "
+  HEADER_LINE_2="-----------  -------  -------  -------  -------  ------------------  --------  ------------------  ------------------"
 
-  echo "Name        Min     Max     Count   KubernetesVersion  Mode     ProvisioningState "
-  echo "${DOTED_LINE?}"
+  echo "${HEADER_LINE_1?}"
+  echo "${HEADER_LINE_2?}"
 
   TOTAL_MIN=0
   TOTAL_MAX=0
@@ -59,7 +60,9 @@ get_nodepool_list() {
     unset AKS_NODEPOOL_MIN_COUNT
     unset AKS_NODEPOOL_MAX_COUNT
     unset AKS_NODEPOOL_COUNT
+    unset AKS_NODEPOOL_MAX_PODS
     unset AKS_NODEPOOL_ORCHESTRATOR_VERSION
+    unset AKS_NODEPOOL_VM_SIZE
     unset AKS_NODEPOOL_MODE
 
     eval $(
@@ -69,14 +72,22 @@ get_nodepool_list() {
         --name ${NODEPOOL_NAME?}
     )
 
-    echo "${NODEPOOL_NAME} ${AKS_NODEPOOL_MIN_COUNT} ${AKS_NODEPOOL_MAX_COUNT} ${AKS_NODEPOOL_COUNT} ${AKS_NODEPOOL_ORCHESTRATOR_VERSION} ${AKS_NODEPOOL_MODE} ${AKS_NODEPOOL_PROVISIONING_STATE}"
-    
+    printf "%s " ${NODEPOOL_NAME}
+    printf "%s " ${AKS_NODEPOOL_MIN_COUNT}
+    printf "%s " ${AKS_NODEPOOL_MAX_COUNT}
+    printf "%s " ${AKS_NODEPOOL_COUNT}
+    printf "%s " ${AKS_NODEPOOL_MAX_PODS}
+    printf "%s " ${AKS_NODEPOOL_ORCHESTRATOR_VERSION}
+    printf "%s " ${AKS_NODEPOOL_MODE}
+    printf "%s " ${AKS_NODEPOOL_VM_SIZE}
+    printf "%s\n" ${AKS_NODEPOOL_PROVISIONING_STATE}
+
     TOTAL_MIN=$((${TOTAL_MIN} + ${AKS_NODEPOOL_MIN_COUNT-0}))
     TOTAL_MAX=$((${TOTAL_MAX} + ${AKS_NODEPOOL_MAX_COUNT-0}))
     TOTAL_COUNT=$((${TOTAL_COUNT} + ${AKS_NODEPOOL_COUNT-0}))
   done <<< "$(get_nodepool_list)"
   
-  echo "${DOTED_LINE?}"
+  echo "${HEADER_LINE_2?}"
   echo "Total ${TOTAL_MIN} ${TOTAL_MAX} ${TOTAL_COUNT}"
 ) \
 | column -t

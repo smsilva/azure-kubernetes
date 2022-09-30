@@ -100,16 +100,44 @@ if [ "${AKS_NODEPOOL_MIN_COUNT_INCREASE}" -ne 0 ] || \
   echo "[${AKS_CLUSTER_NODEPOOL_NAME_TARGET}] Update [${AKS_NODEPOOL_MIN_COUNT_UPDATE}..${AKS_NODEPOOL_MAX_COUNT_UPDATE}]"
 
   if [ "${DRY_RUN}" == "n" ]; then
-    az aks nodepool update \
-      --update-cluster-autoscaler \
-      --cluster-name "${AKS_CLUSTER_NAME}" \
-      --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
-      --name "${AKS_CLUSTER_NODEPOOL_NAME_TARGET}" \
-      --min-count ${AKS_NODEPOOL_MIN_COUNT_UPDATE} \
-      --max-count ${AKS_NODEPOOL_MAX_COUNT_UPDATE} \
-      --only-show-errors 1> /dev/null
+    if [ "${AKS_NODEPOOL_ENABLE_AUTOS_SCALING,,}" != "true" ]; then
+     echo "[${AKS_CLUSTER_NODEPOOL_NAME_TARGET}] Activating autoscaler [${AKS_NODEPOOL_MIN_COUNT_UPDATE}..${AKS_NODEPOOL_MAX_COUNT_UPDATE}]"
 
-    exit $?
+      az aks nodepool update \
+        --enable-cluster-autoscaler \
+        --cluster-name "${AKS_CLUSTER_NAME}" \
+        --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+        --name "${AKS_CLUSTER_NODEPOOL_NAME_TARGET}" \
+        --min-count ${AKS_NODEPOOL_MIN_COUNT_UPDATE} \
+        --max-count ${AKS_NODEPOOL_MAX_COUNT_UPDATE} \
+        --only-show-errors 1> /dev/null
+    else
+      az aks nodepool update \
+        --update-cluster-autoscaler \
+        --cluster-name "${AKS_CLUSTER_NAME}" \
+        --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+        --name "${AKS_CLUSTER_NODEPOOL_NAME_TARGET}" \
+        --min-count ${AKS_NODEPOOL_MIN_COUNT_UPDATE} \
+        --max-count ${AKS_NODEPOOL_MAX_COUNT_UPDATE} \
+        --only-show-errors 1> /dev/null
+    fi
+
+    NODE_POOL_UPDATE_RESULT=$?
+
+    NODE_COUNT_TO_CORDON=$((${AKS_NODEPOOL_MAX_COUNT_UPDATE} - ${AKS_NODEPOOL_MIN_COUNT_UPDATE}))
+
+    if [ "${NODE_COUNT_TO_CORDON}" -gt 0 ]; then
+      echo "[${AKS_CLUSTER_NODEPOOL_NAME_SOURCE}] Cordon [${NODE_COUNT_TO_CORDON} Nodes..]"
+
+      aks-node-cordon \
+        --cluster-name "${AKS_CLUSTER_NAME}" \
+        --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+        --name "${AKS_CLUSTER_NODEPOOL_NAME_SOURCE}" \
+        --count ${NODE_COUNT_TO_CORDON} \
+        --debug 2
+    fi
+
+    exit ${NODE_POOL_UPDATE_RESULT}
   fi
 fi
 

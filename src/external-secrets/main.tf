@@ -7,7 +7,7 @@ resource "helm_release" "external_secrets" {
 }
 
 data "template_file" "external_secrets_config_values" {
-  template = file("${path.module}/template-values.yaml")
+  template = file("${path.module}/templates/values.yaml")
   vars = {
     secret_data_arm_client_id           = var.client_id
     cluster_secret_store_arm_tenant_id  = var.tenant_id

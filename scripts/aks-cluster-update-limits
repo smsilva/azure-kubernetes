@@ -5,11 +5,25 @@ export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 show_usage() {
   cat <<EOF
 
+1. Based on Kubernetes Version
+
   ./aks-cluster-update-limits \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --nodepool user1 \\
     --nodepool user2 \\
+    --hard-limit-min 5 \\
+    --hard-limit-max 10 \\
+    --max-nodes-to-rollout-restart 1 \\
+    --dry-run
+
+2. Explicit Source and Target
+
+  ./aks-cluster-update-limits \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example \\
+    --source user1 \\
+    --target user2 \\
     --hard-limit-min 5 \\
     --hard-limit-max 10 \\
     --max-nodes-to-rollout-restart 1 \\
@@ -24,24 +38,39 @@ case $1 in
     show_usage
     exit
     ;;
+
   -cn | --cluster-name )
     shift; AKS_CLUSTER_NAME=$1
     ;;
+
   -rg | --resource-group )
     shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
     ;;
+
   --nodepool )
     shift; [ -z "${AKS_NODEPOOLS}" ] && AKS_NODEPOOLS="$1" || AKS_NODEPOOLS="${AKS_NODEPOOLS},$1"
     ;;
+
+  -s | --source )
+    shift; AKS_NODEPOOL_SOURCE_NAME=$1
+    ;;
+
+  -t | --target )
+    shift; AKS_NODEPOOL_TARGET_NAME=$1
+    ;;
+
   -min | --hard-limit-min )
     shift; HARD_LIMIT_MIN=$1
     ;;
+
   -max | --hard-limit-max )
     shift; HARD_LIMIT_MAX=$1
     ;;
+
   -max-nodes | --max-nodes-to-rollout-restart )
     shift; MAX_NODES_TO_ROLLOUT_RESTART=$1
     ;;
+
   --dry-run )
     shift; DRY_RUN="y"
     ;;
@@ -52,21 +81,17 @@ if [[ "$1" == '--' ]]; then shift; fi
 DRY_RUN=${DRY_RUN-n}
 MAX_NODES_TO_ROLLOUT_RESTART=${MAX_NODES_TO_ROLLOUT_RESTART-1}
 
-if [ -z "${AKS_CLUSTER_NAME}"                ] || \
-   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
-   [ -z "${AKS_NODEPOOLS}"                   ] || \
-   [ -z "${HARD_LIMIT_MIN}"                  ] || \
-   [ -z "${HARD_LIMIT_MAX}"                  ]; then
+if [ -z "${AKS_CLUSTER_NAME}"                                                    ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}"                                     ] || \
+   [ -z "${AKS_NODEPOOLS}${AKS_NODEPOOL_SOURCE_NAME}${AKS_NODEPOOL_TARGET_NAME}" ] || \
+   [ -z "${HARD_LIMIT_MIN}"                                                      ] || \
+   [ -z "${HARD_LIMIT_MAX}"                                                      ]; then
   echo "You must use ALL parameters."
   show_usage
   exit 1
 fi
 
 AKS_LATEST_VERSION=""
-AKS_NODEPOOL_SOURCE_NAME=""
-AKS_NODEPOOL_SOURCE_VERSION=""
-AKS_NODEPOOL_TARGET_NAME=""
-AKS_NODEPOOL_TARGET_VERSION=""
 
 for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
   unset AKS_NODEPOOL_PROVISIONING_STATE
@@ -98,24 +123,33 @@ for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
   | tail -1)
 done
 
-for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
-  source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+SHOULD_EXECUTE_UPDATE="y"
 
-  if [ "${AKS_LATEST_VERSION}" == "${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" ]; then
-    AKS_NODEPOOL_TARGET_NAME="${NODEPOOL_NAME}"
-    AKS_NODEPOOL_TARGET_VERSION="${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
-  else
-    AKS_NODEPOOL_SOURCE_NAME="${NODEPOOL_NAME}"
-    AKS_NODEPOOL_SOURCE_VERSION="${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
+if [ -z "${AKS_NODEPOOL_SOURCE_NAME}" ] && \
+   [ -z "${AKS_NODEPOOL_TARGET_NAME}" ]; then
+  for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
+    source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+
+    if [ "${AKS_LATEST_VERSION}" == "${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" ]; then
+      AKS_NODEPOOL_TARGET_NAME="${NODEPOOL_NAME}"
+      AKS_NODEPOOL_TARGET_VERSION="${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
+    else
+      AKS_NODEPOOL_SOURCE_NAME="${NODEPOOL_NAME}"
+      AKS_NODEPOOL_SOURCE_VERSION="${AKS_NODEPOOL_ORCHESTRATOR_VERSION}"
+    fi
+  done
+
+  if [ "${AKS_NODEPOOL_SOURCE_VERSION}" == "${AKS_NODEPOOL_TARGET_VERSION}" ]; then
+    SHOULD_EXECUTE_UPDATE="n"
   fi
-done
+fi
 
 if [ -z "${AKS_NODEPOOL_SOURCE_NAME}" ]; then
   echo "No Node Pool Source was discovered."
   exit 0
 fi
 
-if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; then
+if [ "${SHOULD_EXECUTE_UPDATE}" == "y" ]; then
   if [ "${DRY_RUN}" == "n" ]; then
     aks-nodepool-decrease \
       --cluster-name ${AKS_CLUSTER_NAME} \
@@ -163,6 +197,7 @@ if [ "${AKS_NODEPOOL_SOURCE_VERSION}" != "${AKS_NODEPOOL_TARGET_VERSION}" ]; the
     aks-node-rollout-restart \
       --cluster-name ${AKS_CLUSTER_NAME} \
       --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+      --name ${AKS_NODEPOOL_SOURCE_NAME} \
       --debug 1 \
       --count 2 \
       --dry-run

@@ -1,10 +1,48 @@
 #!/bin/bash
-AKS_CLUSTER_NAME="aks-cluster-example"
-AKS_CLUSTER_RESOURCE_GROUP_NAME="aks-cluster-example"
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 
-./aks-nodepool-show \
-  --cluster-name "${AKS_CLUSTER_NAME?}" \
-  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME?}"
+show_usage() {
+  cat <<EOF
+
+  ./show-info \\
+    --cluster-name   aks-cluster-example \\
+    --resource-group aks-cluster-example
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${AKS_CLUSTER_NAME}"                ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ]; then
+  show_usage
+  exit 1
+fi
+
+aks-nodepool-show \
+  --cluster-name "${AKS_CLUSTER_NAME}" \
+  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}"
+
+KUBECTL_CONFIG_CONTEXT_EXISTS=$(kubectl config get-contexts | grep ${AKS_CLUSTER_NAME} | wc -l)
+
+if [ "${KUBECTL_CONFIG_CONTEXT_EXISTS}" -lt 1 ]; then
+  exit 0
+fi
 
 echo ""
 
