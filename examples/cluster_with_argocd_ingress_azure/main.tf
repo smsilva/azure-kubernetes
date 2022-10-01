@@ -17,7 +17,7 @@ locals {
   dns_zone                                 = "sandbox.wasp.silvios.me"
   cluster_ingress_type                     = "azure"
   cert_manager_issuer_type                 = "letsencrypt"
-  cert_manager_issuer_server               = "staging"
+  cert_manager_issuer_server               = "staging" # [ staging | production ]
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
   argocd_administrators_ids                = local.cluster_administrators_ids
