@@ -13,14 +13,23 @@ az aks list --output table \
 grep \
   --quiet "${EXPRESSION?}.*Succeeded" "${CACHE_FILE?}"
 
+RESULT=$?
+
 if [ "$?" == 0 ]; then
+  LINE=$(grep "${EXPRESSION?}.*Succeeded" "${CACHE_FILE?}")
+
+  AKS_CLUSTER_NAME=$(                awk '{ print $1 }' <<< "${LINE}")
+  AKS_CLUSTER_RESOURCE_GROUP_NAME=$( awk '{ print $3 }' <<< "${LINE}")
+
+  echo "Getting credentials for AKS Cluster ${AKS_CLUSTER_NAME} [Resource Group: ${AKS_CLUSTER_RESOURCE_GROUP_NAME}]..."
+
   az aks get-credentials \
-    --name "${EXPRESSION?}" \
-    --resource-group "${EXPRESSION?}" \
+    --name "${AKS_CLUSTER_NAME?}" \
+    --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME?}" \
     --overwrite-existing \
     --admin &> /dev/null
 
   exit 0
 fi
 
-exit $?
+exit ${RESULT}

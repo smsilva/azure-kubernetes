@@ -58,6 +58,7 @@ resource "helm_release" "argocd" {
     file("${path.module}/templates/high-availability.yaml"),
     file("${path.module}/templates/metrics.yaml"),
     file("${path.module}/templates/resource-customizations.yaml"),
+    file("${path.module}/templates/server.yaml"),
     local.extra_objects,
     local.ingress_template_final,
     local.rbac,

@@ -1,6 +1,7 @@
+configs:
+  params:
+    server.insecure: true
+
 server:
-  extraArgs:
-    - --insecure
-    - --enable-gzip
   ingress:
     enabled: false

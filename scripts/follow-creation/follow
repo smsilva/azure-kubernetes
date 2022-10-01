@@ -14,7 +14,7 @@ done
 echo ""
 
 # AKS
-while ! aks "wasp-${ENVIRONMENT_ID?}"; do
+while ! aks "${ENVIRONMENT_ID?}"; do
   sleep 30; clear
 done
 
@@ -35,7 +35,14 @@ done
 echo ""
 
 # external-secrets ExternalSecret
-while ! external-secrets; do
+while ! external-secrets 1; do
+  sleep 10; clear
+done
+
+echo ""
+
+# external-secrets ExternalSecret
+while ! external-secrets 4; do
   sleep 10; clear
 done
 
@@ -49,7 +56,9 @@ echo "argo-cd check DNS"
 echo ""
 
 while [ "${DNS_CHECK_SUCCESS_COUNT}" -lt 3 ]; do
-  ARGOCD_HOST=$(argocd-check-dns)
+  argocd-check-dns
+  
+  ARGOCD_HOST=$(argocd-host)
 
   if [ "$?" == "0" ]; then
     DNS_CHECK_SUCCESS_COUNT=$((${DNS_CHECK_SUCCESS_COUNT} + 1))
