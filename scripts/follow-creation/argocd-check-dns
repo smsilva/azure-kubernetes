@@ -1,8 +1,8 @@
 #!/bin/bash
 CACHE_FILE=$(mktemp)
 
-ARGOCD_HOST=$(argocd-host)
+HOST_NAME=$1
 
-dig "${ARGOCD_HOST?-none}" | grep "^${ARGOCD_HOST?}" > /dev/null
+dig "${HOST_NAME?-none}" | grep "^${HOST_NAME?}" > /dev/null
 
 exit $?

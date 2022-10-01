@@ -15,13 +15,15 @@ grep \
 
 RESULT=$?
 
-if [ "$?" == 0 ]; then
+if [ "${RESULT}" == 0 ]; then
   LINE=$(grep "${EXPRESSION?}.*Succeeded" "${CACHE_FILE?}")
 
   AKS_CLUSTER_NAME=$(                awk '{ print $1 }' <<< "${LINE}")
   AKS_CLUSTER_RESOURCE_GROUP_NAME=$( awk '{ print $3 }' <<< "${LINE}")
 
+  echo ""
   echo "Getting credentials for AKS Cluster ${AKS_CLUSTER_NAME} [Resource Group: ${AKS_CLUSTER_RESOURCE_GROUP_NAME}]..."
+  echo ""
 
   az aks get-credentials \
     --name "${AKS_CLUSTER_NAME?}" \

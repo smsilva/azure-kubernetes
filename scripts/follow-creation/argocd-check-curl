@@ -1,7 +1,7 @@
 #!/bin/bash
 CACHE_FILE=$(mktemp)
 
-ARGOCD_HOST=$(argocd-host)
+ARGOCD_HOST=$1
 
 curl \
   --insecure \
@@ -14,7 +14,6 @@ curl \
 HTTP_CODE=$(cat "${CACHE_FILE?}")
 
 if [ "${HTTP_CODE}" == "200" ]; then
-  echo "${ARGOCD_HOST}"
   exit 0
 fi
 

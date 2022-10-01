@@ -56,10 +56,10 @@ echo "argo-cd check DNS"
 echo ""
 
 while [ "${DNS_CHECK_SUCCESS_COUNT}" -lt 3 ]; do
-  argocd-check-dns
-  
   ARGOCD_HOST=$(argocd-host)
 
+  argocd-check-dns ${ARGOCD_HOST?}
+  
   if [ "$?" == "0" ]; then
     DNS_CHECK_SUCCESS_COUNT=$((${DNS_CHECK_SUCCESS_COUNT} + 1))
   fi
@@ -81,13 +81,17 @@ echo "argo-cd curl check"
 echo ""
 
 while [ "${DNS_CHECK_SUCCESS_COUNT}" -lt 3 ]; do
-  ARGOCD_HOST=$(argocd-check-curl)
+  ARGOCD_HOST=$(argocd-host)
+
+  argocd-check-curl ${ARGOCD_HOST?}
 
   if [ "$?" == "0" ]; then
     DNS_CHECK_SUCCESS_COUNT=$((${DNS_CHECK_SUCCESS_COUNT} + 1))
   fi
 
   DNS_CHECK_COUNT=$((${DNS_CHECK_COUNT} + 1))
+
+  ARGOCD_HOST=$(argocd-host)
 
   echo "curl https://${ARGOCD_HOST?} [SUCCESS: ${DNS_CHECK_SUCCESS_COUNT}/${DNS_CHECK_COUNT}]"
 
