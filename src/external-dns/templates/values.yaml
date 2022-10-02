@@ -1,0 +1,22 @@
+registry: txt
+txtOwnerId: ""
+txtPrefix: ""
+txtSuffix: ""
+
+domainFilters:
+  - ${domain}
+
+provider: azure
+
+extraVolumes:
+  - name: azure-config-file
+    secret:
+      secretName: azure-config-file
+      items:
+        - key: azure-config-file.json
+          path: azure.json
+
+extraVolumeMounts:
+  - name: azure-config-file
+    mountPath: /etc/kubernetes
+    readOnly: true

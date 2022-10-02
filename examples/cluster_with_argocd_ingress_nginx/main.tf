@@ -27,6 +27,7 @@ locals {
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
   nginx_load_balancer_public_ip_cname      = "ingress.${local.cluster_random_id}"
+  external_dns_domain_filter               = "${local.cluster_random_id}.${local.dns_zone}"  
   virtual_network_name                     = local.cluster_name
   virtual_network_cidrs                    = ["10.244.0.0/14"]
   virtual_network_subnets                  = [{ cidr = "10.246.0.0/16", name = "aks" }]
@@ -88,6 +89,8 @@ module "external_secrets" {
 module "external_dns" {
   count  = local.install_external_dns ? 1 : 0
   source = "../../src/external-dns"
+
+  domain = local.external_dns_domain_filter
 
   depends_on = [
     module.external_secrets
