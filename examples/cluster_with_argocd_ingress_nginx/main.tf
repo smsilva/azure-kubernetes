@@ -57,6 +57,8 @@ module "aks" {
 }
 
 module "argocd_app_registration" {
+  count  = local.install_argocd ? 1 : 0
+
   source = "../../src/active-directory/app-registration"
 
   name     = local.argocd_app_registration_name
@@ -116,7 +118,7 @@ module "argo_cd" {
   cname               = local.argocd_host_base_name
   domain              = local.dns_zone
   tenant_id           = data.azurerm_client_config.current.tenant_id
-  sso_application_id  = module.argocd_app_registration.instance.application_id
+  sso_application_id  = module.argocd_app_registration[0].instance.application_id
   administrators_ids  = local.argocd_administrators_ids
   contributors_ids    = local.argocd_contributors_ids
   ingress_issuer_name = local.argocd_ingress_issuer_name
