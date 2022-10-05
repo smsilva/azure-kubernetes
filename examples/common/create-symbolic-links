@@ -1,0 +1,4 @@
+#!/bin/bash
+ln -s ../common/network.tf network.tf
+ln -s ../common/secrets.tf secrets.tf
+ln -s ../common/variables.tf variables.tf
