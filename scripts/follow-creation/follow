@@ -49,12 +49,12 @@ echo ""
 
 # argo-cd DNS check
 while ! check-dns "$(argocd-host)"; do
-  sleep 10;
+  sleep 20;
 done
 echo ""
 
 # argo-cd curl check
 while ! check-curl-wait "$(argocd-host)"; do
-  sleep 10;
+  sleep 20;
 done
 echo ""

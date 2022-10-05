@@ -1,8 +1,8 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Fixed]: v5.5.0 Upgrade guide heading in README"
+    - "[Fixed]: Upgrade Dex to v2.35.0 to avoid CVE-2022-39222 and update app version to v2.4.13"
 apiVersion: v2
-appVersion: v2.4.12
+appVersion: v2.4.13
 dependencies:
 - condition: redis-ha.enabled
   name: redis-ha
@@ -23,4 +23,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.5.7
+version: 5.5.8
