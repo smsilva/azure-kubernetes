@@ -25,6 +25,7 @@ locals {
   argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
   argocd_app_of_apps_infra_target_revision = "development"
   argocd_ingress_issuer_name               = "${local.cert_manager_issuer_type}-${local.cert_manager_issuer_server}-${local.cluster_ingress_type}"
+  external_dns_domain_filter               = "${local.cluster_random_id}.${local.dns_zone}"
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
   virtual_network_name                     = local.cluster_name
@@ -56,6 +57,7 @@ module "aks" {
 }
 
 module "argocd_app_registration" {
+  count  = local.install_argocd ? 1 : 0
   source = "../../src/active-directory/app-registration"
 
   name     = local.argocd_app_registration_name
@@ -88,6 +90,8 @@ module "external_secrets" {
 module "external_dns" {
   count  = local.install_external_dns ? 1 : 0
   source = "../../src/external-dns"
+
+  domain = local.external_dns_domain_filter
 
   depends_on = [
     module.external_secrets
@@ -128,7 +132,7 @@ module "argo_cd" {
   cname               = local.argocd_host_base_name
   domain              = local.dns_zone
   tenant_id           = data.azurerm_client_config.current.tenant_id
-  sso_application_id  = module.argocd_app_registration.instance.application_id
+  sso_application_id  = module.argocd_app_registration[0].instance.application_id
   administrators_ids  = local.argocd_administrators_ids
   contributors_ids    = local.argocd_contributors_ids
   ingress_issuer_name = local.argocd_ingress_issuer_name

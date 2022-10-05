@@ -1,3 +1,5 @@
+# this file is in the common directory
+
 module "vnet" {
   source = "git@github.com:smsilva/azure-network.git//src/vnet?ref=3.0.6"
 

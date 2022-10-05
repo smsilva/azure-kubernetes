@@ -1,3 +1,5 @@
+# this file is in the common directory
+
 data "azurerm_client_config" "current" {}
 
 data "azurerm_key_vault" "default" {

@@ -1,3 +1,5 @@
+# this file is in the common directory
+
 module "argocd_app_registration_password" {
   count  = local.install_argocd ? 1 : 0
 
