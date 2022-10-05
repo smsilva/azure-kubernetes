@@ -16,12 +16,15 @@ case $1 in
     show_usage
     exit
     ;;
+
   -c | --count )
     shift; NODEPOOL_COUNT=$1
     ;;
+
   -mi | --min )
     shift; NODEPOOL_MIN_COUNT=$1
     ;;
+
   -mx | --max )
     shift; NODEPOOL_MAX_COUNT=$1
     ;;

@@ -43,21 +43,27 @@ case $1 in
     show_usage
     exit
     ;;
+
   -cn | --cluster-name )
     shift; AKS_CLUSTER_NAME=$1
     ;;
+
   -rg | --resource-group )
     shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
     ;;
+
   -n | --name )
     shift; AKS_NODE_NAME=$1
     ;;
+
   -c | --count )
     shift; AKS_NODE_COUNT=$1
     ;;
+
   -d | --debug )
     shift; DEBUG_LEVEL=$1
     ;;
+
   --dry-run )
     shift; DRY_RUN="y"
     ;;

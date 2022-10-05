@@ -17,15 +17,19 @@ case $1 in
     show_usage
     exit
     ;;
+
   -cn | --cluster-name )
     shift; AKS_CLUSTER_NAME=$1
     ;;
+
   -rg | --resource-group )
     shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
     ;;
+
   -v | --version )
     shift; AKS_KUBERNETES_VERSION=$1
     ;;
+
   --dry-run )
     shift; DRY_RUN="y"
     ;;

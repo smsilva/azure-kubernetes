@@ -23,24 +23,31 @@ case $1 in
     show_usage
     exit
     ;;
+
   -cn | --cluster-name )
     shift; AKS_CLUSTER_NAME=$1
     ;;
+
   -rg | --resource-group )
     shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
     ;;
+
   -s | --source )
     shift; AKS_CLUSTER_NODEPOOL_NAME_SOURCE=$1
     ;;
+
   -t | --target )
     shift; AKS_CLUSTER_NODEPOOL_NAME_TARGET=$1
     ;;
+
   -min | --hard-limit-min )
     shift; HARD_LIMIT_MIN=$1
     ;;
+
   -max | --hard-limit-max )
     shift; HARD_LIMIT_MAX=$1
     ;;
+
   --dry-run )
     shift; DRY_RUN="y"
     ;;

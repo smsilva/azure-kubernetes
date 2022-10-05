@@ -1,0 +1,81 @@
+#!/bin/bash
+ACCOUNTS_FILE_JSON="$(mktemp)"
+COLUMN_LIST_MAPPING="{\
+SUBSCRIPTION_NAME: .name,\
+TENANT_ID: .tenantId\
+}"
+
+subscription_list() {
+  az account list \
+    --output json
+}
+
+subscription_ids() {
+  jq -r '.[].id' "${ACCOUNTS_FILE_JSON?}"
+}
+
+subscription_json() {
+  SUBSCRIPTION_ID="$1"
+
+  JQ_EXPRESSION=$(printf '.[] | select(.id | contains("%s"))' "${SUBSCRIPTION_ID}")
+
+  jq "${JQ_EXPRESSION?}" "${ACCOUNTS_FILE_JSON?}"
+}
+
+subscription_info() {
+  SUBSCRIPTION_ID="$1"
+
+  JQ_EXPRESSION=$(printf '%s | to_entries | map("export \(.key)=\\"\(.value | tostring)\\"") |.[]' "${COLUMN_LIST_MAPPING}")
+
+  subscription_json "${SUBSCRIPTION_ID}" | jq -r "${JQ_EXPRESSION?}"
+}
+
+aks_cluster_list() {
+  SUBSCRIPTION_ID="$1"
+
+  az aks list \
+    --subscription "${SUBSCRIPTION_ID}" \
+    --output table \
+  | sed 1,2d
+}
+
+subscription_list > "${ACCOUNTS_FILE_JSON?}"
+
+SUBSCRIPTION_NAME_EXCLUSIONS="\
+sandbox|\
+"
+
+LINE_1="TenantId                               SubscriptionId                         SubscriptionName             ClusterName                         ClusterResourceGroupName             ClusterVersion   ClusterLocation   ProvisioningState"
+LINE_2="-------------------------------------  -------------------------------------  ---------------------------  ----------------------------------  -----------------------------------  ---------------  ----------------  ------------------"
+
+(
+echo ${LINE_1}
+echo ${LINE_2}
+
+subscription_ids | while read SUBSCRIPTION_ID; do
+  eval $(
+    subscription_info "${SUBSCRIPTION_ID}"
+  )
+
+  if ! grep --quiet -E "${SUBSCRIPTION_NAME_EXCLUSIONS}" <<< "${SUBSCRIPTION_NAME}"; then
+    aks_cluster_list "${SUBSCRIPTION_ID}" | while read LINE; do
+      AKS_CLUSTER_NAME=$(                awk '{ print $1 }' <<< "${LINE}" )
+      AKS_CLUSTER_LOCATION=$(            awk '{ print $2 }' <<< "${LINE}" )
+      AKS_CLUSTER_RESOURCE_GROUP_NAME=$( awk '{ print $3 }' <<< "${LINE}" )
+      AKS_CLUSTER_VERSION=$(             awk '{ print $4 }' <<< "${LINE}" )
+      AKS_CLUSTER_PROVISIONING_STATE=$(  awk '{ print $6 }' <<< "${LINE}" )
+
+      printf "%s " "${TENANT_ID}"
+      printf "%s " "${SUBSCRIPTION_ID}"
+      printf "%s " "${SUBSCRIPTION_NAME// /_}"
+      printf "%s " "${AKS_CLUSTER_NAME}"
+      printf "%s " "${AKS_CLUSTER_RESOURCE_GROUP_NAME}"
+      printf "%s " "${AKS_CLUSTER_VERSION}"
+      printf "%s " "${AKS_CLUSTER_LOCATION}"
+      printf "%s " "${AKS_CLUSTER_PROVISIONING_STATE}"
+
+      echo ""
+    done
+  fi
+done
+) | column --table

@@ -16,12 +16,15 @@ case $1 in
     show_usage
     exit
     ;;
+
   -cn | --cluster-name )
     shift; AKS_CLUSTER_NAME=$1
     ;;
+
   -rg | --resource-group )
     shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
     ;;
+
   -n | --name )
     shift; AKS_CLUSTER_NODEPOOL_NAME=$1
     ;;
