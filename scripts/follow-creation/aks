@@ -3,7 +3,7 @@ EXPRESSION=${1}
 
 CACHE_FILE=$(mktemp)
 
-echo "AKS Cluster (ProvisioningState must be Succeeded)"
+echo "AKS Cluster (waiting for ProvisioningState become Succeeded)"
 echo ""
 
 az aks list --output table \
@@ -24,6 +24,10 @@ if [ "${RESULT}" == 0 ]; then
   echo ""
   echo "Getting credentials for AKS Cluster ${AKS_CLUSTER_NAME} [Resource Group: ${AKS_CLUSTER_RESOURCE_GROUP_NAME}]..."
   echo ""
+
+  if ! grep --quiet "^clusters:" ~/.kube/config; then
+    echo "clusters: []" >> ~/.kube/config
+  fi
 
   az aks get-credentials \
     --name "${AKS_CLUSTER_NAME?}" \

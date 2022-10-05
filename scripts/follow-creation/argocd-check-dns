@@ -1,8 +1,0 @@
-#!/bin/bash
-CACHE_FILE=$(mktemp)
-
-HOST_NAME=$1
-
-dig "${HOST_NAME?-none}" | grep "^${HOST_NAME?}" > /dev/null
-
-exit $?

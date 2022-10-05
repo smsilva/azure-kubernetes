@@ -1,0 +1,15 @@
+#!/bin/bash
+
+CLUSTERS=$(
+  kubectl config get-clusters \
+| sed 1d \
+| wc -l
+)
+
+if [ "${CLUSTERS}" -gt 0 ]; then
+  kubectl get namespaces &> /dev/null
+
+  exit $?
+fi
+
+exit 1

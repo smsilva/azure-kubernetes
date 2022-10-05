@@ -1,0 +1,30 @@
+#!/bin/bash
+HOST_UNDER_TEST=${1}
+
+RECORD_CHECK_CURL="curl_check:${HOST_UNDER_TEST}:"
+
+printf "curl-check (%s) " ${HOST_UNDER_TEST}
+
+if [ -z "${HOST_UNDER_TEST}" ]; then
+  exit 1
+fi
+
+check_if_host_return_200() {
+  check-curl ${HOST_UNDER_TEST?}
+
+  echo "${RECORD_CHECK_CURL}: $?"
+}
+
+check_if_host_return_200 >> ${EXECUTION_CACHE_FILE}
+
+RECORD_CHECK_CURL_SUCCESS_COUNT=$(grep -E "${RECORD_CHECK_CURL}: 0" ${EXECUTION_CACHE_FILE} | wc -l)
+RECORD_CHECK_CURL_FAILURE_COUNT=$(grep -E "${RECORD_CHECK_CURL}: 1" ${EXECUTION_CACHE_FILE} | wc -l)
+
+printf "[ok=%s fail=%s] " ${RECORD_CHECK_CURL_SUCCESS_COUNT} ${RECORD_CHECK_CURL_FAILURE_COUNT}
+echo ""
+
+if [ "${RECORD_CHECK_CURL_SUCCESS_COUNT}" -gt 2 ]; then
+  exit 0
+fi
+
+exit 1

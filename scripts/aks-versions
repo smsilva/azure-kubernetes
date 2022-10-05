@@ -1,0 +1,22 @@
+#!/bin/bash
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+AKS_CLUSTER_KUBERNETES_VERSION="$1"
+AKS_CLUSTER_LOCATION="${2-eastus2}"
+
+(
+az aks get-versions \
+  --location ${AKS_CLUSTER_LOCATION} \
+  --output table \
+| sed 1,2d \
+| awk '{ print $1 }' \
+| sort --version-sort \
+| while read VERSION; do
+    NEWER_VERSION=$(version-newer "${VERSION}" "${AKS_CLUSTER_KUBERNETES_VERSION}")
+
+    if [ "${VERSION}" == "${NEWER_VERSION}" ]; then
+      echo ${VERSION}
+    fi
+done
+)

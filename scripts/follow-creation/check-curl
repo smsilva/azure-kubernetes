@@ -1,0 +1,18 @@
+#!/bin/bash
+HOST_UNDER_TEST=$1
+
+HTTP_CODE=$(
+  curl \
+    --insecure \
+    --silent \
+    --output /dev/null \
+    --head \
+    --write-out "%{http_code}" \
+    https://${HOST_UNDER_TEST?}
+)
+
+if [ "${HTTP_CODE}" == "200" ]; then
+  exit 0
+fi
+
+exit 1

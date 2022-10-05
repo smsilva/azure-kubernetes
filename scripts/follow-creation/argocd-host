@@ -1,10 +1,15 @@
 #!/bin/bash
-CACHE_FILE=$(mktemp)
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+check-kubernetes-access
+
+if [ "$?" -ne 0 ]; then
+  exit 1
+fi
 
 kubectl \
   --namespace argocd \
   get ing argocd-server \
   --output jsonpath='{.spec.rules[0].host}' \
-  --ignore-not-found > "${CACHE_FILE?}"
-
-cat "${CACHE_FILE?}"
+  --ignore-not-found

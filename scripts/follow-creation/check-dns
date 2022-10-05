@@ -1,0 +1,48 @@
+#!/bin/bash
+HOST_UNDER_TEST=${1}
+
+RECORD_CHECK_GOOGLE="dns_check_google"
+RECORD_CHECK_LOCAL="dns_check_local"
+
+check_if_dns_is_resolvable_using_google() {
+  dig @8.8.8.8 "${HOST_UNDER_TEST}" \
+| grep "^${HOST_UNDER_TEST}" > /dev/null
+
+  echo "${RECORD_CHECK_GOOGLE}: $?"
+}
+
+check_if_dns_is_resolvable_locally() {
+  dig ${HOST_UNDER_TEST} \
+| grep "^${HOST_UNDER_TEST}" > /dev/null
+
+  echo "${RECORD_CHECK_LOCAL}: $?"
+}
+
+printf "dns-check (%s) " ${HOST_UNDER_TEST}
+
+if [ -z "${HOST_UNDER_TEST}" ]; then
+  exit 1
+fi
+
+check_if_dns_is_resolvable_using_google >> ${EXECUTION_CACHE_FILE}
+
+RECORD_CHECK_GOOGLE_SUCCESS_COUNT=$(grep -E "${RECORD_CHECK_GOOGLE}: 0" ${EXECUTION_CACHE_FILE} | wc -l)
+RECORD_CHECK_GOOGLE_FAILURE_COUNT=$(grep -E "${RECORD_CHECK_GOOGLE}: 1" ${EXECUTION_CACHE_FILE} | wc -l)
+
+printf "[google: ok=%s fail=%s] " ${RECORD_CHECK_GOOGLE_SUCCESS_COUNT} ${RECORD_CHECK_GOOGLE_FAILURE_COUNT}
+
+check_if_dns_is_resolvable_locally >> ${EXECUTION_CACHE_FILE}
+
+RECORD_CHECK_LOCAL_SUCCESS_COUNT=$(grep -E "${RECORD_CHECK_LOCAL}: 0" ${EXECUTION_CACHE_FILE} | wc -l)
+RECORD_CHECK_LOCAL_FAILURE_COUNT=$(grep -E "${RECORD_CHECK_LOCAL}: 1" ${EXECUTION_CACHE_FILE} | wc -l)
+
+printf "[local: ok=%s fail=%s] " ${RECORD_CHECK_LOCAL_SUCCESS_COUNT} ${RECORD_CHECK_LOCAL_FAILURE_COUNT}
+
+echo ""
+
+if [ "${RECORD_CHECK_GOOGLE_SUCCESS_COUNT}" -gt 2 ] && \
+   [ "${RECORD_CHECK_LOCAL_SUCCESS_COUNT}" -gt 2 ]; then
+  exit 0
+fi
+
+exit 1

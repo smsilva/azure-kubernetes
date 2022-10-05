@@ -4,98 +4,57 @@ export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 
 ENVIRONMENT_ID="$1"
 
-CACHE_FILE=$(mktemp)
+if [ -z "${ENVIRONMENT_ID}" ]; then
+  echo "Please inform Environment ID."
+  exit 1
+fi
+
+export EXECUTION_CACHE_FILE=$(mktemp)
 
 # Resource Group
 while ! resource-groups "${ENVIRONMENT_ID?}"; do
   sleep 10; clear
 done
-
 echo ""
 
 # AKS
 while ! aks "${ENVIRONMENT_ID?}"; do
   sleep 30; clear
 done
-
 echo ""
 
 # Namespaces
 while ! namespaces; do
   sleep 10; clear
 done
-
 echo ""
 
 # external-secrets ClusterSecretStore
 while ! external-secrets-secret-store; do
   sleep 10; clear
 done
-
 echo ""
 
 # external-secrets ExternalSecret
 while ! external-secrets 1; do
   sleep 10; clear
 done
-
 echo ""
 
 # external-secrets ExternalSecret
 while ! external-secrets 4; do
   sleep 10; clear
 done
-
 echo ""
 
 # argo-cd DNS check
-DNS_CHECK_COUNT=0
-DNS_CHECK_SUCCESS_COUNT=0
-
-echo "argo-cd check DNS"
-echo ""
-
-while [ "${DNS_CHECK_SUCCESS_COUNT}" -lt 3 ]; do
-  ARGOCD_HOST=$(argocd-host)
-
-  argocd-check-dns ${ARGOCD_HOST?}
-  
-  if [ "$?" == "0" ]; then
-    DNS_CHECK_SUCCESS_COUNT=$((${DNS_CHECK_SUCCESS_COUNT} + 1))
-  fi
-
-  DNS_CHECK_COUNT=$((${DNS_CHECK_COUNT} + 1))
-
-  echo "dig ${ARGOCD_HOST?} [SUCCESS: ${DNS_CHECK_SUCCESS_COUNT}/${DNS_CHECK_COUNT}]"
-
+while ! check-dns "$(argocd-host)"; do
   sleep 10;
 done
-
 echo ""
 
 # argo-cd curl check
-DNS_CHECK_COUNT=0
-DNS_CHECK_SUCCESS_COUNT=0
-
-echo "argo-cd curl check"
-echo ""
-
-while [ "${DNS_CHECK_SUCCESS_COUNT}" -lt 3 ]; do
-  ARGOCD_HOST=$(argocd-host)
-
-  argocd-check-curl ${ARGOCD_HOST?}
-
-  if [ "$?" == "0" ]; then
-    DNS_CHECK_SUCCESS_COUNT=$((${DNS_CHECK_SUCCESS_COUNT} + 1))
-  fi
-
-  DNS_CHECK_COUNT=$((${DNS_CHECK_COUNT} + 1))
-
-  ARGOCD_HOST=$(argocd-host)
-
-  echo "curl https://${ARGOCD_HOST?} [SUCCESS: ${DNS_CHECK_SUCCESS_COUNT}/${DNS_CHECK_COUNT}]"
-
+while ! check-curl-wait "$(argocd-host)"; do
   sleep 10;
 done
-
 echo ""
