@@ -104,8 +104,9 @@ for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
 
   source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
 
-  if [ "${AKS_NODEPOOL_PROVISIONING_STATE}" != "Succeeded" ]; then
-    echo "[ERROR] Node Pool ${NODEPOOL_NAME} provisioning state must be \"Succeeded\" instead of \"${AKS_NODEPOOL_PROVISIONING_STATE}\"."
+  if [ "${AKS_NODEPOOL_PROVISIONING_STATE}" != "Succeeded" ] && \
+     [ "${AKS_NODEPOOL_PROVISIONING_STATE}" != "Failed" ]; then
+    echo "[ERROR] Node Pool ${NODEPOOL_NAME} provisioning state must be \"Succeeded\" or \"Failed\" instead of \"${AKS_NODEPOOL_PROVISIONING_STATE}\"."
     exit 1
   fi
 
