@@ -10,6 +10,7 @@ fi
 
 kubectl \
   --namespace argocd \
-  get ing argocd-server \
-  --output jsonpath='{.spec.rules[0].host}' \
-  --ignore-not-found
+  get configmap argocd-cm \
+  --output jsonpath='{.data.url}' \
+  --ignore-not-found \
+| sed 's|https://||'
