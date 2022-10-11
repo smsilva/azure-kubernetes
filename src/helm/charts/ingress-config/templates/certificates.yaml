@@ -1,0 +1,16 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argocd-server-{{ .Values.environment.cluster.certificates.type }}-{{ .Values.environment.cluster.certificates.server }}
+spec:
+  commonName: argocd.{{ .Values.environment.id }}.{{ .Values.environment.domain }}
+  
+  dnsNames:
+    - argocd.{{ .Values.environment.id }}.{{ .Values.environment.domain }}
+
+  secretName: argocd-server-{{ .Values.environment.cluster.certificates.type }}-{{ .Values.environment.cluster.certificates.server }}
+
+  issuerRef:
+    kind: ClusterIssuer
+    name: {{ .Values.environment.cluster.certificates.type }}-{{ .Values.environment.cluster.certificates.server }}-{{ .Values.environment.cluster.ingress.type }}

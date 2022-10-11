@@ -18,6 +18,7 @@ resource "azuread_application" "default" {
     logout_url   = "https://${local.azuread_application_url}/logout"
 
     redirect_uris = [
+      "https://argocd.${var.dns_zone}/auth/callback",
       "https://${local.azuread_application_url}/auth/callback",
       "https://oidcdebugger.com/debug",
       "http://localhost/auth/callback",
