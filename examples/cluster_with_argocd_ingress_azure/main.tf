@@ -4,7 +4,7 @@ locals {
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
   cluster_version                          = "1.23.8"
-  cluster_node_pool_min_count              = 3
+  cluster_node_pool_min_count              = 2
   cluster_node_pool_max_count              = 5
   cluster_node_pool_name                   = "system1"
   cluster_administrators_ids               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
@@ -12,12 +12,14 @@ locals {
   install_external_secrets                 = true
   install_external_dns                     = true
   install_ingress_azure                    = true
-  install_argocd                           = true
-  install_app_of_apps_infra                = true
+  install_argocd                           = false
+  install_app_of_apps_infra                = false
   dns_zone                                 = "sandbox.wasp.silvios.me"
+  dns_zone_resource_group_name             = "wasp-foundation"
   cluster_ingress_type                     = "azure"
   cert_manager_issuer_type                 = "letsencrypt"
   cert_manager_issuer_server               = "staging" # [ staging | production ]
+  ingress_cname_record                     = "inbound.${local.cluster_random_id}"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
   argocd_administrators_ids                = local.cluster_administrators_ids
@@ -71,8 +73,16 @@ module "application_gateway" {
   ]
 }
 
+resource "azurerm_dns_cname_record" "example" {
+  name                = local.ingress_cname_record
+  zone_name           = data.azurerm_dns_zone.wasp.name
+  resource_group_name = data.azurerm_dns_zone.wasp.resource_group_name
+  ttl                 = 300
+  record              = module.application_gateway.application_gateway_public_ip_fqdn
+}
+
 module "argocd_app_registration" {
-  count  = local.install_argocd ? 1 : 0
+  count = local.install_argocd ? 1 : 0
 
   source = "../../src/active-directory/app-registration"
 

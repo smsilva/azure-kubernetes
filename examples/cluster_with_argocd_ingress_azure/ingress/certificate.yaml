@@ -4,10 +4,10 @@ kind: Certificate
 metadata:
   name: httpbin-letsencrypt-staging
 spec:
-  commonName: httpbin.f7lw5.sandbox.wasp.silvios.me
+  commonName: httpbin.0xxx1.sandbox.wasp.silvios.me
   
   dnsNames:
-    - httpbin.f7lw5.sandbox.wasp.silvios.me
+    - httpbin.0xxx1.sandbox.wasp.silvios.me
 
   secretName: httpbin-letsencrypt-staging
 

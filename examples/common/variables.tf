@@ -7,6 +7,11 @@ data "azurerm_key_vault" "default" {
   resource_group_name = local.key_vault_resource_group_name
 }
 
+data "azurerm_dns_zone" "wasp" {
+  name                = local.dns_zone
+  resource_group_name = local.dns_zone_resource_group_name
+}
+
 resource "random_string" "id" {
   length      = 5
   min_lower   = 3

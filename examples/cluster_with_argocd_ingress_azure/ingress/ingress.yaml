@@ -7,16 +7,19 @@ metadata:
     appgw.ingress.kubernetes.io/health-probe-interval: "30"
     appgw.ingress.kubernetes.io/health-probe-timeout: "30"
     appgw.ingress.kubernetes.io/health-probe-unhealthy-threshold: "3"
+
+    external-dns.alpha.kubernetes.io/ttl: "24h"
+    external-dns.alpha.kubernetes.io/target: "inbound.0xxx1.sandbox.wasp.silvios.me"
 spec:
   ingressClassName: azure-application-gateway
 
   tls:
     - hosts:
-        - httpbin.f7lw5.sandbox.wasp.silvios.me
+        - httpbin.0xxx1.sandbox.wasp.silvios.me
       secretName: httpbin-letsencrypt-staging
 
   rules:
-    - host: httpbin.f7lw5.sandbox.wasp.silvios.me
+    - host: httpbin.0xxx1.sandbox.wasp.silvios.me
       http:
         paths:
           - backend:
