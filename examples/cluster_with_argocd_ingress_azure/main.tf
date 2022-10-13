@@ -17,10 +17,11 @@ locals {
   dns_zone                                 = "sandbox.wasp.silvios.me"
   dns_zone_resource_group_name             = "wasp-foundation"
   cluster_ingress_type                     = "azure"
-  cert_manager_issuer_type                 = "letsencrypt"
-  cert_manager_issuer_server               = "staging" # [ staging | production ]
   cname_record_ingress                     = "gateway.${local.cluster_random_id}"
   cname_record_argocd                      = "argocd.${local.cluster_random_id}"
+  cert_manager_issuer_type                 = "letsencrypt"
+  cert_manager_issuer_server               = "staging" # [ staging | production ]
+  cert_manager_fqdn                        = "${local.cname_record_ingress}.${local.dns_zone}"
   argocd_app_registration_name             = local.cname_record_argocd
   argocd_administrators_ids                = local.cluster_administrators_ids
   argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
@@ -93,7 +94,7 @@ module "cert_manager" {
   count  = local.install_cert_manager ? 1 : 0
   source = "../../src/cert-manager"
 
-  fqdn = "${local.cname_record_ingress}.${local.dns_zone}"
+  fqdn = local.cert_manager_fqdn
 
   depends_on = [
     module.aks

@@ -15,18 +15,21 @@ locals {
   install_argocd                           = true
   install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
+  dns_zone_resource_group_name             = "wasp-foundation"
   cluster_ingress_type                     = "nginx"
+  cname_record_ingress                     = "gateway.${local.cluster_random_id}"
+  cname_record_argocd                      = "argocd.${local.cluster_random_id}"
   cert_manager_issuer_type                 = "letsencrypt"
-  cert_manager_issuer_server               = "staging"
-  argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
-  argocd_app_registration_name             = local.argocd_host_base_name
+  cert_manager_issuer_server               = "staging" # [ staging | production ]
+  cert_manager_fqdn                        = "${local.cname_record_ingress}.${local.dns_zone}"
+  argocd_app_registration_name             = local.cname_record_argocd
   argocd_administrators_ids                = local.cluster_administrators_ids
   argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
   argocd_app_of_apps_infra_target_revision = "development"
   argocd_ingress_issuer_name               = "${local.cert_manager_issuer_type}-${local.cert_manager_issuer_server}-${local.cluster_ingress_type}"
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
-  nginx_load_balancer_public_ip_cname      = "ingress.${local.cluster_random_id}"
+  nginx_load_balancer_public_ip_cname      = local.cname_record_ingress
   external_dns_domain_filter               = "${local.cluster_random_id}.${local.dns_zone}"
   virtual_network_name                     = local.cluster_name
   virtual_network_cidrs                    = ["10.244.0.0/14"]
@@ -67,6 +70,8 @@ module "argocd_app_registration" {
 module "cert_manager" {
   count  = local.install_cert_manager ? 1 : 0
   source = "../../src/cert-manager"
+
+  fqdn = local.cert_manager_fqdn
 
   depends_on = [
     module.aks
@@ -114,13 +119,17 @@ module "argo_cd" {
   count  = local.install_argocd ? 1 : 0
   source = "../../src/argo-cd"
 
-  cname               = local.argocd_host_base_name
-  domain              = local.dns_zone
-  tenant_id           = data.azurerm_client_config.current.tenant_id
-  sso_application_id  = module.argocd_app_registration[0].instance.application_id
-  administrators_ids  = local.argocd_administrators_ids
-  contributors_ids    = local.argocd_contributors_ids
-  ingress_issuer_name = local.argocd_ingress_issuer_name
+  cname                       = local.cname_record_argocd
+  domain                      = local.dns_zone
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  sso_application_id          = module.argocd_app_registration[0].instance.application_id
+  administrators_ids          = local.argocd_administrators_ids
+  contributors_ids            = local.argocd_contributors_ids
+  environment_id              = local.cluster_random_id
+  cluster_name                = local.cluster_name
+  cluster_ingress_type        = local.cluster_ingress_type
+  cluster_certificates_server = local.cert_manager_issuer_server
+  cluster_certificates_type   = local.cert_manager_issuer_type
 
   depends_on = [
     module.argocd_app_registration,

@@ -1,5 +1,0 @@
----
-global:
-  environment:
-    id: {{ .Values.global.environment.id }}
-    domain: {{ .Values.global.environment.domain }}

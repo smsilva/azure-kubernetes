@@ -47,6 +47,12 @@ while ! external-secrets 5; do
 done
 echo ""
 
+# argo-cd pods running
+while ! argocd-pods-running 7; do
+  sleep 20;
+done
+echo ""
+
 # argo-cd DNS check
 while ! check-dns "$(argocd-host)"; do
   sleep 20;

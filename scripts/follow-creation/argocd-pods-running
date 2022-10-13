@@ -1,0 +1,21 @@
+#!/bin/bash
+DESIRED_POD_COUNT=$1
+
+RUNNING_POD_COUNT=$(
+  kubectl \
+    --namespace argocd \
+    get pods \
+    --ignore-not-found \
+| egrep "^argocd.*1/1.*Running" \
+| wc -l
+)
+
+echo "argo-cd Running PODs: ${RUNNING_POD_COUNT} (expected: ${DESIRED_POD_COUNT})"
+
+DESIRED_POD_COUNT_TO_COMPARE=$((${DESIRED_POD_COUNT} -1))
+
+if [ "${RUNNING_POD_COUNT}" -gt ${DESIRED_POD_COUNT_TO_COMPARE} ]; then
+  exit 0
+fi
+
+exit 1
