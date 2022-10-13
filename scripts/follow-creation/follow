@@ -41,15 +41,15 @@ while ! external-secrets 1; do
 done
 echo ""
 
-# external-secrets ExternalSecret
-while ! external-secrets 5; do
-  sleep 10; clear
-done
-echo ""
-
 # argo-cd pods running
 while ! argocd-pods-running 7; do
   sleep 20;
+done
+echo ""
+
+# external-secrets ExternalSecret
+while ! external-secrets 5; do
+  sleep 10; clear
 done
 echo ""
 

@@ -1,6 +1,10 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Changed]: Updated example PrometheusRule expression for missing apps"
+    - "[Added]: PDB for Application Set controller"
+    - "[Added]: PDB for Notifications controller"
+    - "[Added]: PDB for Slack bot"
+    - "[Fixed]: PDB for Redis is not created if redis-ha is enabled"
+    - "[Changed]: Documentation for PDB usage"
 apiVersion: v2
 appVersion: v2.4.14
 dependencies:
@@ -23,4 +27,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.5.11
+version: 5.5.24
