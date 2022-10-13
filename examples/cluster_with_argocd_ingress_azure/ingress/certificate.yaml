@@ -1,0 +1,16 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: httpbin-letsencrypt-staging
+spec:
+  commonName: httpbin.0xxx1.sandbox.wasp.silvios.me
+  
+  dnsNames:
+    - httpbin.0xxx1.sandbox.wasp.silvios.me
+
+  secretName: httpbin-letsencrypt-staging
+
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-staging-azure

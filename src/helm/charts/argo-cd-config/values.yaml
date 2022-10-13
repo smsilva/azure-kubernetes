@@ -1,0 +1,21 @@
+global:
+  environment:
+    id: b10oy
+    domain: sandbox.wasp.silvios.me
+
+    cluster:
+      name: wasp-b10oy
+
+      ingress:
+        type: azure
+
+      certificates:
+        type: letsencrypt
+        server: staging
+
+charts:
+  ingress-azure:
+    enabled: true
+
+  ingress-nginx:
+    enabled: false

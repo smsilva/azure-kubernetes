@@ -1,0 +1,4 @@
+configs:
+  params:
+    server.enable.gzip: true
+    server.insecure: ${configs_params_server_insecure}

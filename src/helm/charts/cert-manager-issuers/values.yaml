@@ -1,3 +1,5 @@
+fqdn: gateway.environment-id.sandbox.wasp.silvios.me
+
 letsencrypt:
   email: alerts@silvios.me
 

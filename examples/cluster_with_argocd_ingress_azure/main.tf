@@ -4,7 +4,7 @@ locals {
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
   cluster_version                          = "1.23.8"
-  cluster_node_pool_min_count              = 3
+  cluster_node_pool_min_count              = 2
   cluster_node_pool_max_count              = 5
   cluster_node_pool_name                   = "system1"
   cluster_administrators_ids               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
@@ -15,15 +15,16 @@ locals {
   install_argocd                           = true
   install_app_of_apps_infra                = true
   dns_zone                                 = "sandbox.wasp.silvios.me"
+  dns_zone_resource_group_name             = "wasp-foundation"
   cluster_ingress_type                     = "azure"
   cert_manager_issuer_type                 = "letsencrypt"
   cert_manager_issuer_server               = "staging" # [ staging | production ]
-  argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
-  argocd_app_registration_name             = local.argocd_host_base_name
+  cname_record_ingress                     = "gateway.${local.cluster_random_id}"
+  cname_record_argocd                      = "argocd.${local.cluster_random_id}"
+  argocd_app_registration_name             = local.cname_record_argocd
   argocd_administrators_ids                = local.cluster_administrators_ids
   argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
   argocd_app_of_apps_infra_target_revision = "development"
-  argocd_ingress_issuer_name               = "${local.cert_manager_issuer_type}-${local.cert_manager_issuer_server}-${local.cluster_ingress_type}"
   external_dns_domain_filter               = "${local.cluster_random_id}.${local.dns_zone}"
   key_vault_name                           = "waspfoundation636a465c"
   key_vault_resource_group_name            = "wasp-foundation"
@@ -71,8 +72,16 @@ module "application_gateway" {
   ]
 }
 
+resource "azurerm_dns_cname_record" "ingress" {
+  name                = local.cname_record_ingress
+  zone_name           = data.azurerm_dns_zone.wasp.name
+  resource_group_name = data.azurerm_dns_zone.wasp.resource_group_name
+  ttl                 = 86400
+  record              = module.application_gateway.application_gateway_public_ip_fqdn
+}
+
 module "argocd_app_registration" {
-  count  = local.install_argocd ? 1 : 0
+  count = local.install_argocd ? 1 : 0
 
   source = "../../src/active-directory/app-registration"
 
@@ -83,6 +92,8 @@ module "argocd_app_registration" {
 module "cert_manager" {
   count  = local.install_cert_manager ? 1 : 0
   source = "../../src/cert-manager"
+
+  fqdn = "${local.cname_record_ingress}.${local.dns_zone}"
 
   depends_on = [
     module.aks
@@ -133,13 +144,17 @@ module "argo_cd" {
   count  = local.install_argocd ? 1 : 0
   source = "../../src/argo-cd"
 
-  cname               = local.argocd_host_base_name
-  domain              = local.dns_zone
-  tenant_id           = data.azurerm_client_config.current.tenant_id
-  sso_application_id  = module.argocd_app_registration[0].instance.application_id
-  administrators_ids  = local.argocd_administrators_ids
-  contributors_ids    = local.argocd_contributors_ids
-  ingress_issuer_name = local.argocd_ingress_issuer_name
+  cname                       = local.cname_record_argocd
+  domain                      = local.dns_zone
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  sso_application_id          = module.argocd_app_registration[0].instance.application_id
+  administrators_ids          = local.argocd_administrators_ids
+  contributors_ids            = local.argocd_contributors_ids
+  environment_id              = local.cluster_random_id
+  cluster_name                = local.cluster_name
+  cluster_ingress_type        = local.cluster_ingress_type
+  cluster_certificates_server = local.cert_manager_issuer_server
+  cluster_certificates_type   = local.cert_manager_issuer_type
 
   depends_on = [
     module.argocd_app_registration,

@@ -18,6 +18,11 @@ resource "helm_release" "cert_manager_issuers" {
   create_namespace = true
   atomic           = true
 
+  set {
+    name  = "fqdn"
+    value = var.fqdn
+  }
+
   depends_on = [
     helm_release.cert_manager
   ]

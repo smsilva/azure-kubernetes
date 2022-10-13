@@ -1,0 +1,11 @@
+#!/bin/bash
+kubectl get ingress
+
+echo ""
+
+kubectl get certificate
+
+echo ""
+
+kubectl get secrets \
+| egrep -v "^default"
