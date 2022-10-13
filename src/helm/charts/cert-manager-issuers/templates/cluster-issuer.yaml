@@ -21,7 +21,7 @@ spec:
                   type: "challenge"
                 annotations:
                   external-dns.alpha.kubernetes.io/ttl: "24h"
-                  external-dns.alpha.kubernetes.io/target: "inbound.0xxx1.sandbox.wasp.silvios.me"
+                  external-dns.alpha.kubernetes.io/target: {{ $.Values.fqdn | quote }}
 {{- end }}
 {{- end }}
 ---

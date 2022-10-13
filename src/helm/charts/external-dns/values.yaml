@@ -122,7 +122,7 @@ sources:
   - service
   - ingress
 
-policy: upsert-only
+policy: sync
 
 registry: txt
 txtOwnerId: ""

@@ -19,7 +19,7 @@ locals {
   cluster_ingress_type                     = "azure"
   cert_manager_issuer_type                 = "letsencrypt"
   cert_manager_issuer_server               = "staging" # [ staging | production ]
-  ingress_cname_record                     = "inbound.${local.cluster_random_id}"
+  ingress_cname_record                     = "gateway.${local.cluster_random_id}"
   argocd_host_base_name                    = "argocd.${local.cluster_random_id}"
   argocd_app_registration_name             = local.argocd_host_base_name
   argocd_administrators_ids                = local.cluster_administrators_ids
@@ -93,6 +93,8 @@ module "argocd_app_registration" {
 module "cert_manager" {
   count  = local.install_cert_manager ? 1 : 0
   source = "../../src/cert-manager"
+
+  fqdn = "${local.ingress_cname_record}.${local.dns_zone}"
 
   depends_on = [
     module.aks
