@@ -1,3 +1,9 @@
+sources:
+  - service
+  - ingress
+
+policy: sync
+
 registry: txt
 txtOwnerId: ""
 txtPrefix: ""

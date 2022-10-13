@@ -70,3 +70,34 @@ resource "helm_release" "argocd" {
     data.template_file.sso,
   ]
 }
+
+data "template_file" "argocd_config" {
+  template = file("${path.module}/templates/ingress-config.yaml")
+  vars = {
+    global_environment_id                          = var.environment_id
+    global_environment_domain                      = var.domain
+    global_environment_cluster_name                = var.cluster_name
+    global_environment_cluster_ingress_type        = var.cluster_ingress_type
+    global_environment_cluster_certificates_type   = var.cluster_certificates_type
+    global_environment_cluster_certificates_server = var.cluster_certificates_server
+    charts_ingress_azure_enabled                   = "true"
+    charts_ingress_nginx_enabled                   = "false"
+  }
+}
+
+resource "helm_release" "argocd_config" {
+  chart            = "${path.module}/../helm/charts/argo-cd-config"
+  name             = "argocd-config"
+  namespace        = "argocd"
+  create_namespace = true
+  atomic           = true
+  timeout          = 600 # 10 minutes
+
+  values = [
+    data.template_file.argocd_config.rendered,
+  ]
+
+  depends_on = [
+    helm_release.argocd
+  ]
+}

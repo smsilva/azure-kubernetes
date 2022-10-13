@@ -39,3 +39,23 @@ variable "administrators_ids" {
 variable "contributors_ids" {
   type = list(string)
 }
+
+variable "environment_id" {
+  type = string
+}
+
+variable "cluster_name" {
+  type = string
+}
+
+variable "cluster_ingress_type" {
+  type = string
+}
+
+variable "cluster_certificates_type" {
+  type = string
+}
+
+variable "cluster_certificates_server" {
+  type = string
+}

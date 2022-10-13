@@ -8,7 +8,7 @@ metadata:
     appgw.ingress.kubernetes.io/health-probe-timeout: "30"
     appgw.ingress.kubernetes.io/health-probe-unhealthy-threshold: "3"
 spec:
-  ingressClassName: {{ .Values.global.environment.cluster.ingress.class }}
+  ingressClassName: azure-application-gateway
 
   tls:
     - hosts:

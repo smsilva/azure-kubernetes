@@ -13,7 +13,7 @@ metadata:
     external-dns.alpha.kubernetes.io/ttl: "3m"
     external-dns.alpha.kubernetes.io/target: gateway.{{ .Values.global.environment.id }}.{{ .Values.global.environment.domain }}
 spec:
-  ingressClassName: {{ .Values.global.environment.cluster.ingress.class }}
+  ingressClassName: azure-application-gateway
 
   tls:
     - hosts:

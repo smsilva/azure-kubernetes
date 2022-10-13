@@ -1,0 +1,21 @@
+global:
+  environment:
+    id: ${global_environment_id}
+    domain: ${global_environment_domain}
+
+    cluster:
+      name: ${global_environment_cluster_name}
+
+      ingress:
+        type: ${global_environment_cluster_ingress_type}
+
+      certificates:
+        type: ${global_environment_cluster_certificates_type}
+        server: ${global_environment_cluster_certificates_server}
+
+charts:
+  ingress-azure:
+    enabled: ${charts_ingress_azure_enabled}
+
+  ingress-nginx:
+    enabled: ${charts_ingress_nginx_enabled}

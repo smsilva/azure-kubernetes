@@ -12,7 +12,7 @@ locals {
   install_external_secrets                 = true
   install_external_dns                     = true
   install_ingress_azure                    = true
-  install_argocd                           = false
+  install_argocd                           = true
   install_app_of_apps_infra                = false
   dns_zone                                 = "sandbox.wasp.silvios.me"
   dns_zone_resource_group_name             = "wasp-foundation"
@@ -145,13 +145,18 @@ module "argo_cd" {
   count  = local.install_argocd ? 1 : 0
   source = "../../src/argo-cd"
 
-  cname               = local.argocd_host_base_name
-  domain              = local.dns_zone
-  tenant_id           = data.azurerm_client_config.current.tenant_id
-  sso_application_id  = module.argocd_app_registration[0].instance.application_id
-  administrators_ids  = local.argocd_administrators_ids
-  contributors_ids    = local.argocd_contributors_ids
-  ingress_issuer_name = local.argocd_ingress_issuer_name
+  cname                       = local.argocd_host_base_name
+  domain                      = local.dns_zone
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  sso_application_id          = module.argocd_app_registration[0].instance.application_id
+  administrators_ids          = local.argocd_administrators_ids
+  contributors_ids            = local.argocd_contributors_ids
+  ingress_issuer_name         = local.argocd_ingress_issuer_name
+  environment_id              = local.cluster_random_id
+  cluster_name                = local.cluster_name
+  cluster_ingress_type        = local.cluster_ingress_type
+  cluster_certificates_server = local.cert_manager_issuer_server
+  cluster_certificates_type   = local.cert_manager_issuer_type
 
   depends_on = [
     module.argocd_app_registration,
