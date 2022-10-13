@@ -4,7 +4,7 @@ configs:
 
 server:
   ingress:
-    enabled: true
+    enabled: false
     https: true
     hosts:
       - ${server_ingress_host}.${server_ingress_domain}
