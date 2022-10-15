@@ -21,6 +21,10 @@ spec:
       containers:
         - image: docker.io/kennethreitz/httpbin
           name: httpbin
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
 ---
 apiVersion: v1
 kind: Service
@@ -33,6 +37,6 @@ spec:
     app: httpbin
 
   ports:
-    - port: 80
+    - port: 8000
       protocol: TCP
-      targetPort: 80
+      targetPort: http
