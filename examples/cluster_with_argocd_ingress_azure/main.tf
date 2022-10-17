@@ -3,7 +3,7 @@ locals {
   cluster_name                             = "wasp-${local.cluster_random_id}"
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
-  cluster_version                          = "1.23.8"
+  cluster_version                          = "1.23.12"
   cluster_node_pool_min_count              = 2
   cluster_node_pool_max_count              = 5
   cluster_node_pool_name                   = "system1"
