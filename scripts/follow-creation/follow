@@ -48,19 +48,19 @@ done
 echo ""
 
 # external-secrets ExternalSecret
-while ! external-secrets 5; do
+while ! external-secrets 4; do
   sleep 10; clear
 done
 echo ""
 
 # argo-cd DNS check
 while ! check-dns "$(argocd-host)"; do
-  sleep 20;
+  sleep 15;
 done
 echo ""
 
 # argo-cd curl check
 while ! check-curl-wait "$(argocd-host)"; do
-  sleep 20;
+  sleep 15;
 done
 echo ""

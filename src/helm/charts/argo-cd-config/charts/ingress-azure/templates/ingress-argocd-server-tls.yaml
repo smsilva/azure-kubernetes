@@ -9,9 +9,6 @@ metadata:
     appgw.ingress.kubernetes.io/health-probe-unhealthy-threshold: "3"
 
     cert-manager.io/cluster-issuer: {{ .Values.global.environment.cluster.certificates.type }}-{{ .Values.global.environment.cluster.certificates.server }}-{{ .Values.global.environment.cluster.ingress.type }}
-
-    external-dns.alpha.kubernetes.io/ttl: "3m"
-    external-dns.alpha.kubernetes.io/target: gateway.{{ .Values.global.environment.id }}.{{ .Values.global.environment.domain }}
 spec:
   ingressClassName: azure-application-gateway
 
