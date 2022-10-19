@@ -11,3 +11,7 @@ certificate:
 
 secret:
   prefix: ingress-tls-
+
+gateway:
+  service:
+    externalTrafficPolicy: Local
