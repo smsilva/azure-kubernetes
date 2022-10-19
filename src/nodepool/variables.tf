@@ -70,5 +70,5 @@ variable "taints" {
 
 variable "zones" {
   type    = list(string)
-  default = [ "1" ]
+  default = ["1"]
 }

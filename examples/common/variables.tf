@@ -47,7 +47,7 @@ locals {
   ]
 }
 
-data "azurerm_dns_zone" "wasp" {
+data "azurerm_dns_zone" "default" {
   name                = local.dns_zone
   resource_group_name = local.dns_zone_resource_group_name
 }

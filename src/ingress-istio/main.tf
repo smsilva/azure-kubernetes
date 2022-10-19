@@ -31,7 +31,7 @@ data "template_file" "istio_gateway_service_values" {
 }
 
 resource "kubernetes_namespace" "istio_ingress" {
-  
+
   metadata {
     name = "istio-ingress"
 
@@ -50,22 +50,22 @@ resource "helm_release" "istio_gateway" {
   atomic           = true
 
   set {
-    name = "dns.cname"
+    name  = "dns.cname"
     value = var.cname
   }
 
   set {
-    name = "dns.domain"
+    name  = "dns.domain"
     value = var.domain
   }
 
   set {
-    name = "certificate.type"
+    name  = "certificate.type"
     value = var.certificate_type
   }
 
   set {
-    name = "certificate.server"
+    name  = "certificate.server"
     value = var.certificate_server
   }
 

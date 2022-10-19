@@ -1,5 +1,5 @@
 variable "script" {
-  default = "environment_variables"  
+  default = "environment_variables"
 }
 
 data "external" "variables" {
