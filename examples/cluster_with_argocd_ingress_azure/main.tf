@@ -1,40 +1,13 @@
 locals {
-  cluster_random_id                        = random_string.id.result
-  cluster_name                             = "wasp-${local.cluster_random_id}"
-  cluster_resource_group_name              = local.cluster_name
-  cluster_resource_group_location          = "eastus2"
-  cluster_version                          = "1.23.12"
-  cluster_node_pool_min_count              = 2
-  cluster_node_pool_max_count              = 5
-  cluster_node_pool_name                   = "system1"
-  cluster_administrators_ids               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
-  install_cert_manager                     = true
-  install_external_secrets                 = true
-  install_ingress_azure                    = true
-  install_argocd                           = true
-  install_app_of_apps_infra                = true
-  dns_zone                                 = "sandbox.wasp.silvios.me"
-  dns_zone_resource_group_name             = "wasp-foundation"
-  cluster_ingress_type                     = "azure"
-  cname_record_wildcard                    = "*.${local.cluster_random_id}"
-  cname_record_ingress                     = "gateway.${local.cluster_random_id}"
-  cname_record_argocd                      = "argocd.${local.cluster_random_id}"
-  cert_manager_issuer_type                 = "letsencrypt"
-  cert_manager_issuer_server               = "staging" # [ staging | production ]
-  cert_manager_fqdn                        = "${local.cname_record_ingress}.${local.dns_zone}"
-  argocd_app_registration_name             = local.cname_record_argocd
-  argocd_administrators_ids                = local.cluster_administrators_ids
-  argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
-  argocd_app_of_apps_infra_target_revision = "development"
-  key_vault_name                           = "waspfoundation636a465c"
-  key_vault_resource_group_name            = "wasp-foundation"
-  application_gateway_name                 = local.cluster_name
-  virtual_network_name                     = local.cluster_name
-  virtual_network_cidrs                    = ["10.244.0.0/14"]
-  virtual_network_subnets = [
-    { cidr = "10.246.0.0/16", name = "aks" },
-    { cidr = "10.245.0.0/28", name = "application_gateway" },
-  ]
+  cluster_version             = "1.23.12"
+  cluster_node_pool_min_count = 2
+  cluster_node_pool_max_count = 5
+  install_cert_manager        = true
+  install_external_secrets    = true
+  install_ingress_azure       = true
+  install_argocd              = true
+  install_app_of_apps_infra   = true
+  cluster_ingress_type        = "azure"
 }
 
 resource "azurerm_resource_group" "default" {
@@ -63,7 +36,7 @@ module "aks" {
 module "application_gateway" {
   source = "../../src/application-gateway"
 
-  name           = local.application_gateway_name
+  name           = local.cluster_name
   subnet_id      = module.vnet.subnets["application_gateway"].instance.id
   resource_group = azurerm_resource_group.default
 

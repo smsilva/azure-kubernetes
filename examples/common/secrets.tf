@@ -1,7 +1,7 @@
 # this file is in the common directory
 
 module "argocd_app_registration_password" {
-  count  = local.install_argocd ? 1 : 0
+  count = local.install_argocd ? 1 : 0
 
   source = "git@github.com:smsilva/azure-key-vault.git//src/secret?ref=1.0.0"
 
