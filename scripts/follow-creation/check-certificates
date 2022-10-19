@@ -1,0 +1,26 @@
+#!/bin/bash
+REGEX="${1}"
+COUNT=${2-1}
+
+CACHE_FILE="${HOME}/trash/file"
+# CACHE_FILE=$(mktemp)
+
+echo "certificates (Regex: \"${REGEX}\" ${COUNT})"
+echo ""
+
+kubectl get certificates -A \
+| egrep "NAME|${REGEX}.*True" \
+| tee "${CACHE_FILE?}"
+
+CERTITICATES_READY_COUNT=$(
+egrep "${REGEX}.*True" "${CACHE_FILE?}" \
+| wc -l
+)
+
+COUNT_TO_COMPARE=$((${COUNT} -1))
+
+if [ "${CERTITICATES_READY_COUNT}" -gt ${COUNT_TO_COMPARE} ]; then
+  exit 0
+fi
+
+exit 1

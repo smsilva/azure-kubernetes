@@ -59,6 +59,12 @@ while ! check-dns "$(argocd-host)"; do
 done
 echo ""
 
+# argo-cd Certificate check
+while ! check-certificates "^argocd" 1; do
+  sleep 15;
+done
+echo ""
+
 # argo-cd curl check
 while ! check-curl-wait "$(argocd-host)"; do
   sleep 15;
