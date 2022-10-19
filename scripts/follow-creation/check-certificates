@@ -8,12 +8,18 @@ CACHE_FILE="${HOME}/trash/file"
 echo "certificates (Regex: \"${REGEX}\" ${COUNT})"
 echo ""
 
-kubectl get certificates,ingress -A \
+kubectl get certificates -A \
 | egrep "NAME|${REGEX}|^ " \
 | tee "${CACHE_FILE?}"
 
+echo ""
+
+kubectl get ingress -A \
+| egrep "NAME|${REGEX}|^ " \
+| tee -a "${CACHE_FILE?}"
+
 CERTITICATES_READY_COUNT=$(
-egrep "${REGEX}.*certificate.cert-manager.io.*True" "${CACHE_FILE?}" \
+egrep "${REGEX}.*True" "${CACHE_FILE?}" \
 | wc -l
 )
 
