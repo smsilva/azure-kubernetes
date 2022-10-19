@@ -21,7 +21,7 @@ spec:
                   type: "challenge"
                 annotations:
                   external-dns.alpha.kubernetes.io/ttl: "1m"
-                  external-dns.alpha.kubernetes.io/target: {{ .Values.fqdn | quote }}
+                  external-dns.alpha.kubernetes.io/target: {{ $.Values.fqdn | quote }}
 {{- end }}
 {{- end }}
 ---

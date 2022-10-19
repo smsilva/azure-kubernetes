@@ -47,8 +47,8 @@ module "application_gateway" {
 
 resource "azurerm_dns_cname_record" "wildcard" {
   name                = local.cname_record_wildcard
-  zone_name           = data.azurerm_dns_zone.wasp.name
-  resource_group_name = data.azurerm_dns_zone.wasp.resource_group_name
+  zone_name           = data.azurerm_dns_zone.default.name
+  resource_group_name = data.azurerm_dns_zone.default.resource_group_name
   ttl                 = 60
   record              = module.application_gateway.application_gateway_public_ip_fqdn
 }
