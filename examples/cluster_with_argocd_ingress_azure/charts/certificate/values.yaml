@@ -1,0 +1,16 @@
+issuer:
+  kind: ClusterIssuer
+  name: letsencrypt-staging-azure
+
+ingress:
+  class: azure-application-gateway
+
+domain: 04atd.sandbox.wasp.silvios.me
+
+names:
+  - apps
+  - services
+
+generate:
+  certificate: true
+  ingress: true

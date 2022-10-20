@@ -1,22 +1,24 @@
+{{- if .Values.generate.ingress }}
+{{- range $cname := .Values.names }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: httpbin-tls-wildcard
+  name: {{ $.Values.issuer.name }}-{{ $cname }}
   annotations:
     appgw.ingress.kubernetes.io/health-probe-interval: "30"
     appgw.ingress.kubernetes.io/health-probe-timeout: "30"
     appgw.ingress.kubernetes.io/health-probe-unhealthy-threshold: "3"
 spec:
-  ingressClassName: azure-application-gateway
+  ingressClassName: {{ $.Values.ingress.class }}
 
   tls:
     - hosts:
-        - echo.sandbox.wasp.silvios.me
-      secretName: wildcard-certificate
+        - {{ $cname }}.{{ $.Values.domain }}
+      secretName: {{ first $.Values.names }}-{{ $.Values.issuer.name }}
 
   rules:
-    - host: echo.sandbox.wasp.silvios.me
+    - host: {{ $cname }}.{{ $.Values.domain }}
       http:
         paths:
           - backend:
@@ -26,3 +28,5 @@ spec:
                   number: 8000
             path: /
             pathType: ImplementationSpecific
+{{- end }}
+{{- end }}

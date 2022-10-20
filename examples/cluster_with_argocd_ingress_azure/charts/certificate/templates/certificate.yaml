@@ -1,0 +1,18 @@
+{{- if .Values.generate.certificate }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ first .Values.names }}-{{ .Values.issuer.name }}
+spec:
+  dnsNames:
+  {{- range $cname := .Values.names }}
+    - {{ $cname }}.{{ $.Values.domain }}
+  {{- end }}
+
+  secretName: {{ first .Values.names }}-{{ .Values.issuer.name }}
+
+  issuerRef:
+    kind: {{ .Values.issuer.kind }}
+    name: {{ .Values.issuer.name }}
+{{- end }}
