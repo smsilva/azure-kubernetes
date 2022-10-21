@@ -15,7 +15,7 @@ extraObjects:
           HostkeyAlgorithms +ssh-rsa 
           PubkeyAcceptedAlgorithms +ssh-rsa
 
-  - apiVersion: external-secrets.io/v1alpha1
+  - apiVersion: external-secrets.io/v1beta1
     kind: ExternalSecret
     metadata:
       name: argocd-secret-merge-oidc-azuread
@@ -32,7 +32,7 @@ extraObjects:
           remoteRef:
             key: secret/argocd-oidc-azuread-${argocd_sso_application_id}
 
-  - apiVersion: external-secrets.io/v1alpha1
+  - apiVersion: external-secrets.io/v1beta1
     kind: ExternalSecret
     metadata:
       name: argocd-repo-creds-github
@@ -67,7 +67,7 @@ extraObjects:
           remoteRef:
             key: secret/argocd-repo-creds-url-github
 
-  - apiVersion: external-secrets.io/v1alpha1
+  - apiVersion: external-secrets.io/v1beta1
     kind: ExternalSecret
     metadata:
       name: argocd-repo-creds-ado
