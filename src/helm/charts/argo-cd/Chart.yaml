@@ -1,8 +1,8 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Changed]: Moved Argo Extension resource to argocd-apps chart"
+    - "[Added]: ServiceMonitor resources are able to be annotated"
 apiVersion: v2
-appVersion: v2.4.14
+appVersion: v2.4.15
 dependencies:
 - condition: redis-ha.enabled
   name: redis-ha
@@ -23,4 +23,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.6.0
+version: 5.6.2
