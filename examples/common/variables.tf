@@ -56,3 +56,9 @@ data "azurerm_key_vault" "default" {
   name                = local.key_vault_name
   resource_group_name = local.key_vault_resource_group_name
 }
+
+resource "azurerm_role_assignment" "kubelet_contributor_on_dns_zone" {
+  role_definition_name = "DNS Zone Contributor"
+  principal_id         = module.aks.kubelet_identity_object_id
+  scope                = data.azurerm_dns_zone.default.id
+}

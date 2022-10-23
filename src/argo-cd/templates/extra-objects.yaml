@@ -20,7 +20,7 @@ extraObjects:
     metadata:
       name: argocd-secret-merge-oidc-azuread
     spec:
-      refreshInterval: 1h
+      refreshInterval: 1h0m0s
       secretStoreRef:
         kind: ClusterSecretStore
         name: azure-subscription-key-vault
@@ -37,7 +37,7 @@ extraObjects:
     metadata:
       name: argocd-repo-creds-github
     spec:
-      refreshInterval: 1h
+      refreshInterval: 1h0m0s
       secretStoreRef:
         kind: ClusterSecretStore
         name: azure-subscription-key-vault
@@ -54,7 +54,7 @@ extraObjects:
           type: Opaque
           data:
             sshPrivateKey: |
-              {{`{{ .idrsabase64filecontent | base64decode | toString }}`}}
+              {{`{{ .idrsabase64filecontent | b64dec | toString }}`}}
             url: |
               {{`{{ .privaterepourl | toString }}`}}
     
@@ -72,7 +72,7 @@ extraObjects:
     metadata:
       name: argocd-repo-creds-ado
     spec:
-      refreshInterval: 1h
+      refreshInterval: 1h0m0s
       secretStoreRef:
         kind: ClusterSecretStore
         name: azure-subscription-key-vault
@@ -89,7 +89,7 @@ extraObjects:
           type: Opaque
           data:
             sshPrivateKey: |
-              {{`{{ .idrsabase64filecontent | base64decode | toString }}`}}
+              {{`{{ .idrsabase64filecontent | b64dec | toString }}`}}
             url: |
               {{`{{ .privaterepourl | toString }}`}}
     
