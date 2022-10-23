@@ -1,6 +1,6 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Added]: ServiceMonitor resources are able to be annotated"
+    - "[Changed]: Renamed metrics service templates to metrics.yaml"
 apiVersion: v2
 appVersion: v2.4.15
 dependencies:
@@ -23,4 +23,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.6.2
+version: 5.6.3
