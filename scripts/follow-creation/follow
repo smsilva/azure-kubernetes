@@ -60,6 +60,12 @@ done
 echo ""
 
 # Namespaces
+while ! namespaces "ingress" 1; do
+  sleep 10; clear
+done
+echo ""
+
+# Namespaces
 while ! namespaces "argocd" 1; do
   sleep 10; clear
 done
