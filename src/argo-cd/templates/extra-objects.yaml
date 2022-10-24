@@ -21,12 +21,15 @@ extraObjects:
       name: argocd-secret-merge-oidc-azuread
     spec:
       refreshInterval: 1h0m0s
+
       secretStoreRef:
         kind: ClusterSecretStore
         name: azure-subscription-key-vault
+
       target:
         name: argocd-secret
         creationPolicy: Merge
+
       data:
         - secretKey: "oidc.azuread.clientSecret"
           remoteRef:
@@ -136,3 +139,23 @@ extraObjects:
         - secretKey: "tlscert"
           remoteRef:
             key: secret/wildcard-certificate-base64-encoded
+
+  - apiVersion: external-secrets.io/v1beta1
+    kind: ExternalSecret
+    metadata:
+      name: argocd-notifications-secret
+    spec:
+      refreshInterval: 1h0m0s
+
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: azure-subscription-key-vault
+
+      target:
+        name: argocd-notifications-secret
+        creationPolicy: Merge
+
+      data:
+        - secretKey: "telegram-token"
+          remoteRef:
+            key: secret/telegram-bot-token

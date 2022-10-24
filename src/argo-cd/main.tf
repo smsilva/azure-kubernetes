@@ -17,6 +17,10 @@ locals {
     argocd_sso_application_id = var.sso_application_id
   })
 
+  notifications = templatefile("${path.module}/templates/notifications.yaml", {
+    server_config_url_host = "${var.cname}.${var.domain}"
+  })
+
   configs_server = templatefile("${path.module}/templates/configs-server.yaml", {
     configs_params_server_insecure = var.cluster_ingress_type == "nginx" ? "false" : "true"
   })
@@ -39,6 +43,7 @@ resource "helm_release" "argocd" {
     file("${path.module}/templates/resource-customizations.yaml"),
     local.configs_server,
     local.extra_objects,
+    local.notifications,
     local.rbac,
   ]
 

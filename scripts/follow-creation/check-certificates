@@ -2,8 +2,7 @@
 REGEX="${1}"
 COUNT=${2-1}
 
-CACHE_FILE="${HOME}/trash/file"
-# CACHE_FILE=$(mktemp)
+CACHE_FILE=$(mktemp)
 
 echo "certificates (Regex: \"${REGEX}\" ${COUNT})"
 echo ""
