@@ -1,7 +1,7 @@
 #!/bin/bash
 
 helm repo add aad-pod-identity https://raw.githubusercontent.com/Azure/aad-pod-identity/master/charts &> /dev/null
-helm repo add argo-cd          https://argoproj.github.io/argo-helm                                   &> /dev/null
+helm repo add argo             https://argoproj.github.io/argo-helm                                   &> /dev/null
 helm repo add cert-manager     https://charts.jetstack.io                                             &> /dev/null
 helm repo add external-dns     https://kubernetes-sigs.github.io/external-dns                         &> /dev/null
 helm repo add external-secrets https://charts.external-secrets.io                                     &> /dev/null
