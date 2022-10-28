@@ -7,6 +7,12 @@ show_usage() {
     --resource-group aks-cluster-example \\
     --name user1
 
+  ./aks-nodepool-info \\
+    --subscription 70d05914-4c56-47be-a78c-3b1a47b8f820 \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example \\
+    --name user1
+
 EOF
 }
 
@@ -15,6 +21,10 @@ case $1 in
   -h | --help )
     show_usage
     exit
+    ;;
+
+  -s | --subscription )
+    shift; AZURE_SUBSCRIPTION_ID=$1
     ;;
 
   -cn | --cluster-name )
@@ -40,6 +50,12 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
   exit 1
 fi
 
+if [ -z "${AZURE_SUBSCRIPTION_ID}" ]; then
+  AZURE_SUBSCRIPTION_ID=$(az account show \
+    --query id \
+    --output tsv)
+fi
+
 COLUMN_LIST_MAPPING="{\
 AKS_NODEPOOL_AVAILABILITY_ZONES: .availabilityZones,\
 AKS_NODEPOOL_COUNT: .count,\
@@ -54,17 +70,20 @@ AKS_NODEPOOL_OS_DISK_SIZE_TYPE: .osDiskType,\
 AKS_NODEPOOL_POWER_STATE_CODE: .powerState.code,\
 AKS_NODEPOOL_PROVISIONING_STATE: .provisioningState,\
 AKS_NODEPOOL_VM_SIZE: .vmSize,\
-AKS_NODEPOOL_VNET_SUBNET_ID: .vnetSubnetId\
+AKS_NODEPOOL_VNET_SUBNET_ID: .vnetSubnetId,
+AKS_NODEPOOL_TAINTS: .nodeTaints\
 }"
 
-JQ_COMMAND=$(printf '.[] | %s | to_entries|map("export \(.key)=\(.value|tostring)")|.[]' "${COLUMN_LIST_MAPPING}")
+JQ_COMMAND=$(printf '.[] | %s | to_entries | map("export \(.key)=\(.value|tostring)") | .[]' "${COLUMN_LIST_MAPPING}")
 
 AKS_SHOW_QUERY=$(printf "agentPoolProfiles[?name == '%s']" "${AKS_CLUSTER_NODEPOOL_NAME}")
 
 unset AKS_NODEPOOL_PROVISIONING_STATE
 
 az aks show \
+  --subscription "${AZURE_SUBSCRIPTION_ID}" \
   --name "${AKS_CLUSTER_NAME}" \
   --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
   --query "${AKS_SHOW_QUERY}" \
-  --output json | jq -r "${JQ_COMMAND}"
+  --output json \
+| jq -r "${JQ_COMMAND}"

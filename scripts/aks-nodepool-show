@@ -6,7 +6,12 @@ show_usage() {
   cat <<EOF
 
   ./aks-nodepool-show \\
-    --cluster-name   aks-cluster-example \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example
+
+  ./aks-nodepool-show \\
+    --subscription 70d05914-4c56-47be-a78c-3b1a47b8f820 \\
+    --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example
 
 EOF
@@ -19,6 +24,10 @@ case $1 in
     exit
     ;;
 
+  -s | --subscription )
+    shift; AZURE_SUBSCRIPTION=$1
+    ;;
+
   -cn | --cluster-name )
     shift; AKS_CLUSTER_NAME=$1
     ;;
@@ -26,11 +35,21 @@ case $1 in
   -rg | --resource-group )
     shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
     ;;
+
+  -n | --name )
+    shift; AKS_NODEPOOL_NAME=$1
+    ;;
 esac; shift; done
 
 if [[ "$1" == '--' ]]; then shift; fi
 
 DRY_RUN=${DRY_RUN-n}
+
+if [ -z "${AZURE_SUBSCRIPTION}" ]; then
+  AZURE_SUBSCRIPTION=$(az account show \
+    --query id \
+    --output tsv)
+fi
 
 if [ -z "${AKS_CLUSTER_NAME}"                ] || \
    [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ]; then
@@ -40,16 +59,18 @@ fi
 
 get_nodepool_list() {
   az aks nodepool list \
+    --subscription "${AZURE_SUBSCRIPTION}" \
     --cluster-name ${AKS_CLUSTER_NAME?} \
     --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
     --output tsv \
-    --query '[].name'
+    --query '[].name' \
+  | egrep "${AKS_NODEPOOL_NAME}"
 }
 
 (
-  HEADER_LINE_1="Name         Min     Max     Count   Space   MaxPods   KubernetesVersion   Mode     NodeSize            ProvisioningState "
-  HEADER_LINE_2="-----------  ------  ------  ------  ------  --------  ------------------  -------  ------------------  ------------------"
-
+  HEADER_LINE_1="Name         Min     Max     Count   Space   MaxPods   Version   Mode     NodeSize            ProvisioningState  AutoScale  AvailabilityZones  Subnet            CIDR              "
+  HEADER_LINE_2="-----------  ------  ------  ------  ------  --------  --------  -------  ------------------  ------------------ ---------- ------------------ ----------------- ----------------- "
+  
   echo "${HEADER_LINE_1?}"
   echo "${HEADER_LINE_2?}"
 
@@ -66,15 +87,46 @@ get_nodepool_list() {
     unset AKS_NODEPOOL_ORCHESTRATOR_VERSION
     unset AKS_NODEPOOL_VM_SIZE
     unset AKS_NODEPOOL_MODE
+    unset AKS_NODEPOOL_ENABLE_AUTOS_SCALING
+    unset AKS_NODEPOOL_AVAILABILITY_ZONES
 
     eval $(
       aks-nodepool-info \
+        --subscription "${AZURE_SUBSCRIPTION}" \
         --cluster-name ${AKS_CLUSTER_NAME?} \
         --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
         --name ${NODEPOOL_NAME?}
     )
 
+    if [ "${AKS_NODEPOOL_MIN_COUNT}" == "null" ]; then
+      export AKS_NODEPOOL_MIN_COUNT="0"
+    fi
+
+    if [ "${AKS_NODEPOOL_MAX_COUNT}" == "null" ]; then
+      export AKS_NODEPOOL_MAX_COUNT="0"
+    fi
+
+    if [ "${AKS_NODEPOOL_AVAILABILITY_ZONES}" == "null" ]; then
+      export AKS_NODEPOOL_AVAILABILITY_ZONES="-"
+    else
+      export AKS_NODEPOOL_AVAILABILITY_ZONES=$(
+        jq .[] -r <<< "${AKS_NODEPOOL_AVAILABILITY_ZONES}" \
+        | sort \
+        | tr "\n" "," \
+        | sed 's/.$//'
+      )
+    fi
+
     AKS_NODEPOOL_SPACE_COUNT=$((${AKS_NODEPOOL_MAX_COUNT-0} - ${AKS_NODEPOOL_COUNT-0}))
+
+    if [ "${AKS_NODEPOOL_SPACE_COUNT}" -lt 0 ]; then
+      AKS_NODEPOOL_SPACE_COUNT=0
+    fi
+
+    AKS_NODEPOOL_VNET_SUBNET_CIDR=$(az network vnet subnet show \
+      --ids ${AKS_NODEPOOL_VNET_SUBNET_ID} \
+      --query 'addressPrefix' \
+      --output tsv)
 
     printf "%s " ${NODEPOOL_NAME}
     printf "%s " ${AKS_NODEPOOL_MIN_COUNT}
@@ -85,7 +137,13 @@ get_nodepool_list() {
     printf "%s " ${AKS_NODEPOOL_ORCHESTRATOR_VERSION}
     printf "%s " ${AKS_NODEPOOL_MODE}
     printf "%s " ${AKS_NODEPOOL_VM_SIZE}
-    printf "%s\n" ${AKS_NODEPOOL_PROVISIONING_STATE}
+    printf "%s " ${AKS_NODEPOOL_PROVISIONING_STATE}
+    printf "%s " ${AKS_NODEPOOL_ENABLE_AUTOS_SCALING}
+    printf "%s " ${AKS_NODEPOOL_AVAILABILITY_ZONES}
+    printf "%s " ${AKS_NODEPOOL_VNET_SUBNET_ID##*/}
+    printf "%s " ${AKS_NODEPOOL_VNET_SUBNET_CIDR}
+    
+    echo ""
 
     TOTAL_MIN=$((${TOTAL_MIN} + ${AKS_NODEPOOL_MIN_COUNT-0}))
     TOTAL_MAX=$((${TOTAL_MAX} + ${AKS_NODEPOOL_MAX_COUNT-0}))

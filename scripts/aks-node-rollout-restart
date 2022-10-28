@@ -151,7 +151,7 @@ node_list() {
   kubectl get nodes \
     --output jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' \
     --selector '!rollout-restarted' \
-  | grep -E "${NODE_NAME}"
+  | egrep "${NODE_NAME}"
 }
 
 rollout_restart_deployments() {
@@ -199,13 +199,6 @@ rollout_restart_deployments() {
 }
 
 find_nodes() {
-  if [ "${DEBUG_LEVEL}" -gt "2" ]; then
-    log "Node List filter:"
-    log "AKS_NODE_NAME.......: ${AKS_NODE_NAME}"
-    log "AKS_NODE_COUNT......: ${AKS_NODE_COUNT}"
-    log "SELECTED_NODES_FILE.: ${AKS_NODE_COUNT}"
-  fi
-
   if [ "${AKS_NODE_COUNT}" == "0" ]; then
     node_list "${AKS_NODE_NAME}" > "${SELECTED_NODES_FILE?}"
   else
@@ -235,6 +228,7 @@ find_not_deleted_nodes() {
   NODES_NOT_DELETED=$(kubectl get nodes \
     --selector rollout-restarted \
     --output name \
+  | egrep "${AKS_NODE_NAME}" \
   | wc -l)
 
   if [ "${NODES_NOT_DELETED}" -eq "${AKS_NODE_COUNT}" ] || \
@@ -248,6 +242,12 @@ find_not_deleted_nodes() {
     exit 1
   fi
 }
+
+if [ "${DEBUG_LEVEL}" -gt "1" ]; then
+  log "Node List filter:"
+  log "  name..: ${AKS_NODE_NAME}"
+  log "  count.: ${AKS_NODE_COUNT}"
+fi
 
 log "Check if there are Nodes not deleted yet..."
 find_not_deleted_nodes

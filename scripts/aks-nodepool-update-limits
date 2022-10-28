@@ -48,6 +48,10 @@ case $1 in
     shift; HARD_LIMIT_MAX=$1
     ;;
 
+  -d | --debug )
+    shift; DEBUG_LEVEL=$1
+    ;;
+
   --dry-run )
     shift; DRY_RUN="y"
     ;;
@@ -56,6 +60,7 @@ esac; shift; done
 if [[ "$1" == '--' ]]; then shift; fi
 
 DRY_RUN=${DRY_RUN-n}
+DEBUG_LEVEL=${DEBUG_LEVEL-0}
 
 if [ -z "${AKS_CLUSTER_NAME}"                 ] || \
    [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}"  ] || \
@@ -68,28 +73,37 @@ if [ -z "${AKS_CLUSTER_NAME}"                 ] || \
   exit 1
 fi
 
+# Retrieve Node Pool Source Information
 eval $(
   aks-nodepool-info \
     --cluster-name ${AKS_CLUSTER_NAME} \
     --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
     --name ${AKS_CLUSTER_NODEPOOL_NAME_SOURCE}
 )
-
 export TOTAL_MIN=${AKS_NODEPOOL_MIN_COUNT}
 export TOTAL_MAX=${AKS_NODEPOOL_MAX_COUNT}
 
+# Retrieve Node Pool Target Information
 eval $(
   aks-nodepool-info \
     --cluster-name ${AKS_CLUSTER_NAME} \
     --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
     --name ${AKS_CLUSTER_NODEPOOL_NAME_TARGET}
 )
-
 export TOTAL_MIN=$((${TOTAL_MIN} + ${AKS_NODEPOOL_MIN_COUNT}))
 export TOTAL_MAX=$((${TOTAL_MAX} + ${AKS_NODEPOOL_MAX_COUNT}))
 
+# Calculate Target Increase comparing Hard Limits with Current Limits
 export AKS_NODEPOOL_MIN_COUNT_INCREASE=$((${HARD_LIMIT_MIN} - ${TOTAL_MIN}))
 export AKS_NODEPOOL_MAX_COUNT_INCREASE=$((${HARD_LIMIT_MAX} - ${TOTAL_MAX}))
+
+if [ "${DEBUG_LEVEL}" -gt "0" ]; then
+  if [ "${AKS_NODEPOOL_MIN_COUNT_INCREASE}" == "0" ] && \
+     [ "${AKS_NODEPOOL_MAX_COUNT_INCREASE}" == "0" ]; then
+    echo "Minimum change: ${HARD_LIMIT_MIN} - ${TOTAL_MIN} = ${AKS_NODEPOOL_MIN_COUNT_INCREASE}"
+    echo "Maximum change: ${HARD_LIMIT_MAX} - ${TOTAL_MAX} = ${AKS_NODEPOOL_MAX_COUNT_INCREASE}"
+  fi
+fi
 
 if [ "${AKS_NODEPOOL_MIN_COUNT_INCREASE}" -ne 0 ] || \
    [ "${AKS_NODEPOOL_MAX_COUNT_INCREASE}" -ne 0 ]; then
@@ -105,6 +119,11 @@ if [ "${AKS_NODEPOOL_MIN_COUNT_INCREASE}" -ne 0 ] || \
   fi
 
   echo "[${AKS_CLUSTER_NODEPOOL_NAME_TARGET}] Update [${AKS_NODEPOOL_MIN_COUNT_UPDATE}..${AKS_NODEPOOL_MAX_COUNT_UPDATE}]"
+
+  if [ "${DEBUG_LEVEL}" -gt "0" ]; then
+    echo "  minimum: ${AKS_NODEPOOL_MIN_COUNT} + (${HARD_LIMIT_MIN}-${TOTAL_MIN}=${AKS_NODEPOOL_MIN_COUNT_INCREASE}) = ${AKS_NODEPOOL_MIN_COUNT_UPDATE}"
+    echo "  maximum: ${AKS_NODEPOOL_MAX_COUNT} + (${HARD_LIMIT_MAX}-${TOTAL_MAX}=${AKS_NODEPOOL_MAX_COUNT_INCREASE}) = ${AKS_NODEPOOL_MAX_COUNT_UPDATE}"
+  fi
 
   if [ "${DRY_RUN}" == "n" ]; then
     if [ "${AKS_NODEPOOL_ENABLE_AUTOS_SCALING,,}" != "true" ]; then

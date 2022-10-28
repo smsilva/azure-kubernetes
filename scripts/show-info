@@ -6,8 +6,19 @@ show_usage() {
   cat <<EOF
 
   ./show-info \\
-    --cluster-name   aks-cluster-example \\
+    --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example
+
+  ./show-info \\
+    --subscription 70d05914-4c56-47be-a78c-3b1a47b8f820 \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example
+
+  ./show-info \\
+    --subscription 70d05914-4c56-47be-a78c-3b1a47b8f820 \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example \\
+    --name "user"
 
 EOF
 }
@@ -19,12 +30,20 @@ case $1 in
     exit
     ;;
 
+  -s | --subscription )
+    shift; AZURE_SUBSCRIPTION_ID=$1
+    ;;
+
   -cn | --cluster-name )
     shift; AKS_CLUSTER_NAME=$1
     ;;
 
   -rg | --resource-group )
     shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+
+  -n | --name )
+    shift; AKS_NODEPOOL_NAME=$1
     ;;
 esac; shift; done
 
@@ -36,26 +55,68 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
   exit 1
 fi
 
-aks-nodepool-show \
-  --cluster-name "${AKS_CLUSTER_NAME}" \
-  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}"
-
-KUBECTL_CONFIG_CONTEXT_EXISTS=$(kubectl config get-contexts | grep ${AKS_CLUSTER_NAME} | wc -l)
-
-if [ "${KUBECTL_CONFIG_CONTEXT_EXISTS}" -lt 1 ]; then
-  exit 0
+if [ -z "${AZURE_SUBSCRIPTION_ID}" ]; then
+  AZURE_SUBSCRIPTION_ID=$(az account show \
+    --query id \
+    --output tsv)
 fi
 
-echo ""
+az aks show \
+  --subscription "${AZURE_SUBSCRIPTION_ID}" \
+  --name "${AKS_CLUSTER_NAME}" \
+  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+  --only-show-errors &> /dev/null
 
-(
-echo "RolloutRestartedNode                CandidateToDelete  ScheduledToDelete "
-echo "----------------------------------- ------------------ ------------------"
+if [ "$?" -ne 0 ]; then
+  AZURE_SUBSCRIPTION_NAME=$(az account list \
+    --output tsv \
+    --query "[?id == \`${AZURE_SUBSCRIPTION_ID}\`].name")
 
-kubectl get nodes \
-  --selector rollout-restarted \
-  --output jsonpath='{range .items[*]}{.metadata.name} {.spec.taints[?(@.key == "DeletionCandidateOfClusterAutoscaler")].key} {.spec.taints[?(@.key == "ToBeDeletedByClusterAutoscaler")].key}{"\n"}{end}' \
-| sed 's/DeletionCandidateOfClusterAutoscaler/Yes/g' \
-| sed 's/ToBeDeletedByClusterAutoscaler/Yes/g'
-) \
-| column -t
+  cat <<EOF
+
+  Failed to find Cluster:
+
+    - Subscription Name.......: ${AZURE_SUBSCRIPTION_NAME}
+    - Subscription ID.........: ${AZURE_SUBSCRIPTION_ID}
+    - Cluster Name............: ${AKS_CLUSTER_NAME}
+    - Cluster Resource Group..: ${AKS_CLUSTER_RESOURCE_GROUP_NAME}
+
+EOF
+  exit $?
+fi
+
+aks_nodepool_show() {
+  aks-nodepool-show \
+    --subscription "${AZURE_SUBSCRIPTION_ID}" \
+    --cluster-name "${AKS_CLUSTER_NAME}" \
+    --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+    --name "${AKS_NODEPOOL_NAME}"
+}
+
+show_nodes_with_rollout_restart_label() {
+  KUBECTL_CONFIG_CONTEXT_EXISTS=$(kubectl config get-contexts \
+    | egrep "^\*.*${AKS_CLUSTER_NAME}" \
+    | wc -l)
+
+  if [ "${KUBECTL_CONFIG_CONTEXT_EXISTS}" -lt 1 ]; then
+    exit 0
+  fi
+
+  echo ""
+
+  (
+  echo "RolloutRestartedNode                CandidateToDelete  ScheduledToDelete "
+  echo "----------------------------------- ------------------ ------------------"
+
+  kubectl get nodes \
+    --selector rollout-restarted \
+    --output jsonpath='{range .items[*]}{.metadata.name} {.spec.taints[?(@.key == "DeletionCandidateOfClusterAutoscaler")].key} {.spec.taints[?(@.key == "ToBeDeletedByClusterAutoscaler")].key}{"\n"}{end}' \
+  | sed 's/DeletionCandidateOfClusterAutoscaler/Yes/g' \
+  | sed 's/ToBeDeletedByClusterAutoscaler/Yes/g'
+  ) \
+  | column -t
+}
+
+aks_nodepool_show
+
+show_nodes_with_rollout_restart_label

@@ -104,19 +104,12 @@ NODE_COUNT_UNSCHEDULABLE=$(
 | wc -l
 )
 
-if [ "${DEBUG_LEVEL}" -gt "1" ]; then
-  echo ""
-  echo "NODE_NAME_REGEX..........: ${NODE_NAME_REGEX}"
-  echo "NODE_COUNT_DESIRED.......: ${NODE_COUNT_DESIRED}"
-  echo "NODE_COUNT_UNSCHEDULABLE.: ${NODE_COUNT_UNSCHEDULABLE}"
-fi
-
 list_nodes_to_cordon() {
   NODE_COUNT=${1?}
 
-    kubectl get nodes \
+  kubectl get nodes \
     --output custom-columns=NodeName:.metadata.name,TaintKey:.spec.taints[*].key,TaintValue:.spec.taints[*].value,TaintEffect:.spec.taints[*].effect \
-  | grep ${NODE_NAME_REGEX?} \
+  | grep "${NODE_NAME_REGEX?}" \
   | grep -v "node\.kubernetes\.io\/unschedulable.*NoSchedule" \
   | head -${NODE_COUNT} \
   | awk '{ print $1 }'
@@ -129,7 +122,12 @@ if [ "${NODE_COUNT_TO_CORDON}" -lt 0 ]; then
 fi
 
 if [ "${DEBUG_LEVEL}" -gt "1" ]; then
-  echo "NODE_COUNT_TO_CORDON.....: ${NODE_COUNT_TO_CORDON}"
+  echo ""
+  echo "Node Filter:"
+  echo "  regex.........: ${NODE_NAME_REGEX}"
+  echo "  desired.......: ${NODE_COUNT_DESIRED}"
+  echo "  effective.....: ${NODE_COUNT_TO_CORDON}"
+  echo "  unschedulable.: ${NODE_COUNT_UNSCHEDULABLE}"
   echo ""
 fi
 
