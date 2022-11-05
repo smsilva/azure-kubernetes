@@ -1,13 +1,13 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Changed]: Renamed metrics service templates to metrics.yaml"
+    - "[Changed]: Update redis-ha"
 apiVersion: v2
-appVersion: v2.4.15
+appVersion: v2.5.1
 dependencies:
 - condition: redis-ha.enabled
   name: redis-ha
   repository: https://dandydeveloper.github.io/charts/
-  version: 4.22.2
+  version: 4.22.3
 description: A Helm chart for Argo CD, a declarative, GitOps continuous delivery tool
   for Kubernetes.
 home: https://github.com/argoproj/argo-helm
@@ -16,6 +16,7 @@ keywords:
 - argoproj
 - argocd
 - gitops
+kubeVersion: '>=1.22.0-0'
 maintainers:
 - name: argoproj
   url: https://argoproj.github.io/
@@ -23,4 +24,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.6.3
+version: 5.13.2
