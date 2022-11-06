@@ -13,7 +13,7 @@ spec:
     - host: {{ $cname }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
       http:
         paths:
-          - path: /.well-known/not-used-path/
+          - path: /.well-known/not-used-path/just-for-external-dns-entries
             pathType: Prefix
             backend:
               service: 
