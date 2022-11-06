@@ -5,7 +5,6 @@ export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 AKS_CLUSTER_KUBERNETES_VERSION="$1"
 AKS_CLUSTER_LOCATION="${2-eastus2}"
 
-(
 az aks get-versions \
   --location ${AKS_CLUSTER_LOCATION} \
   --output table \
@@ -19,4 +18,3 @@ az aks get-versions \
       echo ${VERSION}
     fi
 done
-)
