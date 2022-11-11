@@ -37,5 +37,6 @@ istiod:
         "upstream_transport_failure_reason": "%UPSTREAM_TRANSPORT_FAILURE_REASON%",
         "user_agent": "%REQ(USER-AGENT)%",
         "x_forwarded_for": "%REQ(X-FORWARDED-FOR)%",
-        "x_a1_origin_1": "%REQ(X-A1-ORIGIN-1)%"
+        "x_gateway": "%REQ(X-A1-ORIGIN-1)%",
+        "x_wasp_id": "%REQ(X-WASP-ID)%"
       }
