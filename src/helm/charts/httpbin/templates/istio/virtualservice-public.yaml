@@ -24,7 +24,7 @@ spec:
       headers:
         request:
           add:
-            X-A1-origin-1: public-ingress-httpbin
+            X-W1-gateway: public-ingress-httpbin
 
       route:
         - destination:
