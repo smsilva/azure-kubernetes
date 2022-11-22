@@ -1,6 +1,5 @@
 #!/bin/bash
 
-helm repo add aad-pod-identity https://raw.githubusercontent.com/Azure/aad-pod-identity/master/charts &> /dev/null
 helm repo add argo             https://argoproj.github.io/argo-helm                                   &> /dev/null
 helm repo add jetstack         https://charts.jetstack.io                                             &> /dev/null
 helm repo add external-dns     https://kubernetes-sigs.github.io/external-dns                         &> /dev/null
@@ -31,7 +30,6 @@ check_helm_chart_version() {
 
 (
 echo "HELM_REPOSITORY HELM_CHART LOCAL_VERSION REMOTE_VERSION ACTION"
-check_helm_chart_version aad-pod-identity aad-pod-identity
 check_helm_chart_version argo             argo-cd
 check_helm_chart_version jetstack         cert-manager
 check_helm_chart_version external-dns     external-dns

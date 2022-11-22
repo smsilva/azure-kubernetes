@@ -45,7 +45,6 @@ watch -n 10 'scripts/follow-creation.sh'
 
 | Name              | URL                                                                     |
 | ----------------- | ----------------------------------------------------------------------- |
-| aad-pod-identity  | https://raw.githubusercontent.com/Azure/aad-pod-identity/master/charts  |
 | argo              | https://argoproj.github.io/argo-helm                                    |
 | cert-manager      | https://charts.jetstack.io                                              |
 | external-dns      | https://kubernetes-sigs.github.io/external-dns                          |
