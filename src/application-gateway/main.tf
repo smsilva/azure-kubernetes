@@ -1,4 +1,4 @@
-resource "azurerm_public_ip" "app_gw" {
+resource "azurerm_public_ip" "default" {
   name                = local.public_ip_name
   resource_group_name = var.resource_group.name
   location            = var.resource_group.location
@@ -8,7 +8,7 @@ resource "azurerm_public_ip" "app_gw" {
   tags                = local.tags
 }
 
-resource "azurerm_application_gateway" "app_gw" {
+resource "azurerm_application_gateway" "default" {
   name                = local.application_gateway_name
   resource_group_name = var.resource_group.name
   location            = var.resource_group.location
@@ -58,7 +58,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
   frontend_ip_configuration {
     name                 = local.frontend_ip_configuration_name
-    public_ip_address_id = azurerm_public_ip.app_gw.id
+    public_ip_address_id = azurerm_public_ip.default.id
   }
 
   dynamic "frontend_ip_configuration" {
@@ -118,7 +118,7 @@ resource "azurerm_application_gateway" "app_gw" {
   }
 
   depends_on = [
-    azurerm_public_ip.app_gw,
-    azurerm_log_analytics_workspace.app_gw
+    azurerm_public_ip.default,
+    azurerm_log_analytics_workspace.default
   ]
 }

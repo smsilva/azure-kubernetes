@@ -1,6 +1,9 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Changed]: Upgrade Argo CD to 2.5.2"
+    - "[Added]: Configuration option configs.gpg"
+    - "[Deprecated]: Configuration option configs.gpgKeys"
+    - "[Deprecated]: Configuration option configs.gpgKeysAnnotations"
+    - "[Fixed]: Documentation for declarative setup"
 apiVersion: v2
 appVersion: v2.5.2
 dependencies:
@@ -24,4 +27,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.13.6
+version: 5.14.1

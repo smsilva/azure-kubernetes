@@ -11,7 +11,7 @@ This is a **community maintained** chart. This chart installs [argo-cd](https://
 
 The default installation is intended to be similar to the provided Argo CD [releases](https://github.com/argoproj/argo-cd/releases).
 
-If you want to avoid including sensitive information unencrypted (clear text) in your version control, make use of the [declarative set up](https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/) of Argo CD.
+If you want to avoid including sensitive information unencrypted (clear text) in your version control, make use of the [declarative setup] of Argo CD.
 For instance, rather than adding repositories and their keys in your Helm values, you could deploy [SealedSecrets](https://github.com/bitnami-labs/sealed-secrets) with contents as seen in this [repositories section](https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#repositories) or any other secrets manager service (i.e. HashiCorp Vault, AWS/GCP Secrets Manager, etc.).
 
 ## High Availability
@@ -84,8 +84,6 @@ git diff v1.8.7 v2.0.0 -- manifests/install.yaml
 
 Changes in the `CustomResourceDefinition` resources shall be fixed easily by copying 1:1 from the [`manifests/crds` folder](https://github.com/argoproj/argo-cd/tree/master/manifests/crds) into this [`charts/argo-cd/templates/crds` folder](https://github.com/argoproj/argo-helm/tree/master/charts/argo-cd/templates/crds).
 
-## Upgrading
-
 ### Custom resource definitions
 
 Some users would prefer to install the CRDs _outside_ of the chart. You can disable the CRD installation of this chart by using `--set crds.install=false` when installing the chart.
@@ -101,10 +99,31 @@ kubectl apply -k "https://github.com/argoproj/argo-cd/manifests/crds?ref=<appVer
 kubectl apply -k "https://github.com/argoproj/argo-cd/manifests/crds?ref=v2.4.9"
 ```
 
+## Changelog
+
+For full list of changes please check ArtifactHub [changelog].
+
+Highlighted versions provide information about additional steps that should be performed by user when upgrading to newer version.
+
+### 5.13.0
+
+This version reduces history limit for Argo CD deployment replicas to 3 to provide more visibility for Argo CD deployments that manage itself. If you need more deployment revisions for rollbacks set `global.revisionHistoryLimit` parameter.
+
+### 5.12.0
+
+This version deprecates the `configs.secret.argocdServerTlsConfig` option. Use `server.certificate` or `server.certificateSecret` to provide custom TLS configuration for Argo CD server.
+If you terminate TLS on ingress please use `argocd-server-tls` secret instead of `argocd-secret` secret.
+
 ### 5.10.0
 
-This version hardens security by configuring default container security contexts.
-The change aligns chart with [supported versions](https://argo-cd.readthedocs.io/en/stable/operator-manual/installation/#supported-versions) by upstream and adds requirement for minimum Kubernetes version >= 1.22.
+This version hardens security by configuring default container security contexts and adds hard requirement for Kubernetes 1.22+ to work properly.
+The change aligns chart with officially [supported versions](https://argo-cd.readthedocs.io/en/release-2.5/operator-manual/installation/#supported-versions) by upstream project.
+
+### 5.7.0
+
+This version introcudes new `configs.cm` and `configs.rbac` sections that replaces `server.config` and `server.rbacConfig` respectively.
+Please move your current configuration to the new place. The Argo CD RBAC config now also sets defaults in the `argocd-rbac-cm`.
+If you have manually created this ConfigMap please ensure templating is disabled so you will not lose your changes.
 
 ### 5.5.20
 
@@ -383,12 +402,12 @@ NAME: my-release
 | configs.cm."timeout.hard.reconciliation" | int | `0` | Timeout to refresh application data as well as target manifests cache |
 | configs.cm."timeout.reconciliation" | string | `"180s"` | Timeout to discover if a new manifests version got published to the repository |
 | configs.cm.annotations | object | `{}` | Annotations to be added to argocd-cm configmap |
-| configs.cm.create | bool | `true` | Create the argocd-cm configmap for [Declarative setup] |
+| configs.cm.create | bool | `true` | Create the argocd-cm configmap for [declarative setup] |
 | configs.cm.url | string | `""` | Argo CD's externally facing base URL (optional). Required when configuring SSO |
 | configs.credentialTemplates | object | `{}` | Repository credentials to be used as Templates for other repos |
 | configs.credentialTemplatesAnnotations | object | `{}` | Annotations to be added to `configs.credentialTemplates` Secret |
-| configs.gpgKeys | object | `{}` (See [values.yaml]) | [GnuPG](https://argo-cd.readthedocs.io/en/stable/user-guide/gpg-verification/) keys to add to the key ring |
-| configs.gpgKeysAnnotations | object | `{}` | GnuPG key ring annotations |
+| configs.gpg.annotations | object | `{}` | Annotations to be added to argocd-gpg-keys-cm configmap |
+| configs.gpg.keys | object | `{}` (See [values.yaml]) | [GnuPG] public keys to add to the keyring |
 | configs.knownHosts.data.ssh_known_hosts | string | See [values.yaml] | Known Hosts |
 | configs.knownHostsAnnotations | object | `{}` | Known Hosts configmap annotations |
 | configs.params."controller.operation.processors" | int | `10` | Number of application operation processors |
@@ -1087,10 +1106,12 @@ Autogenerated from chart metadata using [helm-docs](https://github.com/norwoodj/
 [affinity]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
 [BackendConfigSpec]: https://cloud.google.com/kubernetes-engine/docs/concepts/backendconfig#backendconfigspec_v1beta1_cloudgooglecom
 [CSS styles]: https://argo-cd.readthedocs.io/en/stable/operator-manual/custom-styles/
+[changelog]: https://artifacthub.io/packages/helm/argo/argo-cd?modal=changelog
 [external cluster credentials]: https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#clusters
 [FrontendConfigSpec]: https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#configuring_ingress_features_through_frontendconfig_parameters
-[Declarative setup]: https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup
+[declarative setup]: https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup
 [gRPC-ingress]: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/
+[GnuPG]: https://argo-cd.readthedocs.io/en/stable/user-guide/gpg-verification/
 [HPA]: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
 [MetricRelabelConfigs]: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs
 [Node selector]: https://kubernetes.io/docs/user-guide/node-selection/
