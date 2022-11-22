@@ -2,9 +2,7 @@ rbac:
   enabled: true
 
 armAuth:
-  type: aadPodIdentity
-  identityResourceID: ${arm_auth_identity_resource_id}
-  identityClientID:   ${arm_auth_identity_client_id}
+  type: servicePrincipal
 
 appgw:
   subscriptionId: ${app_gw_subscription_id}

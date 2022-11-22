@@ -91,7 +91,7 @@ echo ""
 
 # argo-cd Certificate check
 while ! check-certificates "argocd" 1; do
-  sleep 15;
+  sleep 15; clear;
 done
 echo ""
 

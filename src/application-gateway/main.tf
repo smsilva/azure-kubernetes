@@ -17,6 +17,16 @@ resource "azurerm_application_gateway" "app_gw" {
   firewall_policy_id  = var.firewall_policy_id
   tags                = local.tags
 
+  waf_configuration {
+    enabled                  = true
+    firewall_mode            = "Detection"
+    rule_set_type            = "OWASP"
+    rule_set_version         = "3.2"
+    file_upload_limit_mb     = 100
+    request_body_check       = true
+    max_request_body_size_kb = "128"
+  }
+
   sku {
     name     = var.sku_name
     tier     = var.sku_tier
