@@ -68,8 +68,8 @@ get_nodepool_list() {
 }
 
 (
-  HEADER_LINE_1="Name         Min     Max     Count   Space   MaxPods   Version   Mode     NodeSize            ProvisioningState  AutoScale  AvailabilityZones  Subnet            CIDR              "
-  HEADER_LINE_2="-----------  ------  ------  ------  ------  --------  --------  -------  ------------------  ------------------ ---------- ------------------ ----------------- ----------------- "
+  HEADER_LINE_1="Name         Min     Max     Count   Space   MaxPods   Version   Mode     NodeSize            ProvisioningState  AutoScale  Zones  Subnet          CIDR              "
+  HEADER_LINE_2="-----------  ------  ------  ------  ------  --------  --------  -------  ------------------  ------------------ ---------- ------ --------------- ----------------- "
   
   echo "${HEADER_LINE_1?}"
   echo "${HEADER_LINE_2?}"
@@ -87,7 +87,7 @@ get_nodepool_list() {
     unset AKS_NODEPOOL_ORCHESTRATOR_VERSION
     unset AKS_NODEPOOL_VM_SIZE
     unset AKS_NODEPOOL_MODE
-    unset AKS_NODEPOOL_ENABLE_AUTOS_SCALING
+    unset AKS_NODEPOOL_ENABLE_AUTO_SCALING
     unset AKS_NODEPOOL_AVAILABILITY_ZONES
 
     eval $(
@@ -138,7 +138,7 @@ get_nodepool_list() {
     printf "%s " ${AKS_NODEPOOL_MODE}
     printf "%s " ${AKS_NODEPOOL_VM_SIZE}
     printf "%s " ${AKS_NODEPOOL_PROVISIONING_STATE}
-    printf "%s " ${AKS_NODEPOOL_ENABLE_AUTOS_SCALING}
+    printf "%s " ${AKS_NODEPOOL_ENABLE_AUTO_SCALING}
     printf "%s " ${AKS_NODEPOOL_AVAILABILITY_ZONES}
     printf "%s " ${AKS_NODEPOOL_VNET_SUBNET_ID##*/}
     printf "%s " ${AKS_NODEPOOL_VNET_SUBNET_CIDR}

@@ -1,0 +1,90 @@
+#!/bin/bash
+export THIS_SCRIPT_NAME=$0
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  ${THIS_SCRIPT_NAME} \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example
+
+  ${THIS_SCRIPT_NAME} \\
+    --subscription 70d05914-4c56-47be-a78c-3b1a47b8f820 \\
+    --cluster-name aks-cluster-example \\
+    --resource-group aks-cluster-example
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  -s | --subscription )
+    shift; AZURE_SUBSCRIPTION=$1
+    ;;
+
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${AZURE_SUBSCRIPTION}" ]; then
+  AZURE_SUBSCRIPTION=$(az account show \
+    --query id \
+    --output tsv)
+fi
+
+if [ -z "${AKS_CLUSTER_NAME}"                ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ]; then
+  show_usage
+  exit 1
+fi
+
+AKS_CLUSTER_JSON_FILE=$(mktemp)
+
+az aks show \
+  --subscription ${AZURE_SUBSCRIPTION} \
+  --name ${AKS_CLUSTER_NAME} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+  --output jsonc > "${AKS_CLUSTER_JSON_FILE}"
+
+nodepools_info() {
+  jq ".agentPoolProfiles" "${AKS_CLUSTER_JSON_FILE}" \
+| jq -r '.[] | @base64'
+}
+
+TOTAL_NODE_MIN=0
+TOTAL_NODE_MAX=0
+TOTAL_NODE_COUNT=0
+
+while read -r LINE_BASE64; do
+  _jq() {
+    echo ${LINE_BASE64} | base64 --decode | jq -r ${1}
+  }
+  NODEPOOL_MIN=$(_jq '.minCount')
+  NODEPOOL_MAX=$(_jq '.maxCount')
+  NODEPOOL_COUNT=$(_jq '.count')
+
+  TOTAL_NODE_MIN=$((${TOTAL_NODE_MIN} + ${NODEPOOL_MIN}))
+  TOTAL_NODE_MAX=$((${TOTAL_NODE_MAX} + ${NODEPOOL_MAX}))
+  TOTAL_NODE_COUNT=$((${TOTAL_NODE_COUNT} + ${NODEPOOL_COUNT}))
+done <<< "$(nodepools_info)"
+
+TOTAL_NODE_SPACE=$((${TOTAL_NODE_MAX} - ${TOTAL_NODE_COUNT}))
+
+echo "export TOTAL_NODE_MIN=${TOTAL_NODE_MIN}"
+echo "export TOTAL_NODE_MAX=${TOTAL_NODE_MAX}"
+echo "export TOTAL_NODE_COUNT=${TOTAL_NODE_COUNT}"
+echo "export TOTAL_NODE_SPACE=${TOTAL_NODE_SPACE}"
