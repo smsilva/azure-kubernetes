@@ -1,11 +1,8 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Added]: Configuration option configs.gpg"
-    - "[Deprecated]: Configuration option configs.gpgKeys"
-    - "[Deprecated]: Configuration option configs.gpgKeysAnnotations"
-    - "[Fixed]: Documentation for declarative setup"
+    - "[Changed]: Update ArgoCD to v2.5.4"
 apiVersion: v2
-appVersion: v2.5.2
+appVersion: v2.5.4
 dependencies:
 - condition: redis-ha.enabled
   name: redis-ha
@@ -27,4 +24,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.14.1
+version: 5.16.2

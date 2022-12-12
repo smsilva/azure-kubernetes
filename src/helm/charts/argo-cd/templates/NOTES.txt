@@ -28,6 +28,9 @@ DEPRECATED option server.logFormat - Use configs.params.server.log.format
 {{- if .Values.server.logLevel }}
 DEPRECATED option server.logLevel - Use configs.params.server.log.level
 {{- end }}
+{{- if has "--insecure" .Values.server.extraArgs }}
+DEPRECATED option server.extraArgs."--insecure" - Use configs.params.server.insecure
+{{- end }}
 {{- if .Values.repoServer.logFormat }}
 DEPRECATED option repoServer.logFormat - Use configs.params.repoServer.log.format
 {{- end }}
@@ -54,6 +57,12 @@ REMOVED option controller.service - Use controller.metrics
 {{- end }}
 {{- if .Values.repoServer.copyutil }}
 REMOVED option repoSever.copyutil.resources - Use repoServer.resources
+{{- end }}
+{{- if .Values.applicationSet.args.debug }}
+REMOVED option applicationSet.args.debug - Use applicationSet.logLevel: debug
+{{- end }}
+{{- if .Values.applicationSet.args.enableLeaderElection }}
+REMOVED option applicationSet.args.enableLeaderElection - Value determined based on replicas
 {{- end }}
 
 In order to access the server UI you have the following options:
