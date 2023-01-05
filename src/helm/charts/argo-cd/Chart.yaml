@@ -1,13 +1,15 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Fixed]: Prevent could not parse 0 warning"
+    - "[Docs]: Added sample how to provide K8s credentials plugin"
+    - "[Docs]: Added sample how to provide Argo config management plugin"
+    - "[Docs]: Removed samples that injects tools into incorrect controllers"
 apiVersion: v2
-appVersion: v2.5.4
+appVersion: v2.5.5
 dependencies:
 - condition: redis-ha.enabled
   name: redis-ha
   repository: https://dandydeveloper.github.io/charts/
-  version: 4.22.3
+  version: 4.22.4
 description: A Helm chart for Argo CD, a declarative, GitOps continuous delivery tool
   for Kubernetes.
 home: https://github.com/argoproj/argo-helm
@@ -24,4 +26,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.16.4
+version: 5.16.14
