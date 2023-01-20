@@ -6,7 +6,7 @@ locals {
   install_external_secrets    = true
   install_ingress_azure       = true
   install_argocd              = true
-  install_app_of_apps_infra   = false
+  install_app_of_apps_infra   = true
   cluster_ingress_type        = "azure"
 }
 

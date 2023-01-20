@@ -12,7 +12,7 @@ resource "azurerm_monitor_diagnostic_setting" "default" {
   target_resource_id         = azurerm_application_gateway.default.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.default.id
 
-  dynamic "log" {
+  dynamic "enabled_log" {
     for_each = [
       "ApplicationGatewayAccessLog",
       "ApplicationGatewayPerformanceLog",
@@ -20,12 +20,11 @@ resource "azurerm_monitor_diagnostic_setting" "default" {
     ]
 
     content {
-      category = log.value
-      enabled  = true
+      category = enabled_log.value
 
       retention_policy {
         enabled = true
-        days    = 30
+        days    = 1
       }
     }
   }
@@ -36,7 +35,7 @@ resource "azurerm_monitor_diagnostic_setting" "default" {
 
     retention_policy {
       enabled = true
-      days    = 30
+      days    = 1
     }
   }
 
