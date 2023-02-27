@@ -1,0 +1,4 @@
+{
+    "query": "{\n  actor {\n    account(id: ${NEW_RELIC_ACCOUNT_ID}) {\n      nrql(query: \"SELECT clusterTotalNodeSpace,nodepoolSourceRolloutRestarted FROM AksUpdateLimits WHERE clusterName = \u0027${AKS_CLUSTER_NAME}\u0027 SINCE 2 days ago LIMIT MAX ORDER BY timestamp ASC\") {\n        results\n      }\n    }\n  }\n}\n",
+    "variables": ""
+}

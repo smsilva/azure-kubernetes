@@ -1,0 +1,45 @@
+#!/bin/bash
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  newrelic-send-events event.json
+EOF
+}
+
+NEW_RELIC_EVENT_FILE="$1"
+
+if [ -z "${NEW_RELIC_EVENT_FILE}" ]; then
+  echo "File name not informed."
+  show_usage
+  exit 1
+fi
+
+if [ -n "${NEW_RELIC_ACCOUNT_ID}"  ] && \
+   [ -n "${NEW_RELIC_LICENSE_KEY}" ]; then
+
+  CURL_OUTPUT=$(mktemp)
+
+  gzip --stdout "${NEW_RELIC_EVENT_FILE}" \
+  | curl \
+      --silent \
+      --output /dev/null \
+      --write-out "%{http_code}" \
+      --request POST \
+      --header "Content-Type: application/json" \
+      --header "Api-Key: ${NEW_RELIC_LICENSE_KEY?}" \
+      --header "Content-Encoding: gzip" \
+      https://insights-collector.newrelic.com/v1/accounts/${NEW_RELIC_ACCOUNT_ID?}/events \
+      --data-binary @- > ${CURL_OUTPUT}
+
+  HTTP_CODE=$(cat ${CURL_OUTPUT})
+
+  if [ "${HTTP_CODE}" == "200" ]; then
+    exit 0
+  else
+    echo "HTTP_CODE.: ${HTTP_CODE}"
+    exit 1
+  fi
+fi

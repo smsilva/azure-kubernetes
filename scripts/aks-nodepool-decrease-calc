@@ -7,6 +7,12 @@ show_usage() {
     --min 3 \\
     --max 5
 
+  ./aks-nodepool-decrease-calc \\
+    --mode System \\
+    --count 3 \\
+    --min 3 \\
+    --max 5
+
 EOF
 }
 
@@ -15,6 +21,10 @@ case $1 in
   -h | --help )
     show_usage
     exit
+    ;;
+
+  -m | --mode )
+    shift; NODEPOOL_MODE=$1
     ;;
 
   -c | --count )
@@ -40,6 +50,8 @@ if [ -z "${NODEPOOL_COUNT}"     ] || \
   exit 1
 fi
 
+NODEPOOL_MODE=${NODEPOOL_MODE-User}
+
 CURRENT_RANGE=$((${NODEPOOL_MAX_COUNT} - ${NODEPOOL_MIN_COUNT}))
 
 DIFFERENCE=$((${NODEPOOL_MAX_COUNT} - ${NODEPOOL_COUNT}))
@@ -49,11 +61,19 @@ if [ "${CURRENT_RANGE}" -gt 0 ] && \
   NEW_MIN_COUNT=$((${NODEPOOL_COUNT} - ${CURRENT_RANGE}))
   NEW_MAX_COUNT=$((${NODEPOOL_COUNT}))
 
+  if [ "${NEW_MIN_COUNT}" -lt 1 ] && [ "${NODEPOOL_MODE?}" == "System" ]; then
+    NEW_MIN_COUNT=1
+  fi
+
   if [ "${NEW_MIN_COUNT}" -lt 0 ]; then
     NEW_MIN_COUNT=0
   fi
 
+  echo "export AKS_NODEPOOL_DECREASE=y"
   echo "export AKS_NODEPOOL_DECREASE_MIN_COUNT=${NEW_MIN_COUNT}"
   echo "export AKS_NODEPOOL_DECREASE_MAX_COUNT=${NEW_MAX_COUNT}"
+  echo "export AKS_NODEPOOL_DECREASE_DIFFERENCE=${DIFFERENCE}"
   echo "export AKS_NODEPOOL_DECREASE_CURRENT_RANGE=${CURRENT_RANGE}"
+else
+  echo "export AKS_NODEPOOL_DECREASE=n"
 fi

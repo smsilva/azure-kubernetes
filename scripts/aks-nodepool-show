@@ -68,8 +68,8 @@ get_nodepool_list() {
 }
 
 (
-  HEADER_LINE_1="Name         Min     Max     Count   Space   MaxPods   Version   Mode     NodeSize            ProvisioningState  AutoScale  Zones  Subnet          CIDR              "
-  HEADER_LINE_2="-----------  ------  ------  ------  ------  --------  --------  -------  ------------------  ------------------ ---------- ------ --------------- ----------------- "
+  HEADER_LINE_1="Name         Min     Max     Count   Space   MaxPods   Version   Mode     NodeSize            ProvisioningState  AutoScale  Zones  Subnet                          CIDR              "
+  HEADER_LINE_2="-----------  ------  ------  ------  ------  --------  --------  -------  ------------------  ------------------ ---------- ------ ------------------------------- ----------------- "
   
   echo "${HEADER_LINE_1?}"
   echo "${HEADER_LINE_2?}"
