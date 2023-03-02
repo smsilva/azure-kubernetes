@@ -1,0 +1,110 @@
+#!/bin/bash
+export THIS_SCRIPT_NAME=$0
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  ${THIS_SCRIPT_NAME} \\
+    --hard-limit-min 0 \\
+    --hard-limit-max 20 \\
+    --source-min 1 \\
+    --source-max 15 \\
+    --target-min 0 \\
+    --target-max 0 \\
+    --target-mode System
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+
+  -smin | --source-min )
+    shift; AKS_NODEPOOL_SOURCE_MIN_COUNT=$1
+    ;;
+
+  -smax | --source-max )
+    shift; AKS_NODEPOOL_SOURCE_MAX_COUNT=$1
+    ;;
+
+  -tm | --target-mode )
+    shift; AKS_NODEPOOL_TARGET_MODE=$1
+    ;;
+
+
+  -tmin | --target-min )
+    shift; AKS_NODEPOOL_TARGET_MIN_COUNT=$1
+    ;;
+
+  -tmax | --target-max )
+    shift; AKS_NODEPOOL_TARGET_MAX_COUNT=$1
+    ;;
+
+  -min | --hard-limit-min )
+    shift; HARD_LIMIT_MIN=$1
+    ;;
+
+  -max | --hard-limit-max )
+    shift; HARD_LIMIT_MAX=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${AKS_CLUSTER_NAME}"                ] || \
+   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
+   [ -z "${HARD_LIMIT_MIN}"                  ] || \
+   [ -z "${HARD_LIMIT_MAX}"                  ] || \
+   [ -z "${AKS_NODEPOOL_SOURCE_MIN_COUNT}"   ] || \
+   [ -z "${AKS_NODEPOOL_SOURCE_MAX_COUNT}"   ] || \
+   [ -z "${AKS_NODEPOOL_TARGET_MIN_COUNT}"   ] || \
+   [ -z "${AKS_NODEPOOL_TARGET_MAX_COUNT}"   ]; then
+  echo "You must use ALL parameters."
+  show_usage
+  exit 1
+fi
+
+AKS_NODEPOOL_TARGET_MODE=${AKS_NODEPOOL_TARGET_MODE-User}
+
+# Calculate Totals
+export TOTAL_MIN=$((${AKS_NODEPOOL_SOURCE_MIN_COUNT} + ${AKS_NODEPOOL_TARGET_MIN_COUNT}))
+export TOTAL_MAX=$((${AKS_NODEPOOL_SOURCE_MAX_COUNT} + ${AKS_NODEPOOL_TARGET_MAX_COUNT}))
+
+# Calculate Increase comparing Hard Limits with Current Limits
+export AKS_NODEPOOL_TARGET_MIN_COUNT_INCREASE=$((${HARD_LIMIT_MIN} - ${TOTAL_MIN}))
+export AKS_NODEPOOL_TARGET_MAX_COUNT_INCREASE=$((${HARD_LIMIT_MAX} - ${TOTAL_MAX}))
+
+if [ "${AKS_NODEPOOL_TARGET_MIN_COUNT_INCREASE}" -ne 0 ] || \
+   [ "${AKS_NODEPOOL_TARGET_MAX_COUNT_INCREASE}" -ne 0 ]; then
+  export AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT=$((${AKS_NODEPOOL_TARGET_MIN_COUNT} + ${AKS_NODEPOOL_TARGET_MIN_COUNT_INCREASE}))
+  export AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT=$((${AKS_NODEPOOL_TARGET_MAX_COUNT} + ${AKS_NODEPOOL_TARGET_MAX_COUNT_INCREASE}))
+
+  if [ "${AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT}" -lt 0 ]; then
+    export AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT=0
+  fi
+
+  if [ "${AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT}" == 0 ] && \
+     [ "${AKS_NODEPOOL_TARGET_MODE}" == "System" ] ; then
+    export AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT=1
+  fi
+
+  echo "export AKS_NODEPOOL_TARGET_UPDATE_LIMITS=y"
+  echo "export AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT=${AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT}"
+  echo "export AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT=${AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT}"
+else
+  echo "export AKS_NODEPOOL_TARGET_UPDATE_LIMITS=n"
+fi

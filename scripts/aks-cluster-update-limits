@@ -1,4 +1,5 @@
 #!/bin/bash
+export THIS_SCRIPT_NAME=$0
 export THIS_SCRIPT_DIRECTORY=$(dirname $0)
 export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 
@@ -7,7 +8,7 @@ show_usage() {
 
 1. Based on Kubernetes Version
 
-  ./aks-cluster-update-limits \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --nodepool user1 \\
@@ -19,7 +20,7 @@ show_usage() {
 
 2. Explicit Source and Target
 
-  ./aks-cluster-update-limits \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --source user1 \\
@@ -93,6 +94,63 @@ fi
 
 AKS_LATEST_VERSION=""
 
+if [ -z "${AKS_NODEPOOLS}"            ] && \
+   [ -n "${AKS_NODEPOOL_SOURCE_NAME}" ] && \
+   [ -n "${AKS_NODEPOOL_TARGET_NAME}" ]; then
+  AKS_NODEPOOLS="${AKS_NODEPOOL_SOURCE_NAME},${AKS_NODEPOOL_TARGET_NAME}"
+fi
+
+METRICS_FILE_NAME=$(mktemp)
+NEWRELIC_EVENTS_JSON="$(mktemp)"
+
+export AKS_UPDATE_LIMITS_EXECUTION_ID=$(uuidgen)
+export AKS_UPDATE_LIMITS_DURATION=0
+export AKS_UPDATE_LIMITS_START=$(date +%s)
+export AKS_UPDATE_LIMITS_END=0
+export AKS_NODEPOOL_SOURCE_CORDON_COUNT=0
+export AKS_NODEPOOL_SOURCE_COUNT=0
+export AKS_NODEPOOL_SOURCE_MAX_COUNT=0
+export AKS_NODEPOOL_SOURCE_MIN_COUNT=0
+export AKS_NODEPOOL_SOURCE_ROLLOUT_RESTART_COUNT=0
+export AKS_NODEPOOL_SOURCE_UPDATE_DURATION=0
+export AKS_NODEPOOL_SOURCE_UPDATE_DURATION=0
+export AKS_NODEPOOL_SOURCE_UPDATE_MAX_COUNT=0
+export AKS_NODEPOOL_SOURCE_UPDATE_MIN_COUNT=0
+export AKS_NODEPOOL_TARGET_COUNT=0
+export AKS_NODEPOOL_TARGET_MAX_COUNT=0
+export AKS_NODEPOOL_TARGET_MIN_COUNT=0
+export AKS_NODEPOOL_TARGET_UPDATE_DURATION=0
+export AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT=0
+export AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT=0
+
+nodepool_information_file_name() {
+  NODEPOOL_NAME=$1
+  echo "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+}
+
+save_metric() {
+  METRIC_NAME="$1"
+  METRIC_VALUE="$2"
+
+  printf "export %s='%s'\n" "${METRIC_NAME}" "${METRIC_VALUE}" >> "${METRICS_FILE_NAME}"
+}
+
+eval $(
+  aks-cluster-info \
+    --cluster-name ${AKS_CLUSTER_NAME} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME}
+)
+export AKS_CLUSTER_NODES_MIN=${TOTAL_NODE_MIN}
+export AKS_CLUSTER_NODES_MAX=${TOTAL_NODE_MAX}
+export AKS_CLUSTER_NODES_COUNT=${TOTAL_NODE_COUNT}
+export AKS_CLUSTER_NODES_SPACE=${TOTAL_NODE_SPACE}
+
+save_metric "AKS_CLUSTER_NODES_MIN" "${AKS_CLUSTER_NODES_MIN}"
+save_metric "AKS_CLUSTER_NODES_MAX" "${AKS_CLUSTER_NODES_MAX}"
+save_metric "AKS_CLUSTER_NODES_COUNT" "${AKS_CLUSTER_NODES_COUNT}"
+save_metric "AKS_CLUSTER_NODES_SPACE" "${AKS_CLUSTER_NODES_SPACE}"
+
+# Retrieve Node Pools Information
 for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
   unset AKS_NODEPOOL_PROVISIONING_STATE
   unset AKS_NODEPOOL_POWER_STATE_CODE
@@ -100,7 +158,7 @@ for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
   aks-nodepool-info \
     --cluster-name ${AKS_CLUSTER_NAME} \
     --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-    --name ${NODEPOOL_NAME} > "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+    --name ${NODEPOOL_NAME} > "$(nodepool_information_file_name "${NODEPOOL_NAME}")"
 
   source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
 
@@ -126,10 +184,12 @@ done
 
 SHOULD_EXECUTE_UPDATE="y"
 
+# Check if Source and Target Node Pools are not defined yet
 if [ -z "${AKS_NODEPOOL_SOURCE_NAME}" ] && \
    [ -z "${AKS_NODEPOOL_TARGET_NAME}" ]; then
+  # Discover Node Pool Source and Target based on Latest Version (--nodepool parameters)
   for NODEPOOL_NAME in ${AKS_NODEPOOLS//,/ }; do
-    source "${THIS_SCRIPT_DIRECTORY}/${NODEPOOL_NAME}.env"
+    source $(nodepool_information_file_name "${NODEPOOL_NAME}")
 
     if [ "${AKS_LATEST_VERSION}" == "${AKS_NODEPOOL_ORCHESTRATOR_VERSION}" ]; then
       AKS_NODEPOOL_TARGET_NAME="${NODEPOOL_NAME}"
@@ -146,63 +206,220 @@ if [ -z "${AKS_NODEPOOL_SOURCE_NAME}" ] && \
 fi
 
 if [ -z "${AKS_NODEPOOL_SOURCE_NAME}" ]; then
-  echo "No Node Pool Source was discovered."
+  echo "No Node Pool Source was discovered. Nothing to do."
   exit 0
 fi
 
-if [ "${SHOULD_EXECUTE_UPDATE}" == "y" ]; then
+if [ "${SHOULD_EXECUTE_UPDATE}" == "n" ]; then
+  echo "Nothing to do."
+  exit 0
+fi
+
+source $(nodepool_information_file_name "${AKS_NODEPOOL_SOURCE_NAME}")
+
+AKS_NODEPOOL_SOURCE_UPDATE_START=$(date +%s)
+AKS_NODEPOOL_SOURCE_MIN_COUNT=${AKS_NODEPOOL_MIN_COUNT}
+AKS_NODEPOOL_SOURCE_MAX_COUNT=${AKS_NODEPOOL_MAX_COUNT}
+AKS_NODEPOOL_SOURCE_COUNT=${AKS_NODEPOOL_COUNT}
+AKS_NODEPOOL_SOURCE_MODE=${AKS_NODEPOOL_MODE}
+
+save_metric "AKS_NODEPOOL_SOURCE_NAME" "${AKS_NODEPOOL_SOURCE_NAME}"
+save_metric "AKS_NODEPOOL_SOURCE_MODE" "${AKS_NODEPOOL_SOURCE_MODE}"
+save_metric "AKS_NODEPOOL_SOURCE_COUNT" "${AKS_NODEPOOL_SOURCE_COUNT}"
+save_metric "AKS_NODEPOOL_SOURCE_MIN_COUNT" "${AKS_NODEPOOL_SOURCE_MIN_COUNT}"
+save_metric "AKS_NODEPOOL_SOURCE_MAX_COUNT" "${AKS_NODEPOOL_SOURCE_MAX_COUNT}"
+
+eval $(
+  aks-nodepool-decrease-calc \
+    --mode ${AKS_NODEPOOL_MODE} \
+    --min ${AKS_NODEPOOL_MIN_COUNT} \
+    --max ${AKS_NODEPOOL_MAX_COUNT} \
+    --count ${AKS_NODEPOOL_COUNT}
+)
+
+if [ "${AKS_NODEPOOL_DECREASE}" == "y" ]; then
+  echo "[${AKS_NODEPOOL_SOURCE_NAME}] Decrease [${AKS_NODEPOOL_DECREASE_MIN_COUNT}..${AKS_NODEPOOL_DECREASE_MAX_COUNT}]"
+
   if [ "${DRY_RUN}" == "n" ]; then
-    aks-nodepool-decrease \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --name ${AKS_NODEPOOL_SOURCE_NAME}
+    eval $(
+      aks-nodepool-decrease \
+        --cluster-name ${AKS_CLUSTER_NAME} \
+        --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+        --name ${AKS_NODEPOOL_SOURCE_NAME} \
+        --min ${AKS_NODEPOOL_DECREASE_MIN_COUNT} \
+        --max ${AKS_NODEPOOL_DECREASE_MAX_COUNT}
+    )
 
-    DECREASE_RESULT=$?
+    if [ "${AKS_NODEPOOL_DECREASE_EXECUTED}" == "y" ]; then
+      echo "[${AKS_NODEPOOL_SOURCE_NAME}] Decrease done"
 
-    aks-nodepool-update-limits \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --source ${AKS_NODEPOOL_SOURCE_NAME} \
-      --target ${AKS_NODEPOOL_TARGET_NAME} \
-      --hard-limit-min ${HARD_LIMIT_MIN} \
-      --hard-limit-max ${HARD_LIMIT_MAX}
+      AKS_NODEPOOL_SOURCE_UPDATE_END=$(date +%s)
+      AKS_NODEPOOL_SOURCE_UPDATE_DURATION=$((AKS_NODEPOOL_SOURCE_UPDATE_END - AKS_NODEPOOL_SOURCE_UPDATE_START))
 
-    UPDATE_RESULT=$?
+      save_metric "AKS_NODEPOOL_SOURCE_UPDATE_MIN_COUNT" "${AKS_NODEPOOL_DECREASE_MIN_COUNT}"
+      save_metric "AKS_NODEPOOL_SOURCE_UPDATE_MAX_COUNT" "${AKS_NODEPOOL_DECREASE_MAX_COUNT}"
+      save_metric "AKS_NODEPOOL_SOURCE_UPDATE_DURATION" "${AKS_NODEPOOL_SOURCE_UPDATE_DURATION}"
+    fi
+  fi
+else
+  AKS_NODEPOOL_DECREASE_EXECUTED="n"
+fi
 
-    if [ "${DECREASE_RESULT}" == "100" ] && [ "${UPDATE_RESULT}" == "100" ]; then
-      echo "Rollout Restart Deployments for ${MAX_NODES_TO_ROLLOUT_RESTART?} Nodes"
+# Update Target Node Pool
+AKS_NODEPOOL_TARGET_UPDATE_START=$(date +%s)
 
+eval $(
+  aks-nodepool-info \
+    --cluster-name ${AKS_CLUSTER_NAME} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+    --name ${AKS_NODEPOOL_SOURCE_NAME}
+)
+AKS_NODEPOOL_SOURCE_MODE=${AKS_NODEPOOL_MODE}
+AKS_NODEPOOL_SOURCE_MIN_COUNT=${AKS_NODEPOOL_MIN_COUNT}
+AKS_NODEPOOL_SOURCE_MAX_COUNT=${AKS_NODEPOOL_MAX_COUNT}
+
+eval $(
+  aks-nodepool-info \
+    --cluster-name ${AKS_CLUSTER_NAME} \
+    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
+    --name ${AKS_NODEPOOL_TARGET_NAME}
+)
+AKS_NODEPOOL_TARGET_MODE=${AKS_NODEPOOL_MODE}
+AKS_NODEPOOL_TARGET_ENABLE_AUTO_SCALING=${AKS_NODEPOOL_ENABLE_AUTO_SCALING}
+AKS_NODEPOOL_TARGET_MIN_COUNT=${AKS_NODEPOOL_MIN_COUNT}
+AKS_NODEPOOL_TARGET_MAX_COUNT=${AKS_NODEPOOL_MAX_COUNT}
+AKS_NODEPOOL_TARGET_COUNT=${AKS_NODEPOOL_COUNT}
+
+save_metric "AKS_NODEPOOL_TARGET_NAME" "${AKS_NODEPOOL_TARGET_NAME}"
+save_metric "AKS_NODEPOOL_TARGET_MODE" "${AKS_NODEPOOL_TARGET_MODE}"
+save_metric "AKS_NODEPOOL_TARGET_COUNT" "${AKS_NODEPOOL_TARGET_COUNT}"
+save_metric "AKS_NODEPOOL_TARGET_MIN_COUNT" "${AKS_NODEPOOL_SOURCE_MIN_COUNT}"
+save_metric "AKS_NODEPOOL_TARGET_MAX_COUNT" "${AKS_NODEPOOL_SOURCE_MAX_COUNT}"
+
+eval $(
+  aks-nodepool-update-limits-calc \
+    --hard-limit-min ${HARD_LIMIT_MIN} \
+    --hard-limit-max ${HARD_LIMIT_MAX} \
+    --source-min ${AKS_NODEPOOL_SOURCE_MIN_COUNT} \
+    --source-max ${AKS_NODEPOOL_SOURCE_MAX_COUNT} \
+    --target-min ${AKS_NODEPOOL_TARGET_MIN_COUNT} \
+    --target-max ${AKS_NODEPOOL_TARGET_MAX_COUNT} \
+    --target-mode ${AKS_NODEPOOL_TARGET_MODE}
+)
+
+AKS_NODEPOOL_UPDATE_EXECUTED="n"
+
+if [ "${AKS_NODEPOOL_TARGET_UPDATE_LIMITS}" == "y" ]; then
+  echo "[${AKS_NODEPOOL_TARGET_NAME}] Update [${AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT}..${AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT}]"
+
+  if [ "${DRY_RUN}" == "n" ]; then
+    if [ "${AKS_NODEPOOL_TARGET_ENABLE_AUTO_SCALING,,}" != "true" ]; then
+      az aks nodepool update \
+        --enable-cluster-autoscaler \
+        --cluster-name "${AKS_CLUSTER_NAME}" \
+        --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+        --name "${AKS_NODEPOOL_TARGET_NAME}" \
+        --min-count ${AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT} \
+        --max-count ${AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT} \
+        --only-show-errors 1> /dev/null
+    else
+      az aks nodepool update \
+        --update-cluster-autoscaler \
+        --cluster-name "${AKS_CLUSTER_NAME}" \
+        --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+        --name "${AKS_NODEPOOL_TARGET_NAME}" \
+        --min-count ${AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT} \
+        --max-count ${AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT} \
+        --only-show-errors 1> /dev/null
+    fi
+
+    if [ "$?" == 0 ]; then
+      AKS_NODEPOOL_UPDATE_EXECUTED="y"
+
+      echo "[${AKS_NODEPOOL_TARGET_NAME}] Update done"
+      
+      AKS_NODEPOOL_TARGET_UPDATE_END=$(date +%s)
+      AKS_NODEPOOL_TARGET_UPDATE_DURATION=$((AKS_NODEPOOL_TARGET_UPDATE_END - AKS_NODEPOOL_TARGET_UPDATE_START))
+  
+      save_metric "AKS_NODEPOOL_TARGET_UPDATE_DURATION" "${AKS_NODEPOOL_TARGET_UPDATE_DURATION}"
+    else
+      echo "[${AKS_NODEPOOL_TARGET_NAME}] Update was not completed"
+    fi
+
+    save_metric "AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT" "${AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT}"
+    save_metric "AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT" "${AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT}"
+  fi
+fi
+
+if [ "${AKS_NODEPOOL_UPDATE_EXECUTED}" == "y" ]; then
+  NODE_COUNT_TO_CORDON=$((${AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT} - ${AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT}))
+
+  if [ "${NODE_COUNT_TO_CORDON}" -gt 0 ]; then
+    echo "[${AKS_NODEPOOL_SOURCE_NAME}] Cordon [${NODE_COUNT_TO_CORDON}]"
+
+    if [ "${DRY_RUN}" == "n" ]; then
+      aks-node-cordon \
+        --cluster-name "${AKS_CLUSTER_NAME}" \
+        --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+        --name "${AKS_NODEPOOL_SOURCE_NAME}" \
+        --count ${NODE_COUNT_TO_CORDON} \
+        --debug 2
+
+      save_metric "AKS_NODEPOOL_SOURCE_CORDON_COUNT" "${NODE_COUNT_TO_CORDON}"
+    fi
+  fi
+fi
+
+if [ "${AKS_NODEPOOL_DECREASE_EXECUTED}" == "n" ] && \
+    [ "${AKS_NODEPOOL_UPDATE_EXECUTED}" == "n" ]; then
+  echo "[${AKS_NODEPOOL_SOURCE_NAME}] Rollout Restart Deployments for ${MAX_NODES_TO_ROLLOUT_RESTART?} Nodes"
+
+  if [ "${DRY_RUN}" == "n" ]; then
+    eval $(
+      aks-node-rollout-restart-calc \
+        --cluster-name ${AKS_CLUSTER_NAME?} \
+        --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
+        --max-nodes-to-rollout-restart ${MAX_NODES_TO_ROLLOUT_RESTART?}
+    )
+
+    echo ""
+    echo "Rollout restart:"
+    echo "  space-history:     [${AKS_NODE_ROLLOUT_RESTART_LAST_SPACE_VALUES}]"
+    echo "  space-trend:       ${AKS_NODE_ROLLOUT_RESTART_LINEAR_TREND}"
+    echo "  rollout-last:      ${AKS_NODE_ROLLOUT_RESTART_LAST_COUNT}"
+    echo "  rollout-effective: ${AKS_NODE_ROLLOUT_RESTART_COUNT}"
+    echo "  history-file:      ${AKS_NODE_ROLLOUT_RESTART_HISTORY_FILE}"
+    echo ""
+
+    if [ "${AKS_NODE_ROLLOUT_RESTART_COUNT}" -gt 0 ]; then
       aks-node-rollout-restart \
         --cluster-name ${AKS_CLUSTER_NAME} \
         --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
         --name ${AKS_NODEPOOL_SOURCE_NAME} \
-        --count ${MAX_NODES_TO_ROLLOUT_RESTART?} \
-        --debug 1
+        --count ${AKS_NODE_ROLLOUT_RESTART_COUNT?} \
+        --debug 2
+      
+      # Only compute this metric if the Rollout Restart was really executed
+      if [ $? == 0 ]; then
+        AKS_NODEPOOL_SOURCE_ROLLOUT_RESTART_COUNT=${AKS_NODE_ROLLOUT_RESTART_COUNT}
+      fi
     fi
-  else
-    aks-nodepool-decrease \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --name ${AKS_NODEPOOL_SOURCE_NAME} \
-      --dry-run
-
-    aks-nodepool-update-limits \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --source ${AKS_NODEPOOL_SOURCE_NAME} \
-      --target ${AKS_NODEPOOL_TARGET_NAME} \
-      --hard-limit-min ${HARD_LIMIT_MIN} \
-      --hard-limit-max ${HARD_LIMIT_MAX} \
-      --dry-run
-
-    aks-node-rollout-restart \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-      --name ${AKS_NODEPOOL_SOURCE_NAME} \
-      --debug 1 \
-      --count 2 \
-      --dry-run
   fi
-else
-  echo "Nothing to do."
+fi
+
+save_metric "AKS_NODEPOOL_SOURCE_ROLLOUT_RESTART_COUNT" "${AKS_NODEPOOL_SOURCE_ROLLOUT_RESTART_COUNT}"
+
+AKS_UPDATE_LIMITS_END=$(date +%s)
+AKS_UPDATE_LIMITS_DURATION=$((AKS_UPDATE_LIMITS_END - AKS_UPDATE_LIMITS_START))
+
+save_metric "AKS_UPDATE_LIMITS_DURATION" "${AKS_UPDATE_LIMITS_DURATION}"
+
+if [ "${DRY_RUN}" == "n" ]; then
+  source "${METRICS_FILE_NAME}"
+  envsubst < "${THIS_SCRIPT_DIRECTORY}/../templates/newrelic/aks-update-limits.template" > "${NEWRELIC_EVENTS_JSON}"
+
+  echo
+  cat "${NEWRELIC_EVENTS_JSON}"
+
+  newrelic-send-events "${NEWRELIC_EVENTS_JSON}"
 fi

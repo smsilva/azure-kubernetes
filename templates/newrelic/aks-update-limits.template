@@ -1,0 +1,33 @@
+[
+  {
+    "eventType": "AksUpdateLimits",
+    "id": "${AKS_UPDATE_LIMITS_EXECUTION_ID}",
+    "version": "0.2.0",
+    "subscriptionId": "${ARM_SUBSCRIPTION_ID}",
+    "subscriptionName": "${ARM_SUBSCRIPTION_NAME}",
+    "clusterName": "${AKS_CLUSTER_NAME}",
+    "clusterResourceGroupName": "${AKS_CLUSTER_RESOURCE_GROUP_NAME}",
+    "clusterTotalNodeMin": ${AKS_CLUSTER_NODES_MIN},
+    "clusterTotalNodeMax": ${AKS_CLUSTER_NODES_MAX},
+    "clusterTotalNodeCount": ${AKS_CLUSTER_NODES_COUNT},
+    "clusterTotalNodeSpace": ${AKS_CLUSTER_NODES_SPACE},
+    "duration": ${AKS_UPDATE_LIMITS_DURATION},
+    "nodepoolSourceName": "${AKS_NODEPOOL_SOURCE_NAME}",
+    "nodepoolSourceMode": "${AKS_NODEPOOL_SOURCE_MODE}",
+    "nodepoolSourceMin": ${AKS_NODEPOOL_SOURCE_MIN_COUNT},
+    "nodepoolSourceMax": ${AKS_NODEPOOL_SOURCE_MAX_COUNT},
+    "nodepoolSourceCount": ${AKS_NODEPOOL_SOURCE_COUNT},
+    "nodepoolSourceMinUpdate": ${AKS_NODEPOOL_SOURCE_UPDATE_MIN_COUNT},
+    "nodepoolSourceMaxUpdate": ${AKS_NODEPOOL_SOURCE_UPDATE_MAX_COUNT},
+    "nodepoolSourceUpdateDuration": ${AKS_NODEPOOL_SOURCE_UPDATE_DURATION},
+    "nodepoolTargetName": "${AKS_NODEPOOL_TARGET_NAME}",
+    "nodepoolTargetMode": "${AKS_NODEPOOL_TARGET_MODE}",
+    "nodepoolTargetMin": ${AKS_NODEPOOL_TARGET_MIN_COUNT},
+    "nodepoolTargetMax": ${AKS_NODEPOOL_TARGET_MAX_COUNT},
+    "nodepoolTargetCount": ${AKS_NODEPOOL_TARGET_COUNT},
+    "nodepoolTargetMinUpdate": ${AKS_NODEPOOL_TARGET_UPDATE_MIN_COUNT},
+    "nodepoolTargetMaxUpdate": ${AKS_NODEPOOL_TARGET_UPDATE_MAX_COUNT},
+    "nodepoolTargetUpdateDuration": ${AKS_NODEPOOL_TARGET_UPDATE_DURATION},
+    "nodepoolSourceRolloutRestarted": ${AKS_NODEPOOL_SOURCE_ROLLOUT_RESTART_COUNT}
+  }
+]

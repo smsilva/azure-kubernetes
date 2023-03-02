@@ -1,0 +1,73 @@
+#!/bin/bash
+export THIS_SCRIPT_NAME=$0
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export TEMPLATES_DIRECTORY="${THIS_SCRIPT_DIRECTORY}/../templates/newrelic"
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  --account-id )
+    shift; NEW_RELIC_ACCOUNT_ID=$1
+    ;;
+
+  --api-key )
+    shift; NEW_RELIC_API_KEY=$1
+    ;;
+
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+
+  -max-nodes | --max-nodes-to-rollout-restart )
+    shift; MAX_NODES_TO_ROLLOUT_RESTART=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${NEW_RELIC_ACCOUNT_ID}" ] && \
+   [ -z "${NEW_RELIC_API_KEY}"   ]; then
+  exit 1
+fi
+
+# Initialize variables
+NEWRELIC_NERD_GRAPH_PAYLOAD_FILE="$(mktemp)"
+NEWRELIC_NERD_GRAPH_RESPONSE_FILE="$(mktemp)"
+
+# Prepare New Relic Nerd Graph Payload File with NRQL Query to Retrieve "clusterTotalNodeSpace" and "nodepoolSourceRolloutRestarted" data columns
+envsubst < "${TEMPLATES_DIRECTORY}/nerdgraph-aks-update-limits-payload.template" > "${NEWRELIC_NERD_GRAPH_PAYLOAD_FILE}"
+
+curl \
+  --silent 'https://api.newrelic.com/graphql' \
+  --header "Content-Type: application/json" \
+  --header "API-Key: ${NEW_RELIC_API_KEY}" \
+  --data-binary @"${NEWRELIC_NERD_GRAPH_PAYLOAD_FILE}" > ${NEWRELIC_NERD_GRAPH_RESPONSE_FILE}
+
+read_file() {
+  jq -r ".data.actor.account.nrql.results[] | @base64" "${NEWRELIC_NERD_GRAPH_RESPONSE_FILE}"
+}
+
+from_json_to_csv() {
+  while read -r LINE_BASE64; do
+    _jq() {
+      echo ${LINE_BASE64} | base64 --decode | jq -r ${1}
+    }
+    CLUSTER_TOTAL_NODE_SPACE=$(_jq '.clusterTotalNodeSpace')
+    NODEPOOL_SOURCE_ROLLOUT_RESTARTED=$(_jq '.nodepoolSourceRolloutRestarted')
+
+    if [ -n "${CLUSTER_TOTAL_NODE_SPACE}" ]; then
+      echo "${CLUSTER_TOTAL_NODE_SPACE},${NODEPOOL_SOURCE_ROLLOUT_RESTARTED-0}"
+    fi
+  done <<< "$(read_file)"
+}
+
+from_json_to_csv

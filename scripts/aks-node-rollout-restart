@@ -198,67 +198,84 @@ rollout_restart_deployments() {
   log "[${NODE_NAME?}] labeled with 'rollout-restarted=true'"
 }
 
-find_nodes() {
+find_nodes_to_rollout_restart() {
   if [ "${AKS_NODE_COUNT}" == "0" ]; then
     node_list "${AKS_NODE_NAME}" > "${SELECTED_NODES_FILE?}"
   else
     node_list "${AKS_NODE_NAME}" | head -${AKS_NODE_COUNT} > "${SELECTED_NODES_FILE?}"
   fi
 
-  if [ "${DEBUG_LEVEL}" -gt "2" ]; then
-    log ""
-    log "[${SELECTED_NODES_FILE?}]"
-    cat "${SELECTED_NODES_FILE?}"
-    log ""
+  NODES_SELECTED=$(cat ${SELECTED_NODES_FILE?} | wc -l)
+
+  if [ "${DEBUG_LEVEL}" -gt "1" ]; then
+    log "  filter:      ${AKS_NODE_NAME}"
+    log "  desired:     ${AKS_NODE_COUNT}"
+    log "  selected:    ${NODES_SELECTED}"
+
+    if [ "${DEBUG_LEVEL}" -gt "2" ]; then
+      log "  file:        ${SELECTED_NODES_FILE}"
+    fi
   fi
 
-  if ! [ -s "${SELECTED_NODES_FILE?}" ]; then
-    log "No Nodes selected without 'rollout-restarted' label."
-    exit 1
+  if [ "${NODES_SELECTED}" -gt 0 ]; then
+    log ""
+    while read NODE_NAME; do
+      log "  ${NODE_NAME}"
+    done < "${SELECTED_NODES_FILE?}"
+    log ""
+
+    return 0
   fi
 
+  log "No Nodes selected without rollout-restarted label."
   log ""
-  while read NODE_NAME; do
-    log "  ${NODE_NAME}"
-  done < "${SELECTED_NODES_FILE?}"
-  log ""
+
+  return 1
 }
 
-find_not_deleted_nodes() {
+are_there_nodes_to_delete() {
   NODES_NOT_DELETED=$(kubectl get nodes \
     --selector rollout-restarted \
     --output name \
   | egrep "${AKS_NODE_NAME}" \
   | wc -l)
 
+  if [ "${DEBUG_LEVEL}" -gt "1" ]; then
+    log "  desired:     ${AKS_NODE_COUNT}"
+    log "  not-deleted: ${NODES_NOT_DELETED}"
+  fi
+
   if [ "${NODES_NOT_DELETED}" -eq "${AKS_NODE_COUNT}" ] || \
      [ "${NODES_NOT_DELETED}" -gt "${AKS_NODE_COUNT}" ]; then
-    log "There are Nodes (${NODES_NOT_DELETED}) not deleted yet.".
+    log "There are NOT DELETED Nodes: ${NODES_NOT_DELETED}. Nothing to do."
     log ""
 
     kubectl get nodes \
       --selector rollout-restarted
 
-    exit 1
+    return 0
   fi
+
+  log "No Pending Nodes to delete."
+  log ""
+  return 1
 }
 
-if [ "${DEBUG_LEVEL}" -gt "1" ]; then
-  log "Node List filter:"
-  log "  name..: ${AKS_NODE_NAME}"
-  log "  count.: ${AKS_NODE_COUNT}"
+log "Finding NOT DELETED Nodes..."
+if are_there_nodes_to_delete; then
+  exit 1
 fi
 
-log "Check if there are Nodes not deleted yet..."
-find_not_deleted_nodes
+log "Finding NODES to ROLLOUT RESTART..."
 
-log "Finding Nodes..."
-find_nodes
+if ! find_nodes_to_rollout_restart; then
+  exit 1
+fi
 
-log "Collecting all ReplicaSets data..."
+log "Collecting ALL REPLICASETS data..."
 get_all_replicasets
 
-log "Collecting all Pods/Deployments data..."
+log "Collecting ALL PODS/DEPLOYMENTS data..."
 get_all_pods | while read LINE; do
   POD_NODE_NAME=$(awk '{ print $1 }' <<< "${LINE}")
   POD_NAMESPACE=$(awk '{ print $2 }' <<< "${LINE}")

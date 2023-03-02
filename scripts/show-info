@@ -86,6 +86,9 @@ EOF
 fi
 
 aks_nodepool_show() {
+  echo "${AKS_CLUSTER_NAME}"
+  echo ""
+
   aks-nodepool-show \
     --subscription "${AZURE_SUBSCRIPTION_ID}" \
     --cluster-name "${AKS_CLUSTER_NAME}" \

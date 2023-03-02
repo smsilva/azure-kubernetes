@@ -9,7 +9,8 @@ show_usage() {
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --name user1 \\
-    --dry-run
+    --min 1 \\
+    --max 5
 
 EOF
 }
@@ -33,8 +34,12 @@ case $1 in
     shift; AKS_CLUSTER_NODEPOOL_NAME=$1
     ;;
 
-  --dry-run )
-    shift; DRY_RUN="y"
+  -min | --min )
+    shift; AKS_NODEPOOL_MIN_COUNT=$1
+    ;;
+
+  -max | --max )
+    shift; AKS_NODEPOOL_MAX_COUNT=$1
     ;;
 esac; shift; done
 
@@ -50,39 +55,23 @@ if [ -z "${AKS_CLUSTER_NAME}"                ] || \
   exit 1
 fi
 
-eval $(
-  aks-nodepool-info \
-    --cluster-name ${AKS_CLUSTER_NAME} \
-    --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME} \
-    --name ${AKS_CLUSTER_NODEPOOL_NAME}
-)
+az aks nodepool update \
+  --update-cluster-autoscaler \
+  --cluster-name "${AKS_CLUSTER_NAME}" \
+  --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
+  --name "${AKS_CLUSTER_NODEPOOL_NAME}" \
+  --min-count ${AKS_NODEPOOL_MIN_COUNT} \
+  --max-count ${AKS_NODEPOOL_MAX_COUNT} \
+  --only-show-errors 1> /dev/null
 
-eval $(
-  aks-nodepool-decrease-calc \
-    --count ${AKS_NODEPOOL_COUNT} \
-    --min ${AKS_NODEPOOL_MIN_COUNT} \
-    --max ${AKS_NODEPOOL_MAX_COUNT}
-)
+NODEPOOL_UPDATE_RESULT=$?
 
-if [ -n "${AKS_NODEPOOL_DECREASE_CURRENT_RANGE}" ]; then
-  if [ "${AKS_NODEPOOL_DECREASE_MIN_COUNT}" -lt 1 ] && [ "${AKS_NODEPOOL_MODE?}" == "System" ]; then
-    export AKS_NODEPOOL_DECREASE_MIN_COUNT=1
-  fi
-
-  echo "[${AKS_CLUSTER_NODEPOOL_NAME}] Decrease [${AKS_NODEPOOL_DECREASE_MIN_COUNT}..${AKS_NODEPOOL_DECREASE_MAX_COUNT}]"
-
-  if [ "${DRY_RUN}" == "n" ]; then
-    az aks nodepool update \
-      --update-cluster-autoscaler \
-      --cluster-name "${AKS_CLUSTER_NAME}" \
-      --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
-      --name "${AKS_CLUSTER_NODEPOOL_NAME}" \
-      --min-count ${AKS_NODEPOOL_DECREASE_MIN_COUNT} \
-      --max-count ${AKS_NODEPOOL_DECREASE_MAX_COUNT} \
-      --only-show-errors 1> /dev/null
-    
-    exit $?
-  fi
+if [ "${NODEPOOL_UPDATE_RESULT}" == "0" ]; then
+  AKS_NODEPOOL_DECREASE_EXECUTED="y"
+else
+  AKS_NODEPOOL_DECREASE_EXECUTED="n"
 fi
 
-exit 100
+echo "export AKS_NODEPOOL_DECREASE_EXECUTED=${AKS_NODEPOOL_DECREASE_EXECUTED}"
+
+exit ${NODEPOOL_UPDATE_RESULT}

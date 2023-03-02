@@ -20,6 +20,7 @@ show_usage() {
     --resource-group aks-cluster-example \\
     --source user1 \\
     --name user2 \\
+    --availability-zones "1,2" \\
     --vm-size Standard_D32s_v3 \\
     --mode User \\
     --kubernetes-version 1.23.8 \\
@@ -57,6 +58,10 @@ case $1 in
     shift; NODEPOOL_VM_SIZE=$1
     ;;
 
+  -azs | --availability-zones )
+    shift; NODEPOOL_AVAILABILITY_ZONES="[$1]"
+    ;;
+
   -m | --mode )
     shift; NODEPOOL_MODE=$1
     ;;
@@ -71,6 +76,10 @@ case $1 in
 
   -mx | --max )
     shift; NODEPOOL_MAX_COUNT=$1
+    ;;
+
+  -sid | --subnet-id )
+    shift; NODEPOOL_VNET_SUBNET_ID=$1
     ;;
 
   --dry-run )
@@ -115,6 +124,10 @@ if [ -z "${NODEPOOL_VM_SIZE}" ]; then
   NODEPOOL_VM_SIZE="${AKS_NODEPOOL_VM_SIZE}"
 fi
 
+if [ -z "${NODEPOOL_VNET_SUBNET_ID}" ]; then
+  NODEPOOL_VNET_SUBNET_ID="${AKS_NODEPOOL_VNET_SUBNET_ID}"
+fi
+
 if [ "${AKS_NODEPOOL_TAINTS}" == "null" ]; then
   if [ "${NODEPOOL_MODE}" == "System" ]; then
     AKS_NODEPOOL_TAINTS_FINAL="CriticalAddonsOnly=true:NoSchedule"
@@ -125,11 +138,11 @@ else
   AKS_NODEPOOL_TAINTS_FINAL=$(sed -e 's|\[||g' -e 's|\]||g' <<< "${AKS_NODEPOOL_TAINTS}")
 fi
 
-if [ "${AKS_NODEPOOL_AVAILABILITY_ZONES}" == "null" ]; then
+if [ "${NODEPOOL_AVAILABILITY_ZONES}" == "null" ]; then
   export AKS_NODEPOOL_AVAILABILITY_ZONES_FINAL="1 2"
 else
   export AKS_NODEPOOL_AVAILABILITY_ZONES_FINAL=$(
-    jq .[] -r <<< "${AKS_NODEPOOL_AVAILABILITY_ZONES}" \
+    jq .[] -r <<< "${NODEPOOL_AVAILABILITY_ZONES}" \
     | sort \
     | tr "\n" " " \
     | sed 's/.$//'
@@ -138,14 +151,14 @@ fi
 
 if [ "${DRY_RUN}" == "y" ]; then
   AKS_NODEPOOL_VNET_SUBNET_CIDR=$(az network vnet subnet show \
-    --ids ${AKS_NODEPOOL_VNET_SUBNET_ID} \
+    --ids ${NODEPOOL_VNET_SUBNET_ID} \
     --query 'addressPrefix' \
     --output tsv)
 
   echo "CLUSTER_NAME...................: ${AKS_CLUSTER_NAME}"
   echo "CLUSTER_RESOURCE_GROUP_NAME....: ${AKS_CLUSTER_RESOURCE_GROUP_NAME}"
-  echo "NODEPOOL_VNET_SUBNET_ID........: ${AKS_NODEPOOL_VNET_SUBNET_ID}"
-  echo "NODEPOOL_VNET_SUBNET_NAME......: ${AKS_NODEPOOL_VNET_SUBNET_ID##*/}"
+  echo "NODEPOOL_VNET_SUBNET_ID........: ${NODEPOOL_VNET_SUBNET_ID}"
+  echo "NODEPOOL_VNET_SUBNET_NAME......: ${NODEPOOL_VNET_SUBNET_ID##*/}"
   echo "NODEPOOL_VNET_SUBNET_CIDR......: ${AKS_NODEPOOL_VNET_SUBNET_CIDR}"
   echo "NODEPOOL_MODE..................: ${NODEPOOL_MODE}"
   echo "NODEPOOL_NAME..................: ${NODEPOOL_NAME}"
@@ -176,6 +189,6 @@ az aks nodepool add \
   --max-count ${NODEPOOL_MAX_COUNT?} \
   --node-osdisk-size "${AKS_NODEPOOL_OS_DISK_SIZE_GB?}" \
   --node-osdisk-type "${AKS_NODEPOOL_OS_DISK_SIZE_TYPE?}" \
-  --vnet-subnet-id "${AKS_NODEPOOL_VNET_SUBNET_ID?}" \
+  --vnet-subnet-id "${NODEPOOL_VNET_SUBNET_ID?}" \
   --enable-cluster-autoscaler \
   --node-taints "${AKS_NODEPOOL_TAINTS_FINAL}"

@@ -1,0 +1,105 @@
+#!/bin/bash
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  -cn | --cluster-name )
+    shift; AKS_CLUSTER_NAME=$1
+    ;;
+
+  -rg | --resource-group )
+    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
+    ;;
+
+  -max-nodes | --max-nodes-to-rollout-restart )
+    shift; MAX_NODES_TO_ROLLOUT_RESTART=$1
+    ;;
+
+  --dry-run )
+    shift; DRY_RUN="y"
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+AKS_CLUSTER_HISTORY_FILE="$(mktemp)"
+AKS_CLUSTER_HISTORY_NODE_SPACE_FILE="$(mktemp)"
+AKS_NODE_ROLLOUT_RESTART_COUNT=0
+
+retrieve_history_list_from_new_relic_nerd_graph_api() {
+  export AKS_CLUSTER_NAME
+  export AKS_CLUSTER_RESOURCE_GROUP_NAME
+
+  newrelic-query-space-history \
+    --account-id "${NEW_RELIC_ACCOUNT_ID?}" \
+    --api-key "${NEW_RELIC_API_KEY?}" \
+    --cluster-name "${AKS_CLUSTER_NAME?}" \
+    --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME?}"
+}
+
+retrieve_history_list_from () {
+  FILE_NAME=$1
+  awk -F ',' '{ print $1 }' ${FILE_NAME?} \
+  | tail -20
+}
+
+last_node_rollout_restart_count() {
+  awk -F ',' '{ print $2 }' "${AKS_CLUSTER_HISTORY_FILE}" \
+| grep -v "0" \
+| tail -1
+}
+
+calculate_linear_trend_coefficient() {
+  python3 -m pip install numpy &> /dev/null
+  python3 ${THIS_SCRIPT_DIRECTORY}/linear_trend_coefficient.py "${AKS_CLUSTER_HISTORY_NODE_SPACE_FILE}"
+}
+
+list_last_space_values() {
+  cat ${AKS_CLUSTER_HISTORY_NODE_SPACE_FILE} \
+| tail -20 \
+| tr "\n" "," \
+| sed 's|,$||g'
+}
+
+retrieve_history_list_from_new_relic_nerd_graph_api > "${AKS_CLUSTER_HISTORY_FILE}"
+
+retrieve_history_list_from "${AKS_CLUSTER_HISTORY_FILE}" > "${AKS_CLUSTER_HISTORY_NODE_SPACE_FILE}"
+
+LAST_SPACE_VALUES=$(list_last_space_values)
+
+LAST_NODE_ROLLOUT_RESTARTED_COUNT=$(last_node_rollout_restart_count)
+
+LINEAR_TREND_COEFFICIENT=$(calculate_linear_trend_coefficient)
+
+AKS_NODE_ROLLOUT_RESTART_COUNT=0
+
+if [ -z "${LAST_NODE_ROLLOUT_RESTARTED_COUNT}" ]; then
+  AKS_NODE_ROLLOUT_RESTART_COUNT=${MAX_NODES_TO_ROLLOUT_RESTART?}
+fi
+
+if [ "${LINEAR_TREND_COEFFICIENT}" -gt 0 ]; then
+  AKS_NODE_ROLLOUT_RESTART_COUNT=$((LAST_NODE_ROLLOUT_RESTARTED_COUNT + 1))
+else
+  if [ "${LINEAR_TREND_COEFFICIENT}" -lt 0 ]; then
+    AKS_NODE_ROLLOUT_RESTART_COUNT=$((LAST_NODE_ROLLOUT_RESTARTED_COUNT - 1))
+  else
+    AKS_NODE_ROLLOUT_RESTART_COUNT=${MAX_NODES_TO_ROLLOUT_RESTART?}
+  fi
+fi
+
+if [ "${AKS_NODE_ROLLOUT_RESTART_COUNT}" -lt 1 ]; then
+  AKS_NODE_ROLLOUT_RESTART_COUNT=1
+fi
+
+echo "export AKS_NODE_ROLLOUT_RESTART_COUNT=${AKS_NODE_ROLLOUT_RESTART_COUNT}"
+echo "export AKS_NODE_ROLLOUT_RESTART_HISTORY_FILE=${AKS_CLUSTER_HISTORY_FILE}"
+echo "export AKS_NODE_ROLLOUT_RESTART_HISTORY_SPACE_FILE=${AKS_CLUSTER_HISTORY_NODE_SPACE_FILE}"
+echo "export AKS_NODE_ROLLOUT_RESTART_LAST_COUNT=${LAST_NODE_ROLLOUT_RESTARTED_COUNT}"
+echo "export AKS_NODE_ROLLOUT_RESTART_LAST_SPACE_VALUES=${LAST_SPACE_VALUES}"
+echo "export AKS_NODE_ROLLOUT_RESTART_LINEAR_TREND=${LINEAR_TREND_COEFFICIENT}"
