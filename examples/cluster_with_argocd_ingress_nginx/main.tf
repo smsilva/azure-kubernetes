@@ -1,5 +1,5 @@
 locals {
-  cluster_version             = "1.23.12"
+  cluster_version             = "1.23.15"
   cluster_node_pool_min_count = 3
   cluster_node_pool_max_count = 5
   install_cert_manager        = true
@@ -7,7 +7,7 @@ locals {
   install_external_dns        = true
   install_ingress_nginx       = true
   install_argocd              = true
-  install_app_of_apps_infra   = true
+  install_app_of_apps_infra   = false
   cluster_ingress_type        = "nginx"
 }
 
@@ -71,7 +71,7 @@ module "external_dns" {
   count  = local.install_external_dns ? 1 : 0
   source = "../../src/external-dns"
 
-  domain = local.external_dns_domain_filter
+  domain = local.dns_zone
 
   depends_on = [
     module.external_secrets,

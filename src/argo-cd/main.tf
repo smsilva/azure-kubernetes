@@ -36,14 +36,14 @@ resource "helm_release" "argocd" {
 
   values = [
     data.template_file.sso.rendered,
-    file("${path.module}/templates/configs-known-hosts.yaml"),
-    file("${path.module}/templates/extra-volumes.yaml"),
-    file("${path.module}/templates/high-availability.yaml"),
-    file("${path.module}/templates/metrics.yaml"),
+    # file("${path.module}/templates/configs-known-hosts.yaml"),
+    # file("${path.module}/templates/extra-volumes.yaml"),
+    # file("${path.module}/templates/high-availability.yaml"),
+    # file("${path.module}/templates/metrics.yaml"),
     file("${path.module}/templates/resource-customizations.yaml"),
     local.configs_server,
     local.extra_objects,
-    local.notifications,
+    # local.notifications,
     local.rbac,
   ]
 

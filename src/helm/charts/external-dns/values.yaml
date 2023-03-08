@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 image:
-  repository: k8s.gcr.io/external-dns/external-dns
+  repository: registry.k8s.io/external-dns/external-dns
   # Overrides the image tag whose default is v{{ .Chart.AppVersion }}
   tag: ""
   pullPolicy: IfNotPresent
@@ -91,18 +91,9 @@ service:
   port: 7979
   annotations: {}
 
-extraVolumes:
-  - name: azure-config-file
-    secret:
-      secretName: azure-config-file
-      items:
-        - key: azure-config-file.json
-          path: azure.json
+extraVolumes: []
 
-extraVolumeMounts:
-  - name: azure-config-file
-    mountPath: /etc/kubernetes
-    readOnly: true
+extraVolumeMounts: []
 
 resources: {}
 
@@ -124,7 +115,7 @@ sources:
   - service
   - ingress
 
-policy: sync
+policy: upsert-only
 
 registry: txt
 txtOwnerId: ""
@@ -133,14 +124,19 @@ txtSuffix: ""
 
 domainFilters: []
 
-provider: azure
+provider: aws
 
 extraArgs: []
 
 secretConfiguration:
   enabled: false
   mountPath: ""
+  subPath: ""
   data: {}
+    # credentials: |
+    #   [default]
+    #   aws_access_key_id = $SECRET_ACCESS_KEY
+    #   aws_secret_access_key = $SECRET_ACCESS_KEY
 
 deploymentStrategy:
   type: Recreate

@@ -1,8 +1,9 @@
 annotations:
   artifacthub.io/changes: |
-    - "[Added]: Extra secret labels with .Values.configs.secret.labels"
+    - kind: fixed
+      description: ApplicationSet utilizes global tolerations
 apiVersion: v2
-appVersion: v2.5.7
+appVersion: v2.6.3
 dependencies:
 - condition: redis-ha.enabled
   name: redis-ha
@@ -24,4 +25,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.18.0
+version: 5.24.1
