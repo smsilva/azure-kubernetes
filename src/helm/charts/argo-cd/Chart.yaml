@@ -1,9 +1,9 @@
 annotations:
   artifacthub.io/changes: |
     - kind: fixed
-      description: ApplicationSet utilizes global tolerations
+      description: Clarify syntax in values.yaml
 apiVersion: v2
-appVersion: v2.6.3
+appVersion: v2.6.4
 dependencies:
 - condition: redis-ha.enabled
   name: redis-ha
@@ -25,4 +25,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.24.1
+version: 5.24.3
