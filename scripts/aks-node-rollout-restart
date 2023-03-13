@@ -1,4 +1,5 @@
 #!/bin/bash
+export THIS_SCRIPT_NAME=$0
 export THIS_SCRIPT_DIRECTORY=$(dirname $0)
 export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 export EXECUTION_ID="$(date +"%Y-%m-%d_%H-%M-%S")_$(uuidgen)"
@@ -12,7 +13,7 @@ mkdir -p "${CACHE_DIRECTORY}"
 show_usage() {
   cat <<EOF
 
-  ./aks-node-rollout-restart \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --name agentpool \\
@@ -20,14 +21,14 @@ show_usage() {
     --debug 1 \\
     --dry-run
 
-  ./aks-node-rollout-restart \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --name aks-system1-37832835-vmss000000 \\
     --debug 1 \\
     --dry-run
 
-  ./aks-node-rollout-restart \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --count 3 \\

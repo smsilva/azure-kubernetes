@@ -1,13 +1,15 @@
 #!/bin/bash
+export THIS_SCRIPT_NAME=$0
+
 show_usage() {
   cat <<EOF
 
-  ./aks-nodepool-info \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --name user1
 
-  ./aks-nodepool-info \\
+  ${THIS_SCRIPT_NAME} \\
     --subscription 70d05914-4c56-47be-a78c-3b1a47b8f820 \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\

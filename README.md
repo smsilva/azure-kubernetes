@@ -38,7 +38,8 @@ terraform apply
 # Follow Process
 
 ```bash
-watch -n 10 'scripts/follow-creation.sh'
+# wasp-xpt3
+watch -n 10 'scripts/follow-creation/follow xpt3'
 ```
 
 # Helm Charts

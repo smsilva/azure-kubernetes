@@ -1,8 +1,10 @@
 #!/bin/bash
+export THIS_SCRIPT_NAME=$0
+
 show_usage() {
   cat <<EOF
 
-  ./aks-nodepool-upgrade \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --name user1 \\
@@ -53,4 +55,5 @@ az aks nodepool upgrade \
   --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" \
   --name "${AKS_CLUSTER_NODEPOOL_NAME}" \
   --kubernetes-version "${AKS_KUBERNETES_VERSION?}" \
-  --only-show-errors
+  --only-show-errors \
+  --yes

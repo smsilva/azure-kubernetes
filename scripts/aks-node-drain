@@ -1,8 +1,10 @@
 #!/bin/bash
+export THIS_SCRIPT_NAME=$0
+
 show_usage() {
   cat <<EOF
 
-  ./aks-nodepool-drain aks-user1-69591119-vmss000000
+  ${THIS_SCRIPT_NAME} aks-user1-69591119-vmss000000
 
 EOF
 }

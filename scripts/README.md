@@ -13,7 +13,7 @@ az aks list \
 cat <<EOF > cluster.env
 export AKS_CLUSTER_NAME="wasp-example-aks"
 export AKS_CLUSTER_RESOURCE_GROUP_NAME="wasp-example-aks"
-export AKS_KUBERNETES_VERSION="1.23.8"
+export AKS_KUBERNETES_VERSION="1.23.15"
 export AKS_NODEPOOL_SOURCE="user1"
 export AKS_NODEPOOL_TARGET="user2"
 EOF
@@ -43,7 +43,11 @@ az aks nodepool list \
 ### AKS Cluster Upgrade Control Plane Only
 
 ```bash
-./aks-cluster-upgrade
+./aks-upgrade-control-plane-only \
+  --cluster-name ${AKS_CLUSTER_NAME?} \
+  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
+  --version ${AKS_KUBERNETES_VERSION?} \
+  --dry-run
 ```
 
 ### Node Pool Creation
@@ -62,7 +66,7 @@ Create a Node Pool using the parameters from an existing one.
   --dry-run
 ```
 
-### Node Pool Node Limits Upgrade
+### Node Pool Upgrade
 
 ```bash
 ./aks-nodepool-upgrade \
@@ -75,28 +79,15 @@ Create a Node Pool using the parameters from an existing one.
   --dry-run
 ```
 
-### AKS Node Pool Upgrade
-
-```bash
-az aks nodepool upgrade \
-  --cluster-name ${AKS_CLUSTER_NAME?} \
-  --resource-group ${AKS_CLUSTER_RESOURCE_GROUP_NAME?} \
-  --name ${AKS_NODEPOOL_SOURCE?} \
-  --kubernetes-version "${AKS_KUBERNETES_VERSION?}" \
-  --only-show-errors
-```
-
 ## Node Rollout Restart
 
 ### Creating namespaces
 
 ```bash
-kubectl create namespace red
-kubectl create namespace blue
-kubectl create namespace green
+kubectl create namespace example
 
-kubectl create deployment --image nginx --replicas 1 tango --namespace red
-kubectl create deployment --image nginx --replicas 3 delta --namespace red
-kubectl create deployment --image nginx --replicas 1 bravo --namespace green
-kubectl create deployment --image nginx --replicas 3 lima  --namespace blue
+kubectl create deployment --image nginx --replicas 1 tango --namespace example
+kubectl create deployment --image nginx --replicas 3 delta --namespace example
+kubectl create deployment --image nginx --replicas 1 bravo --namespace example
+kubectl create deployment --image nginx --replicas 3 lima  --namespace example
 ```

@@ -1,11 +1,12 @@
 #!/bin/bash
+export THIS_SCRIPT_NAME=$0
 export THIS_SCRIPT_DIRECTORY=$(dirname $0)
 export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 
 show_usage() {
   cat <<EOF
 
-  newrelic-send-events event.json
+  ${THIS_SCRIPT_NAME} events.json
 EOF
 }
 

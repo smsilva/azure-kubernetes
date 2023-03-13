@@ -1,24 +1,26 @@
 #!/bin/bash
+export THIS_SCRIPT_NAME=$0
+
 show_usage() {
   cat <<EOF
 
-  ./aks-node-cordon \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --name aks-userpool1-39323922-vmss000001 \\
     --dry-run
 
-  ./aks-node-cordon \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --name aks-userpool1-39323922-vmss000001
 
-  ./aks-node-cordon \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --name userpool1-39323922
 
-  ./aks-node-cordon \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\
     --name userpool1-39323922 \\

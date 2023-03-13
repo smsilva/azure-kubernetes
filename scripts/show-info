@@ -1,20 +1,21 @@
 #!/bin/bash
+export THIS_SCRIPT_NAME=$0
 export THIS_SCRIPT_DIRECTORY=$(dirname $0)
 export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
 
 show_usage() {
   cat <<EOF
 
-  ./show-info \\
+  ${THIS_SCRIPT_NAME} \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example
 
-  ./show-info \\
+  ${THIS_SCRIPT_NAME} \\
     --subscription 70d05914-4c56-47be-a78c-3b1a47b8f820 \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example
 
-  ./show-info \\
+  ${THIS_SCRIPT_NAME} \\
     --subscription 70d05914-4c56-47be-a78c-3b1a47b8f820 \\
     --cluster-name aks-cluster-example \\
     --resource-group aks-cluster-example \\

@@ -7,7 +7,16 @@ show_usage() {
   cat <<EOF
 
   ${THIS_SCRIPT_NAME} \\
-    --hard-limit-min 0 \\
+    --hard-limit-min 3 \\
+    --hard-limit-max 20 \\
+    --source-min 1 \\
+    --source-max 15 \\
+    --target-min 0 \\
+    --target-max 0 \\
+    --target-mode User
+
+  ${THIS_SCRIPT_NAME} \\
+    --hard-limit-min 3 \\
     --hard-limit-max 20 \\
     --source-min 1 \\
     --source-max 15 \\
@@ -23,14 +32,6 @@ case $1 in
   -h | --help )
     show_usage
     exit
-    ;;
-
-  -cn | --cluster-name )
-    shift; AKS_CLUSTER_NAME=$1
-    ;;
-
-  -rg | --resource-group )
-    shift; AKS_CLUSTER_RESOURCE_GROUP_NAME=$1
     ;;
 
   -smin | --source-min )
@@ -65,14 +66,12 @@ esac; shift; done
 
 if [[ "$1" == '--' ]]; then shift; fi
 
-if [ -z "${AKS_CLUSTER_NAME}"                ] || \
-   [ -z "${AKS_CLUSTER_RESOURCE_GROUP_NAME}" ] || \
-   [ -z "${HARD_LIMIT_MIN}"                  ] || \
-   [ -z "${HARD_LIMIT_MAX}"                  ] || \
-   [ -z "${AKS_NODEPOOL_SOURCE_MIN_COUNT}"   ] || \
-   [ -z "${AKS_NODEPOOL_SOURCE_MAX_COUNT}"   ] || \
-   [ -z "${AKS_NODEPOOL_TARGET_MIN_COUNT}"   ] || \
-   [ -z "${AKS_NODEPOOL_TARGET_MAX_COUNT}"   ]; then
+if [ -z "${HARD_LIMIT_MIN}"                ] || \
+   [ -z "${HARD_LIMIT_MAX}"                ] || \
+   [ -z "${AKS_NODEPOOL_SOURCE_MIN_COUNT}" ] || \
+   [ -z "${AKS_NODEPOOL_SOURCE_MAX_COUNT}" ] || \
+   [ -z "${AKS_NODEPOOL_TARGET_MIN_COUNT}" ] || \
+   [ -z "${AKS_NODEPOOL_TARGET_MAX_COUNT}" ]; then
   echo "You must use ALL parameters."
   show_usage
   exit 1
