@@ -72,7 +72,7 @@ module "external_dns" {
   count  = local.install_external_dns ? 1 : 0
   source = "../../src/external-dns"
 
-  domain = local.external_dns_domain_filter
+  domain = local.dns_zone
 
   depends_on = [
     module.external_secrets
