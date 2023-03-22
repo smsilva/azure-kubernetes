@@ -28,7 +28,7 @@ locals {
   cert_manager_issuer_server               = "staging" # [ staging | production ]
   cert_manager_fqdn                        = "${local.cname_record_ingress}.${local.dns_zone}"
   cluster_random_id                        = random_string.id.result
-  cluster_name                             = "wasp-${random_string.id.result}"
+  cluster_name                             = "wasp-sandbox-${random_string.id.result}"
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
   cluster_node_pool_name                   = "system1"
