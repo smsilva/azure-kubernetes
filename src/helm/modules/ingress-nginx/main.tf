@@ -7,7 +7,7 @@ data "template_file" "ingress_nginx" {
 }
 
 resource "helm_release" "ingress_nginx" {
-  chart            = "${path.module}/../helm/charts/ingress-nginx"
+  chart            = "${path.module}/../../charts/ingress-nginx"
   name             = var.name
   namespace        = var.namespace
   create_namespace = true
