@@ -4,7 +4,7 @@ locals {
   cluster_node_pool_max_count = 5
   install_cert_manager        = true
   install_external_secrets    = true
-  install_external_dns        = false
+  install_external_dns        = true
   install_ingress_nginx       = false
   install_argocd              = false
   install_app_of_apps_infra   = false
@@ -69,7 +69,7 @@ module "external_secrets" {
 
 module "external_dns" {
   count  = local.install_external_dns ? 1 : 0
-  source = "../../src/external-dns"
+  source = "../../src/helm/modules/external-dns"
 
   domain = local.dns_zone
 

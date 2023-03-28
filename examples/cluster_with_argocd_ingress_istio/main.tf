@@ -70,7 +70,7 @@ module "external_secrets" {
 
 module "external_dns" {
   count  = local.install_external_dns ? 1 : 0
-  source = "../../src/external-dns"
+  source = "../../src/helm/modules/external-dns"
 
   domain = local.dns_zone
 
