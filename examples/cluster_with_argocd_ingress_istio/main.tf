@@ -45,7 +45,7 @@ module "argocd_app_registration" {
 
 module "cert_manager" {
   count  = local.install_cert_manager ? 1 : 0
-  source = "../../src/cert-manager"
+  source = "../../src/helm/modules/cert-manager"
 
   fqdn = local.cert_manager_fqdn
 
