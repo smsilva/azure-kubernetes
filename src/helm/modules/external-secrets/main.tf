@@ -1,5 +1,5 @@
 resource "helm_release" "external_secrets" {
-  chart            = "${path.module}/../helm/charts/external-secrets"
+  chart            = "${path.module}/../../charts/external-secrets"
   name             = "external-secrets"
   namespace        = "external-secrets"
   create_namespace = true
@@ -16,7 +16,7 @@ data "template_file" "external_secrets_config_values" {
 }
 
 resource "helm_release" "external_secrets_config" {
-  chart            = "${path.module}/../helm/charts/external-secrets-config"
+  chart            = "${path.module}/../../charts/external-secrets-config"
   name             = "external-secrets-config"
   namespace        = "external-secrets"
   create_namespace = true

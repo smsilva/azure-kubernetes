@@ -3,7 +3,7 @@ locals {
   cluster_node_pool_min_count = 1
   cluster_node_pool_max_count = 5
   install_cert_manager        = true
-  install_external_secrets    = false
+  install_external_secrets    = true
   install_external_dns        = false
   install_ingress_nginx       = false
   install_argocd              = false
@@ -55,7 +55,7 @@ module "cert_manager" {
 
 module "external_secrets" {
   count  = local.install_external_secrets ? 1 : 0
-  source = "../../src/external-secrets"
+  source = "../../src/helm/modules/external-secrets"
 
   tenant_id      = data.azurerm_client_config.current.tenant_id
   client_id      = data.azurerm_client_config.current.client_id

@@ -1,5 +1,5 @@
 resource "helm_release" "cert_manager" {
-  chart            = "${path.module}/../../helm/charts/cert-manager"
+  chart            = "${path.module}/../../charts/cert-manager"
   name             = "cert-manager"
   namespace        = "cert-manager"
   create_namespace = true
@@ -12,7 +12,7 @@ resource "helm_release" "cert_manager" {
 }
 
 resource "helm_release" "cert_manager_issuers" {
-  chart            = "${path.module}/../../helm/charts/cert-manager-issuers"
+  chart            = "${path.module}/../../charts/cert-manager-issuers"
   name             = "cert-manager-issuers"
   namespace        = "cert-manager"
   create_namespace = true

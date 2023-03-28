@@ -56,7 +56,7 @@ module "cert_manager" {
 
 module "external_secrets" {
   count  = local.install_external_secrets ? 1 : 0
-  source = "../../src/external-secrets"
+  source = "../../src/helm/modules/external-secrets"
 
   tenant_id      = data.azurerm_client_config.current.tenant_id
   client_id      = data.azurerm_client_config.current.client_id
