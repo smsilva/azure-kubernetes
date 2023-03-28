@@ -7,7 +7,7 @@ locals {
   install_external_dns        = true
   install_ingress_nginx       = true
   install_argocd              = true
-  install_app_of_apps_infra   = false
+  install_app_of_apps_infra   = true
   cluster_ingress_type        = "nginx"
 }
 
@@ -118,7 +118,7 @@ module "argo_cd" {
 
 module "app_of_apps_infra" {
   count  = local.install_app_of_apps_infra ? 1 : 0
-  source = "../../src/app-of-apps-infra"
+  source = "../../src/helm/modules/app-of-apps-infra"
 
   environment_id                          = local.cluster_random_id
   environment_cluster_name                = local.cluster_name
