@@ -1,7 +1,7 @@
 annotations:
   artifacthub.io/changes: |
-    - kind: changed
-      description: Update Github RSA SSH public key
+    - kind: fixed
+      description: Surround with if hostNetwork field to disable it when is set to false
 apiVersion: v2
 appVersion: v2.6.7
 dependencies:
@@ -25,4 +25,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.27.3
+version: 5.27.4
