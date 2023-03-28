@@ -89,7 +89,7 @@ module "external_secrets" {
 
 module "ingress_azure" {
   count  = local.install_ingress_azure ? 1 : 0
-  source = "../../src/ingress-azure"
+  source = "../../src/helm/modules/ingress-azure"
 
   application_gateway = module.application_gateway.instance
   subscription_id     = data.azurerm_client_config.current.subscription_id

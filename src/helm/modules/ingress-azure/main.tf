@@ -8,7 +8,7 @@ data "template_file" "ingress_azure" {
 }
 
 resource "helm_release" "ingress_azure" {
-  chart            = "${path.module}/../helm/charts/ingress-azure"
+  chart            = "${path.module}/../../charts/ingress-azure"
   name             = "ingress-azure"
   namespace        = "ingress-azure"
   create_namespace = true
