@@ -92,7 +92,10 @@ module "ingress_azure" {
   source = "../../src/helm/modules/ingress-azure"
 
   application_gateway = module.application_gateway.instance
+  tenant_id           = data.azurerm_client_config.current.tenant_id
   subscription_id     = data.azurerm_client_config.current.subscription_id
+  client_id           = data.azurerm_client_config.current.client_id
+  client_secret       = local.arm_client_secret
 
   depends_on = [
     module.aks,

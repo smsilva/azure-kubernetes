@@ -1,0 +1,14 @@
+{
+    "tenantId": "${arm_tenant_id}",
+    "subscriptionId": "${arm_subscription_id}",
+    "clientId": "${arm_client_id}",
+    "clientSecret": "${arm_client_secret}",
+    "clientCertificate": "",
+    "clientCertificatePassword": "",
+    "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+    "activeDirectoryGraphResourceId": "https://graph.windows.net/",
+    "galleryEndpointUrl": "https://gallery.azure.com/",
+    "managementEndpointUrl": "https://management.core.windows.net/",
+    "resourceManagerEndpointUrl": "https://management.azure.com/",
+    "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/"
+}

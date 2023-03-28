@@ -7,14 +7,30 @@ data "template_file" "ingress_azure" {
   }
 }
 
+data "template_file" "ingress_azure_secret" {
+  template = file("${path.module}/templates/service-principal.json")
+  vars = {
+    arm_tenant_id       = var.tenant_id
+    arm_subscription_id = var.subscription_id
+    arm_client_id       = var.client_id
+    arm_client_secret   = var.client_secret
+  }
+}
+
 resource "helm_release" "ingress_azure" {
   chart            = "${path.module}/../../charts/ingress-azure"
   name             = "ingress-azure"
   namespace        = "ingress-azure"
   create_namespace = true
-  atomic           = true
+  atomic           = false
+  timeout          = 240 # 4 minutes
 
   values = [
     data.template_file.ingress_azure.rendered
   ]
+
+  set_sensitive {
+    name  = "armAuth.secretJSON"
+    value = base64encode(data.template_file.ingress_azure_secret.rendered)
+  }
 }

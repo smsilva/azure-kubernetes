@@ -22,7 +22,7 @@ resource "helm_release" "external_secrets_config" {
   create_namespace = true
   atomic           = true
 
-  set {
+  set_sensitive {
     name  = "secret.data.armClientSecret"
     value = base64encode(var.client_secret)
   }
