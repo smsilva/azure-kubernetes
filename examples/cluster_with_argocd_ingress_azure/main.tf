@@ -103,7 +103,7 @@ module "ingress_azure" {
 
 module "argo_cd" {
   count  = local.install_argocd ? 1 : 0
-  source = "../../src/argo-cd"
+  source = "../../src/helm/modules/argo-cd"
 
   cname                       = local.cname_record_argocd
   domain                      = local.dns_zone

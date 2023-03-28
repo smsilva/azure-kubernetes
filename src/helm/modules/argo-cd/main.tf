@@ -27,7 +27,7 @@ locals {
 }
 
 resource "helm_release" "argocd" {
-  chart            = "${path.module}/../helm/charts/argo-cd"
+  chart            = "${path.module}/../../charts/argo-cd"
   name             = "argocd"
   namespace        = "argocd"
   create_namespace = true
@@ -36,14 +36,9 @@ resource "helm_release" "argocd" {
 
   values = [
     data.template_file.sso.rendered,
-    # file("${path.module}/templates/configs-known-hosts.yaml"),
-    # file("${path.module}/templates/extra-volumes.yaml"),
-    # file("${path.module}/templates/high-availability.yaml"),
-    # file("${path.module}/templates/metrics.yaml"),
     file("${path.module}/templates/resource-customizations.yaml"),
     local.configs_server,
     local.extra_objects,
-    # local.notifications,
     local.rbac,
   ]
 
@@ -67,7 +62,7 @@ data "template_file" "argocd_config" {
 }
 
 resource "helm_release" "argocd_config" {
-  chart            = "${path.module}/../helm/charts/argo-cd-config"
+  chart            = "${path.module}/../../charts/argo-cd-config"
   name             = "argocd-config"
   namespace        = "argocd"
   create_namespace = true

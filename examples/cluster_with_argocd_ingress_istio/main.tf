@@ -108,7 +108,7 @@ module "httpbin" {
 
 module "argo_cd" {
   count  = local.install_argocd ? 1 : 0
-  source = "../../src/argo-cd"
+  source = "../../src/helm/modules/argo-cd"
 
   cname                       = local.argocd_host_base_name
   domain                      = local.dns_zone
