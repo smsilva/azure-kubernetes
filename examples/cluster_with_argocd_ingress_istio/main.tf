@@ -1,6 +1,6 @@
 locals {
-  cluster_version             = "1.23.12"
-  cluster_node_pool_min_count = 3
+  cluster_version             = "1.24.9"
+  cluster_node_pool_min_count = 1
   cluster_node_pool_max_count = 5
   install_cert_manager        = true
   install_external_secrets    = true
@@ -96,7 +96,7 @@ module "ingress_istio" {
 
 module "httpbin" {
   count  = local.install_httpbin ? 1 : 0
-  source = "../../src/httpbin"
+  source = "../../src/helm/modules/httpbin"
 
   cname  = local.cluster_random_id
   domain = local.dns_zone

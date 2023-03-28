@@ -11,7 +11,7 @@ resource "kubernetes_namespace" "httpbin" {
 }
 
 resource "helm_release" "httpbin" {
-  chart            = "${path.module}/../helm/charts/httpbin"
+  chart            = "${path.module}/../../charts/httpbin"
   name             = "httpbin"
   namespace        = kubernetes_namespace.httpbin.metadata[0].name
   create_namespace = true
