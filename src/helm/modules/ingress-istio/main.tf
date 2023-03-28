@@ -1,5 +1,5 @@
 resource "helm_release" "istio_base" {
-  chart            = "${path.module}/../helm/charts/istio-base"
+  chart            = "${path.module}/../.../charts/istio-base"
   name             = "istio-base"
   namespace        = "istio-system"
   create_namespace = true
@@ -7,7 +7,7 @@ resource "helm_release" "istio_base" {
 }
 
 resource "helm_release" "istio_discovery" {
-  chart            = "${path.module}/../helm/charts/istio-discovery"
+  chart            = "${path.module}/../.../charts/istio-discovery"
   name             = "istio-discovery"
   namespace        = "istio-system"
   create_namespace = false
@@ -43,7 +43,7 @@ resource "kubernetes_namespace" "istio_ingress" {
 }
 
 resource "helm_release" "istio_gateway" {
-  chart            = "${path.module}/../helm/charts/istio-gateway"
+  chart            = "${path.module}/../.../charts/istio-gateway"
   name             = "istio-ingress"
   namespace        = kubernetes_namespace.istio_ingress.metadata[0].name
   create_namespace = false

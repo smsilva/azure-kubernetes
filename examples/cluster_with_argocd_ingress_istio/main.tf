@@ -81,7 +81,7 @@ module "external_dns" {
 
 module "ingress_istio" {
   count  = local.install_ingress_istio ? 1 : 0
-  source = "../../src/ingress-istio"
+  source = "../../src/helm/modules/ingress-istio"
 
   cname              = local.cluster_random_id
   domain             = local.dns_zone

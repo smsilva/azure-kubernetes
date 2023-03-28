@@ -1,5 +1,5 @@
 locals {
-  cluster_version             = "1.23.12"
+  cluster_version             = "1.24.9"
   cluster_node_pool_min_count = 1
   cluster_node_pool_max_count = 5
   install_cert_manager        = true
