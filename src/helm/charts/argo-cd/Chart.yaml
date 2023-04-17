@@ -1,7 +1,7 @@
 annotations:
   artifacthub.io/changes: |
     - kind: fixed
-      description: Change default value for global.tolerations, from object to array.
+      description: Namespace field for some namespaced resources needs to be evaluated via helm root scope
 apiVersion: v2
 appVersion: v2.6.7
 dependencies:
@@ -25,4 +25,4 @@ name: argo-cd
 sources:
 - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 - https://github.com/argoproj/argo-cd
-version: 5.28.1
+version: 5.29.1
