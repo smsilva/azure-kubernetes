@@ -65,7 +65,7 @@ serviceMonitor:
   # namespace: monitoring
 
   # Fallback to the prometheus default unless specified
-  interval: 30s
+  # interval: 10s
 
   ## scheme: HTTP scheme to use for scraping. Can be used with `tlsConfig` for example if using istio mTLS.
   # scheme: ""
@@ -76,7 +76,7 @@ serviceMonitor:
 
   # bearerTokenFile:
   # Fallback to the prometheus default unless specified
-  scrapeTimeout: 30s
+  # scrapeTimeout: 30s
 
   ## Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with
   ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec
