@@ -5,6 +5,28 @@
 - Azure Key Vault
 - Azure DNS Zone
 
+## Assumptions
+
+The examples will assume `subscriptions` names like:
+
+```lua
+${local.project}-${local.environment}
+wasp-sandbox
+wasp-dev
+```
+
+The default domain for the examples is: `silvios.me`.
+
+When an AKS Cluster is created and configured with ArgoCD, a Gateway URL will be created like:
+
+```lua
+DNS Zone..............:                             ${local.environment}.${local.project}.${local.domain} ->               sandbox.wasp.silvios.me
+DNS Zone A Record.....: gateway.${random_string.id}.${local.environment}.${local.project}.${local.domain} -> gateway.xpt54.sandbox.wasp.silvios.me -> Load Balancer/Public IP
+DNS Zone CNAME Record.:  argocd.${random_string.id}.${local.environment}.${local.project}.${local.domain} ->  argocd.xpt54.sandbox.wasp.silvios.me -> gateway.xpt54.sandbox.wasp.silvios.me
+```
+
+Please take a look on [variables.tf](examples/common/variables.tf).
+
 ## Environment Variables
 
 | Variable                                            | Description                                           | Example                                                              |
@@ -26,7 +48,7 @@
 # Application Gateway Example Execution
 
 ```bash
-cd examples/cluster_with_argocd_ingress_azure
+cd examples/cluster_argocd_ingress_nginx
 
 terraform init
 
