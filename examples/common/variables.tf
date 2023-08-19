@@ -16,10 +16,11 @@ module "variables" {
 }
 
 locals {
+  arm_subscription_id_first_8_digits       = substr(data.azurerm_client_config.current.subscription_id, 0, 8)
   arm_client_secret                        = module.variables.values.arm_client_secret
-  dns_zone                                 = "sandbox.wasp.silvios.me"
+  dns_zone                                 = "${local.environment}.wasp.silvios.me"
   dns_zone_resource_group_name             = "wasp-foundation"
-  key_vault_name                           = "waspfoundation636a465c"
+  key_vault_name                           = "waspfoundation${local.arm_subscription_id_first_8_digits}"
   key_vault_resource_group_name            = "wasp-foundation"
   cname_record_wildcard                    = "*.${random_string.id.result}"
   cname_record_ingress                     = "gateway.${random_string.id.result}"
@@ -28,7 +29,7 @@ locals {
   cert_manager_issuer_server               = "staging" # [ staging | production ]
   cert_manager_fqdn                        = "${local.cname_record_ingress}.${local.dns_zone}"
   cluster_random_id                        = random_string.id.result
-  cluster_name                             = "wasp-sandbox-${random_string.id.result}"
+  cluster_name                             = "wasp-${local.environment}-${random_string.id.result}"
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
   cluster_node_pool_name                   = "system1"
