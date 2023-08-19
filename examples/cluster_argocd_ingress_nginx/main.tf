@@ -1,13 +1,13 @@
 locals {
-  cluster_version             = "1.25.11"
+  cluster_version             = "1.26.6"
   cluster_node_pool_min_count = 1
   cluster_node_pool_max_count = 5
-  install_cert_manager        = false
-  install_external_secrets    = false
-  install_external_dns        = false
-  install_ingress_nginx       = false
-  install_argocd              = false
-  install_app_of_apps_infra   = false
+  install_cert_manager        = true
+  install_external_secrets    = true
+  install_external_dns        = true
+  install_ingress_nginx       = true
+  install_argocd              = true
+  install_app_of_apps_infra   = true
   cluster_ingress_type        = "nginx"
 }
 
@@ -71,10 +71,12 @@ module "external_dns" {
   count  = local.install_external_dns ? 1 : 0
   source = "../../src/helm/modules/external-dns"
 
-  domain = local.dns_zone
+  domain         = local.dns_zone
+  tenantId       = data.azurerm_client_config.current.tenant_id
+  subscriptionId = data.azurerm_subscription.current.subscription_id
+  resourceGroup  = local.dns_zone_resource_group_name
 
   depends_on = [
-    module.external_secrets,
     azurerm_role_assignment.kubelet_contributor_on_dns_zone
   ]
 }

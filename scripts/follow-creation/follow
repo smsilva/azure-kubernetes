@@ -53,12 +53,6 @@ while ! external-secrets-secret-store; do
 done
 echo ""
 
-# external-secrets ExternalSecret
-while ! external-secrets 1; do
-  sleep 10; clear
-done
-echo ""
-
 # Namespaces
 while ! namespaces "ingress" 1; do
   sleep 10; clear

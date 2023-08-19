@@ -72,10 +72,13 @@ module "external_dns" {
   count  = local.install_external_dns ? 1 : 0
   source = "../../src/helm/modules/external-dns"
 
-  domain = local.dns_zone
+  domain         = local.dns_zone
+  tenantId       = data.azurerm_client_config.current.tenant_id
+  subscriptionId = data.azurerm_subscription.current.subscription_id
+  resourceGroup  = local.dns_zone_resource_group_name
 
   depends_on = [
-    module.external_secrets
+    azurerm_role_assignment.kubelet_contributor_on_dns_zone
   ]
 }
 

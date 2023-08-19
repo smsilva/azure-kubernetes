@@ -11,8 +11,22 @@ resource "helm_release" "external_dns_config" {
   namespace        = var.namespace
   create_namespace = true
   atomic           = true
-}
 
+  set {
+    name = "tenantId"
+    value = var.tenantId
+  }
+
+  set {
+    name = "subscriptionId"
+    value = var.subscriptionId
+  }
+
+  set {
+    name = "resourceGroup"
+    value = var.resourceGroup
+  }
+}
 
 resource "helm_release" "external_dns" {
   chart            = "${path.module}/../../charts/external-dns"

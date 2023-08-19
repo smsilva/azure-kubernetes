@@ -11,3 +11,15 @@ variable "namespace" {
 variable "domain" {
   type = string
 }
+
+variable "tenantId" {
+  type = string
+}
+
+variable "subscriptionId" {
+  type = string
+}
+
+variable "resourceGroup" {
+  type = string
+}
