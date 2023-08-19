@@ -9,7 +9,6 @@ locals {
   install_argocd              = false
   install_app_of_apps_infra   = false
   cluster_ingress_type        = "nginx"
-  environment                 = "dev"
 }
 
 resource "azurerm_resource_group" "default" {

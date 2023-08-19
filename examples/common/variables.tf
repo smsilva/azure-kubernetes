@@ -2,6 +2,8 @@
 
 data "azurerm_client_config" "current" {}
 
+data "azurerm_subscription" "current" {}
+
 resource "random_string" "id" {
   length      = 5
   min_lower   = 3
@@ -16,12 +18,16 @@ module "variables" {
 }
 
 locals {
+  project                                  = "wasp"
+  domain                                   = "silvios.me"
   arm_subscription_id_first_8_digits       = substr(data.azurerm_client_config.current.subscription_id, 0, 8)
+  arm_subscription_name                    = data.azurerm_subscription.current.display_name
+  environment                              = replace(local.arm_subscription_name, "${local.project}-", "")
   arm_client_secret                        = module.variables.values.arm_client_secret
-  dns_zone                                 = "${local.environment}.wasp.silvios.me"
-  dns_zone_resource_group_name             = "wasp-foundation"
-  key_vault_name                           = "waspfoundation${local.arm_subscription_id_first_8_digits}"
-  key_vault_resource_group_name            = "wasp-foundation"
+  dns_zone                                 = "${local.environment}.${local.project}.${local.domain}"
+  dns_zone_resource_group_name             = "${local.project}-foundation"
+  key_vault_name                           = "${local.project}foundation${local.arm_subscription_id_first_8_digits}"
+  key_vault_resource_group_name            = "${local.project}-foundation"
   cname_record_wildcard                    = "*.${random_string.id.result}"
   cname_record_ingress                     = "gateway.${random_string.id.result}"
   cname_record_argocd                      = "argocd.${random_string.id.result}"
@@ -29,7 +35,7 @@ locals {
   cert_manager_issuer_server               = "staging" # [ staging | production ]
   cert_manager_fqdn                        = "${local.cname_record_ingress}.${local.dns_zone}"
   cluster_random_id                        = random_string.id.result
-  cluster_name                             = "wasp-${local.environment}-${random_string.id.result}"
+  cluster_name                             = "${local.project}-${local.environment}-${random_string.id.result}"
   cluster_resource_group_name              = local.cluster_name
   cluster_resource_group_location          = "eastus2"
   cluster_node_pool_name                   = "system1"
