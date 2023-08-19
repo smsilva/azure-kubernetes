@@ -4,6 +4,16 @@ data "azurerm_client_config" "current" {}
 
 data "azurerm_subscription" "current" {}
 
+data "azurerm_dns_zone" "default" {
+  name                = local.dns_zone
+  resource_group_name = local.dns_zone_resource_group_name
+}
+
+data "azurerm_key_vault" "default" {
+  name                = local.key_vault_name
+  resource_group_name = local.key_vault_resource_group_name
+}
+
 resource "random_string" "id" {
   length      = 5
   min_lower   = 3
@@ -52,16 +62,6 @@ locals {
     { cidr = "10.246.0.0/16", name = "aks" },
     { cidr = "10.245.0.0/28", name = "application_gateway" },
   ]
-}
-
-data "azurerm_dns_zone" "default" {
-  name                = local.dns_zone
-  resource_group_name = local.dns_zone_resource_group_name
-}
-
-data "azurerm_key_vault" "default" {
-  name                = local.key_vault_name
-  resource_group_name = local.key_vault_resource_group_name
 }
 
 resource "azurerm_role_assignment" "kubelet_contributor_on_dns_zone" {
