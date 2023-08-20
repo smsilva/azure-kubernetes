@@ -64,7 +64,7 @@ resource "azurerm_role_assignment" "kubelet_contributor_on_cluster_infrastructur
   scope                = data.azurerm_resource_group.cluster_infrastructure.id
 }
 
-resource "azurerm_role_assignment" "identity_network_contributor_on_subscription" {
+resource "azurerm_role_assignment" "kubelet_network_contributor_on_subscription" {
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_kubernetes_cluster.default.kubelet_identity[0].object_id
   scope                = "/subscriptions/${data.azurerm_client_config.default.subscription_id}"
