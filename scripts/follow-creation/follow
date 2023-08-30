@@ -24,7 +24,7 @@ done
 echo ""
 
 # Namespaces
-while ! namespaces "cert-manager" 1; do
+while ! namespaces "cert-manager|external-secrets" 2; do
   sleep 10; clear
 done
 echo ""
