@@ -8,7 +8,7 @@ locals {
   install_ingress_istio       = true
   install_httpbin             = true
   install_argocd              = true
-  install_app_of_apps_infra   = false
+  install_app_of_apps_infra   = true
   cluster_ingress_type        = "istio"
 }
 

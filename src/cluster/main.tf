@@ -64,10 +64,10 @@ resource "azurerm_role_assignment" "kubelet_contributor_on_cluster_infrastructur
   scope                = data.azurerm_resource_group.cluster_infrastructure.id
 }
 
-resource "azurerm_role_assignment" "kubelet_network_contributor_on_subscription" {
+resource "azurerm_role_assignment" "kubelet_network_contributor_on_aks_subnet" {
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_kubernetes_cluster.default.kubelet_identity[0].object_id
-  scope                = "/subscriptions/${data.azurerm_client_config.default.subscription_id}"
+  scope                = local.cluster_subnet_id
 }
 
 resource "azurerm_role_assignment" "azure_kubernetes_service_cluster_user_role_for_admins" {
