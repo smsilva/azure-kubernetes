@@ -51,7 +51,7 @@ locals {
   cluster_node_pool_name                   = "system1"
   cluster_administrators_ids               = ["d5075d0a-3704-4ed9-ad62-dc8068c7d0e1"] # aks-administrator
   argocd_contributors_ids                  = ["2deb9d06-5807-4107-a5a6-94368f39d79f"] # aks-contributor
-  argocd_app_of_apps_infra_target_revision = "development"
+  argocd_app_of_apps_infra_target_revision = "dev"
   argocd_host_base_name                    = local.cname_record_argocd
   argocd_app_registration_name             = local.cname_record_argocd
   argocd_administrators_ids                = local.cluster_administrators_ids
