@@ -18,7 +18,7 @@ project: infra
 source:
   repoURL: git@github.com:smsilva/wasp-gitops.git
   path: infrastructure/charts/applications
-  targetRevision: development
+  targetRevision: dev
 
 destination:
   name: in-cluster
