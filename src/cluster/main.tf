@@ -15,6 +15,8 @@ resource "azurerm_kubernetes_cluster" "default" {
   kubernetes_version                = var.orchestrator_version
   sku_tier                          = var.sku_tier
   role_based_access_control_enabled = true
+  oidc_issuer_enabled               = true
+  workload_identity_enabled         = true
 
   default_node_pool {
     name                         = var.node_pool_name
