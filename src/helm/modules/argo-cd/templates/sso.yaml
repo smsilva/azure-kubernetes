@@ -1,5 +1,5 @@
-server:
-  config:
+configs:
+  cm:
     url: https://${server_config_url_host}
     users.anonymous.enabled: "false"
     admin.enabled: "false"
