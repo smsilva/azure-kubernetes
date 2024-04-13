@@ -1,5 +1,5 @@
-server:
-  rbacConfig:
+configs:
+  rbac:
     policy.csv: |
       p, role:app-contributor, applications, delete, default/*, allow
       p, role:app-contributor, applications, get, default/*, allow
