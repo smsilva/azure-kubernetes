@@ -1,0 +1,44 @@
+#!/bin/bash
+export THIS_SCRIPT_NAME=$0
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  ${THIS_SCRIPT_NAME} \\
+    --env HOME \\
+    --env USER
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  -e | --env | --environment )
+    shift; [ -z "${ENVIRONEMNT_VARIABLE_NAME_LIST}" ] && ENVIRONEMNT_VARIABLE_NAME_LIST="$1" || ENVIRONEMNT_VARIABLE_NAME_LIST="${ENVIRONEMNT_VARIABLE_NAME_LIST},$1"
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+generate-json-body() {
+  for ENVIRONEMNT_VARIABLE_NAME in ${ENVIRONEMNT_VARIABLE_NAME_LIST//,/ }; do
+    cat <<EOF
+  "${ENVIRONEMNT_VARIABLE_NAME}": "${!ENVIRONEMNT_VARIABLE_NAME}",
+EOF
+  done
+}
+
+show-json() {
+  echo "{"
+  generate-json-body | sed '$ s|,$||'
+  echo "}"
+}
+
+show-json
