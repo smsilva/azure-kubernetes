@@ -2,11 +2,11 @@ locals {
   cluster_version             = "1.28.9"
   cluster_node_pool_min_count = 1
   cluster_node_pool_max_count = 5
-  install_cert_manager        = false
-  install_external_secrets    = false
-  install_external_dns        = false
-  install_ingress_nginx       = false
-  install_argocd              = false
+  install_cert_manager        = true
+  install_external_secrets    = true
+  install_external_dns        = true
+  install_ingress_nginx       = true
+  install_argocd              = true
   install_app_of_apps_infra   = false
   cluster_ingress_type        = "nginx"
 }
