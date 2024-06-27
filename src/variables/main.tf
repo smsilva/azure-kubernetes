@@ -1,3 +1,8 @@
+variable "script" {
+  type    = string
+  default = "azure"
+}
+
 locals {
   script-name = "environment-variables"
 }

@@ -3,8 +3,8 @@ resource "time_rotating" "default" {
 }
 
 resource "azuread_application_password" "default" {
-  application_id = azuread_application.default.id
-  display_name   = "argocd"
+  application_object_id = azuread_application.default.object_id
+  display_name          = "argocd"
 
   rotate_when_changed = {
     rotation = time_rotating.default.id
