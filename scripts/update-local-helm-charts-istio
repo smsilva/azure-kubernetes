@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Add the Istio Helm repository
+helm repo add istio https://istio-release.storage.googleapis.com/charts &> /dev/null
+
+# Remove all tgz files in the src/helm/charts/istio* directory
+find src/helm/charts/istio* -type f -name '*.tgz' | xargs -I {} rm {}
+
+# Fetch the latest Istio base, discovery, and gateway charts
+helm fetch istio/base    --destination src/helm/charts/istio-base/charts/
+helm fetch istio/istiod  --destination src/helm/charts/istio-discovery/charts/
+helm fetch istio/gateway --destination src/helm/charts/istio-gateway/charts/
