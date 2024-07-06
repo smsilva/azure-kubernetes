@@ -49,7 +49,7 @@ resource "azurerm_kubernetes_cluster" "default" {
 
   azure_active_directory_role_based_access_control {
     azure_rbac_enabled     = true
-    managed = true
+    managed                = true
     admin_group_object_ids = var.administrators_ids
   }
 
