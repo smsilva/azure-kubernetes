@@ -1,0 +1,4 @@
+name: azure-kubernetes
+terraform:
+  version: 1.9.2
+  backend: azurerm
