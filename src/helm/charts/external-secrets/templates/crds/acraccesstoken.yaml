@@ -9,7 +9,7 @@ metadata:
     {{- if and .Values.crds.conversion.enabled .Values.webhook.certManager.enabled .Values.webhook.certManager.addInjectorAnnotations }}
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "external-secrets.fullname" . }}-webhook
     {{- end }}
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.2
   labels:
     external-secrets.io/component: controller
   name: acraccesstokens.generators.external-secrets.io
@@ -36,7 +36,6 @@ spec:
             (depending on the identity).
             This can be scoped down to the repository level using .spec.scope.
             In case scope is defined it will return an ACR Access Token.
-
 
             See docs: https://github.com/Azure/acr/blob/main/docs/AAD-OAuth.md
           properties:
@@ -171,11 +170,9 @@ spec:
                     if not provided it will return a refresh token that has full scope.
                     Note: you need to pin it down to the repository level, there is no wildcard available.
 
-
                     examples:
                     repository:my-repository:pull,push
                     repository:my-repository:pull
-
 
                     see docs for details: https://docs.docker.com/registry/spec/auth/scope/
                   type: string

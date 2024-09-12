@@ -1,14 +1,10 @@
-### Added
-
-- Added support for `extraContainers` argument. ([#4432](https://github.com/kubernetes-sigs/external-dns/pull/4432)) _@omerap12_
-- Added support for setting `excludeDomains` argument.  ([#4380](https://github.com/kubernetes-sigs/external-dns/pull/4380)) _@bford-evs_
-
 ### Changed
 
-- Updated _ExternalDNS_ OCI image version to [v0.14.2](https://github.com/kubernetes-sigs/external-dns/releases/tag/v0.14.2). ([#4541](https://github.com/kubernetes-sigs/external-dns/pull/4541)) _@stevehipwell_
-- Updated `DNSEndpoint` CRD. ([#4541](https://github.com/kubernetes-sigs/external-dns/pull/4541)) _@stevehipwell_
-- Changed the implementation for `revisionHistoryLimit` to be more generic. ([#4541](https://github.com/kubernetes-sigs/external-dns/pull/4541)) _@stevehipwell_
+- Updated _ExternalDNS_ OCI image version to [v0.15.0](https://github.com/kubernetes-sigs/external-dns/releases/tag/v0.15.0). ([#xxxx](https://github.com/kubernetes-sigs/external-dns/pull/xxxx)) _@stevehipwell_
 
 ### Fixed
 
-- Fixed the `ServiceMonitor` job name to correctly use the instance label. ([#4541](https://github.com/kubernetes-sigs/external-dns/pull/4541)) _@stevehipwell_
+- Fixed `provider.webhook.resources` behavior to correctly leverage resource limits. ([#4560](https://github.com/kubernetes-sigs/external-dns/pull/4560)) _@crutonjohn_
+- Fixed `provider.webhook.imagePullPolicy` behavior to correctly leverage pull policy. ([#4643](https://github.com/kubernetes-sigs/external-dns/pull/4643)) _@kimsondrup_
+- Fixed to add correct webhook metric port to `Service` and `ServiceMonitor`. ([#4643](https://github.com/kubernetes-sigs/external-dns/pull/4643)) _@kimsondrup_
+- Fixed to no longer require the unauthenticated webhook provider port to be exposed for health probes. ([#4691](https://github.com/kubernetes-sigs/external-dns/pull/4691)) _@kimsondrup_ & _@hatrx_
