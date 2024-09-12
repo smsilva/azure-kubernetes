@@ -29,7 +29,7 @@ resource "azurerm_kubernetes_cluster" "default" {
     only_critical_addons_enabled = var.node_pool_only_critical_addons_enabled
     os_disk_type                 = var.node_pool_os_disk_type
     os_disk_size_gb              = var.node_pool_os_disk_size_gb
-    enable_auto_scaling          = true
+    auto_scaling_enabled         = true
     type                         = "VirtualMachineScaleSets"
 
     upgrade_settings {
@@ -49,7 +49,6 @@ resource "azurerm_kubernetes_cluster" "default" {
 
   azure_active_directory_role_based_access_control {
     azure_rbac_enabled     = true
-    managed                = true
     admin_group_object_ids = var.administrators_ids
   }
 

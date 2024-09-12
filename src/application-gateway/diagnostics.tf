@@ -21,19 +21,11 @@ resource "azurerm_monitor_diagnostic_setting" "default" {
 
     content {
       category = enabled_log.value
-
-      retention_policy {
-        enabled = false
-      }
     }
   }
 
   metric {
     category = "AllMetrics"
-
-    retention_policy {
-      enabled = false
-    }
   }
 
   depends_on = [

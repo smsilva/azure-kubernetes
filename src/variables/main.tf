@@ -3,15 +3,10 @@ variable "script" {
   default = "azure"
 }
 
-locals {
-  script-name = "environment-variables"
-}
-
 data "external" "variables" {
   program = [
-    "${path.module}/${local.script-name}",
+    "${path.module}/environment-variables",
     "--env", "HOME",
-    "--env", "USER",
     "--env", "ARM_CLIENT_ID",
   ]
 }
