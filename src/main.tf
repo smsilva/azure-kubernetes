@@ -43,3 +43,15 @@ module "aks" {
     module.vnet
   ]
 }
+
+module "application_gateway" {
+  source = "./application-gateway"
+
+  name           = local.cluster_name
+  subnet_id      = module.vnet.subnets[var.application_gateway_subnet_name].instance.id
+  resource_group = azurerm_resource_group.default
+
+  depends_on = [
+    module.vnet
+  ]
+}

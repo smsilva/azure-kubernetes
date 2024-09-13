@@ -1,10 +1,6 @@
 variable "administrators_ids" {
   description = "The list of administrator ids"
   type        = list(string)
-  default = [
-    "d5075d0a-3704-4ed9-ad62-dc8068c7d0e1", # aks-administrator
-  ]
-
 }
 
 variable "kubernetes_version" {
@@ -73,4 +69,9 @@ variable "node_pool_max_count" {
 variable "subnet_name" {
   description = "The name of the subnet"
   default     = "aks"
+}
+
+variable "application_gateway_subnet_name" {
+  description = "The name of the application gateway subnet"
+  default     = "application_gateway"
 }

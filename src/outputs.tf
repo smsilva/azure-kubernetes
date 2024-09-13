@@ -13,3 +13,11 @@ output "resource_group_location" {
 output "network_id" {
   value = module.vnet.instance.id
 }
+
+output "application_gateway_id" {
+  value = module.application_gateway.instance.id
+}
+
+output "application_gateway_public_ip_fqdn" {
+  value = module.application_gateway.application_gateway_public_ip_fqdn
+}
