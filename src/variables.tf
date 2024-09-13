@@ -12,13 +12,14 @@ variable "name" {
   description = "The name of the cluster"
 }
 
-variable "resource_group_name" {
-  description = "The name of the resource group"
-}
-
-variable "resource_group_location" {
+variable "location" {
   description = "The location of the resource group"
   default     = "eastus2"
+}
+
+variable "resource_group_name" {
+  description = "The name of the resource group"
+  default     = ""
 }
 
 variable "ingress_type" {
@@ -74,4 +75,24 @@ variable "subnet_name" {
 variable "application_gateway_subnet_name" {
   description = "The name of the application gateway subnet"
   default     = "application_gateway"
+}
+
+variable "install_cert_manager" {
+  type        = bool
+  description = "Install Cert Manager"
+  default     = false
+}
+
+variable "install_external_secrets" {
+  type        = bool
+  description = "Install External Secrets"
+  default     = false
+}
+
+variable "key_vault_name" {
+  description = "The name of the key vault"
+}
+
+variable "key_vault_resource_group_name" {
+  description = "The name of the resource group where the key vault is located"
 }

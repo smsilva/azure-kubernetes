@@ -29,3 +29,7 @@ output "application_gateway_public_ip_address" {
 output "application_gateway_public_ip_fqdn" {
   value = azurerm_public_ip.default.fqdn
 }
+
+output "public_ip_fqdn" {
+  value = azurerm_public_ip.default.fqdn
+}
