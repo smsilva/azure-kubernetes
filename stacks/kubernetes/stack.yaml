@@ -1,4 +1,0 @@
-name: azure-kubernetes-cluster
-terraform:
-  version: 1.2.4
-  backend: azurerm
