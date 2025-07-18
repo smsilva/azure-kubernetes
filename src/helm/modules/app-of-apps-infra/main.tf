@@ -12,40 +12,41 @@ resource "helm_release" "app_of_apps_infra" {
   create_namespace = false
   atomic           = false
 
-  set {
-    name  = "environment.id"
-    value = var.environment_id
-  }
+  set = [
+    {
+      name  = "environment.id"
+      value = var.environment_id
+    },
 
-  set {
-    name  = "environment.domain"
-    value = var.environment_domain
-  }
+    {
+      name  = "environment.domain"
+      value = var.environment_domain
+    }
 
-  set {
-    name  = "environment.cluster.name"
-    value = var.environment_cluster_name
-  }
+    , {
+      name  = "environment.cluster.name"
+      value = var.environment_cluster_name
+    }
 
-  set {
-    name  = "environment.cluster.ingress.type"
-    value = var.environment_cluster_ingress_type
-  }
+    , {
+      name  = "environment.cluster.ingress.type"
+      value = var.environment_cluster_ingress_type
+    }
 
-  set {
-    name  = "environment.cluster.certificates.type"
-    value = var.environment_cluster_certificates_type
-  }
+    , {
+      name  = "environment.cluster.certificates.type"
+      value = var.environment_cluster_certificates_type
+    }
 
-  set {
-    name  = "environment.cluster.certificates.server"
-    value = var.environment_cluster_certificates_server
-  }
+    , {
+      name  = "environment.cluster.certificates.server"
+      value = var.environment_cluster_certificates_server
+    }
 
-  set {
-    name  = "source.targetRevision"
-    value = var.target_revision
-  }
+    , {
+      name  = "source.targetRevision"
+      value = var.target_revision
+  }]
 
   values = [
     data.template_file.values.rendered,

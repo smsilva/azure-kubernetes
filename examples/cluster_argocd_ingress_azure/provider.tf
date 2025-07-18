@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 0.15.0, < 2.0.0"
+  required_version = ">= 1.10.0, < 2.0.0"
 
   backend "local" {}
 
@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/azuread"
       version = ">= 2.22.0, < 4.0.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">=3.0.2, < 4.0.0"
+    }
   }
 }
 
@@ -23,9 +27,9 @@ provider "azuread" {
 }
 
 provider "helm" {
-  kubernetes {
-    host                   = module.aks.instance.kube_admin_config.0.host
-    token                  = module.aks.instance.kube_admin_config.0.password
-    cluster_ca_certificate = base64decode(module.aks.instance.kube_admin_config.0.cluster_ca_certificate)
-  }
+  # kubernetes {
+  #   host                   = module.aks.instance.kube_admin_config.0.host
+  #   token                  = module.aks.instance.kube_admin_config.0.password
+  #   cluster_ca_certificate = base64decode(module.aks.instance.kube_admin_config.0.cluster_ca_certificate)
+  # }
 }

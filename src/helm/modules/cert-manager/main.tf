@@ -5,10 +5,12 @@ resource "helm_release" "cert_manager" {
   create_namespace = true
   atomic           = true
 
-  set {
-    name  = "installCRDs"
-    value = "true"
-  }
+  set = [
+    {
+      name  = "installCRDs"
+      value = "true"
+    }
+  ]
 }
 
 resource "helm_release" "cert_manager_issuers" {
@@ -18,10 +20,12 @@ resource "helm_release" "cert_manager_issuers" {
   create_namespace = true
   atomic           = true
 
-  set {
-    name  = "fqdn"
-    value = var.fqdn
-  }
+  set = [
+    {
+      name  = "fqdn"
+      value = var.fqdn
+    }
+  ]
 
   depends_on = [
     helm_release.cert_manager

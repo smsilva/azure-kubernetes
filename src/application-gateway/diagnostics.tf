@@ -24,10 +24,6 @@ resource "azurerm_monitor_diagnostic_setting" "default" {
     }
   }
 
-  metric {
-    category = "AllMetrics"
-  }
-
   depends_on = [
     azurerm_application_gateway.default,
     azurerm_log_analytics_workspace.default
