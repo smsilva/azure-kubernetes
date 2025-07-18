@@ -29,8 +29,10 @@ resource "helm_release" "ingress_azure" {
     data.template_file.ingress_azure.rendered
   ]
 
-  set_sensitive {
-    name  = "armAuth.secretJSON"
-    value = base64encode(data.template_file.ingress_azure_secret.rendered)
-  }
+  set = [
+    {
+      name  = "armAuth.secretJSON"
+      value = sensitive(base64encode(data.template_file.ingress_azure_secret.rendered))
+    }
+  ]
 }
