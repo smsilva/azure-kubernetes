@@ -75,3 +75,11 @@ watch -n 10 'scripts/follow-creation/follow xpt3'
 | ingress-azure     | https://appgwingress.blob.core.windows.net/ingress-azure-helm-package   |
 | ingress-nginx     | https://kubernetes.github.io/ingress-nginx                              |
 | istio             | https://istio-release.storage.googleapis.com/charts                     |
+
+## Ingress Azure
+
+```bash
+helm fetch oci://mcr.microsoft.com/azure-application-gateway/charts/ingress-azure \
+  --untar \
+  --untardir src/helm/charts/ingress-azure
+```
