@@ -3,7 +3,7 @@ locals {
   cluster_node_pool_min_count = 1
   cluster_node_pool_max_count = 5
   install_cert_manager        = true
-  install_external_secrets    = false
+  install_external_secrets    = true
   install_external_dns        = false
   install_ingress_istio       = false
   install_httpbin             = false
@@ -54,17 +54,41 @@ module "cert_manager" {
   ]
 }
 
+module "external_secrets_workload_identity" {
+  count  = local.install_external_secrets ? 1 : 0
+  source = "../../src/active-directory/workload-identity"
+
+  name                 = "${local.cluster_name}-external-secrets"
+  resource_group       = azurerm_resource_group.default
+  oidc_issuer_url      = module.aks.oidc_issuer_url
+  namespace            = "external-secrets"
+  service_account_name = "external-secrets"
+}
+
+resource "azurerm_key_vault_access_policy" "external_secrets" {
+  count = local.install_external_secrets ? 1 : 0
+
+  key_vault_id = data.azurerm_key_vault.default.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = module.external_secrets_workload_identity[0].principal_id
+
+  secret_permissions = [
+    "Get",
+    "List",
+  ]
+}
+
 module "external_secrets" {
   count  = local.install_external_secrets ? 1 : 0
   source = "../../src/helm/modules/external-secrets"
 
-  tenant_id      = data.azurerm_client_config.current.tenant_id
-  client_id      = data.azurerm_client_config.current.client_id
-  client_secret  = local.arm_client_secret
-  key_vault_name = data.azurerm_key_vault.default.name
+  tenant_id          = data.azurerm_client_config.current.tenant_id
+  key_vault_name     = data.azurerm_key_vault.default.name
+  identity_client_id = module.external_secrets_workload_identity[0].client_id
 
   depends_on = [
-    module.aks
+    module.aks,
+    azurerm_key_vault_access_policy.external_secrets
   ]
 }
 

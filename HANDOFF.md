@@ -84,11 +84,23 @@ O primeiro apply falhou com `403 AuthorizationFailed` nos 5 `azurerm_role_assign
 - Documentado no `README.md` (seção "Service Principal Permissions").
 - Re-apply completou os 5 role assignments (5 added, 0 changed, 0 destroyed).
 
-### ▶️ Próximos passos (istio)
-1. Validar cluster 1.34.9 no portal/kubectl.
-2. Religar `install_*` **um a um** (ordem sugerida): cert-manager → external-secrets → external-dns → ingress-istio → argocd → app-of-apps-infra. A cada um: `apply`, validar, commit.
-3. Ao religar módulos que usam os charts atualizados, revisar `values`/templates.
-4. Provisionar tudo, validar, **destruir**.
+### Religando módulos um a um (apply + validar + commit)
+- [x] **cert-manager** v1.21.1 — commit `8b1c9b5`. 3 pods Running, 6 CRDs, 7 ClusterIssuers READY.
+- [x] **external-secrets** v0.10.3 → 2.9.0 — migrado para **Azure Workload Identity** (sem client_secret no cluster). ClusterSecretStore `store validated` (Valid) e ExternalSecret de teste `SecretSynced`. Novos recursos: `src/active-directory/workload-identity` (user-assigned MI + federated credential), `azurerm_key_vault_access_policy`. Notas da migração:
+  - ESO 2.9.0 serve o CRD `ClusterSecretStore` apenas em `external-secrets.io/v1` (v1beta1 `served=false`) → config chart migrado para `v1`.
+  - `podLabels.azure\.workload\.identity/use` precisa `type = "string"` no helm_release `set` (senão o helm envia boolean e o k8s rejeita o label).
+  - Requer output novo `oidc_issuer_url` em `src/cluster/output.tf`.
+  - `azurerm_federated_identity_credential` no azurerm v5 usa `user_assigned_identity_id` (não `parent_id`/`resource_group_name`).
+- [ ] external-dns (chart 1.15.0 → 1.21.1)
+- [ ] ingress-istio (charts istio 1.30.3 já commitados)
+- [ ] argocd (chart 7.5.2 → 10.3.2 — bump grande) + httpbin
+- [ ] app-of-apps-infra
+
+Ao final: provisionar tudo, validar, **destruir**.
+
+### Acesso ao cluster (kubectl)
+`kubelogin` não está instalado → usar admin config:
+`az aks get-credentials --resource-group wasp-sandbox-2g0nh --name wasp-sandbox-2g0nh --admin --overwrite-existing`
 
 ---
 
