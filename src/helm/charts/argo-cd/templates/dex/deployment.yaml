@@ -12,6 +12,9 @@ metadata:
   namespace: {{ include  "argo-cd.namespace" . }}
   labels:
     {{- include "argo-cd.labels" (dict "context" . "component" .Values.dex.name "name" .Values.dex.name) | nindent 4 }}
+    {{- with (mergeOverwrite (deepCopy .Values.global.deploymentLabels) .Values.dex.deploymentLabels) }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   {{- with include "argo-cd.strategy" (mergeOverwrite (deepCopy .Values.global.deploymentStrategy) .Values.dex.deploymentStrategy) }}
   strategy:
@@ -43,6 +46,9 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      {{- with .Values.dex.runtimeClassName | default .Values.global.runtimeClassName }}
+      runtimeClassName: {{ . }}
+      {{- end }}
       {{- with .Values.dex.imagePullSecrets | default .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -69,8 +75,12 @@ spec:
         imagePullPolicy: {{ default .Values.global.image.imagePullPolicy .Values.dex.image.imagePullPolicy }}
         command:
         - /shared/argocd-dex
-        - --logformat={{ default .Values.global.logging.format .Values.dex.logFormat }}
-        - --loglevel={{ default .Values.global.logging.level .Values.dex.logLevel }}
+        {{- with .Values.dex.logLevel }}
+        - --loglevel={{ . }}
+        {{- end }}
+        {{- with .Values.dex.logFormat }}
+        - --logformat={{ . }}
+        {{- end }}
         args:
         - rundex
         {{- with .Values.dex.extraArgs }}
@@ -78,8 +88,26 @@ spec:
         {{- end }}
         env:
           {{- with (concat .Values.global.env .Values.dex.env) }}
-            {{- toYaml . | nindent 10 }}
+            {{- tpl (toYaml .) $ | nindent 10 }}
           {{- end }}
+          - name: ARGOCD_DEX_SERVER_LOGFORMAT
+            valueFrom:
+              configMapKeyRef:
+                key: dexserver.log.format
+                name: argocd-cmd-params-cm
+                optional: true
+          - name: ARGOCD_DEX_SERVER_LOGLEVEL
+            valueFrom:
+              configMapKeyRef:
+                key: dexserver.log.level
+                name: argocd-cmd-params-cm
+                optional: true
+          - name: ARGOCD_LOG_FORMAT_TIMESTAMP
+            valueFrom:
+              configMapKeyRef:
+                name: argocd-cmd-params-cm
+                key: log.format.timestamp
+                optional: true
           - name: ARGOCD_DEX_SERVER_DISABLE_TLS
             valueFrom:
               configMapKeyRef:
@@ -124,14 +152,30 @@ spec:
           successThreshold: {{ .Values.dex.readinessProbe.successThreshold }}
           failureThreshold: {{ .Values.dex.readinessProbe.failureThreshold }}
         {{- end }}
+        {{- if .Values.dex.startupProbe.enabled }}
+        startupProbe:
+          httpGet:
+            path: {{ .Values.dex.startupProbe.httpPath }}
+            port: {{ .Values.dex.startupProbe.httpPort }}
+            scheme: {{ .Values.dex.startupProbe.httpScheme }}
+          initialDelaySeconds: {{ .Values.dex.startupProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.dex.startupProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.dex.startupProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.dex.startupProbe.successThreshold }}
+          failureThreshold: {{ .Values.dex.startupProbe.failureThreshold }}
+        {{- end }}
         resources:
           {{- toYaml .Values.dex.resources | nindent 10 }}
         {{- with .Values.dex.containerSecurityContext }}
         securityContext:
-          {{- toYaml . | nindent 10 }}
+          {{- if $.Values.openshift.enabled }}
+            {{- omit . "runAsUser" | toYaml | nindent 10 }}
+          {{- else }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
         {{- end }}
         volumeMounts:
-        {{- with .Values.dex.volumeMounts }}
+        {{- with (concat .Values.global.extraVolumeMounts .Values.dex.volumeMounts) }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
         - name: static-files
@@ -161,7 +205,11 @@ spec:
           {{- toYaml (default .Values.dex.resources .Values.dex.initImage.resources) | nindent 10 }}
         {{- with .Values.dex.containerSecurityContext }}
         securityContext:
-          {{- toYaml . | nindent 10 }}
+          {{- if $.Values.openshift.enabled }}
+            {{- omit . "runAsUser" | toYaml | nindent 10 }}
+          {{- else }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
         {{- end }}
       {{- with .Values.dex.initContainers }}
         {{- tpl (toYaml .) $ | nindent 6 }}
@@ -215,7 +263,7 @@ spec:
             path: tls.key
           - key: ca.crt
             path: ca.crt
-      {{- with .Values.dex.volumes }}
+      {{- with (concat .Values.global.extraVolumes .Values.dex.volumes) }}
         {{- toYaml . | nindent 6 }}
       {{- end }}
       {{- with .Values.dex.dnsConfig }}
