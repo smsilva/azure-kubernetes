@@ -6,11 +6,13 @@ Atualizar providers e charts do exemplo `examples/cluster_argocd_ingress_istio` 
 
 ## In Progress
 
-**Ambiente destruído** — cluster `wasp-sandbox-vtl26` provisionado e destruído em 2026-08-10 (`terraform destroy`, 29 recursos; sem AKS/RG/A record `vtl26` remanescentes no Azure). Toggles seguem em `install_cert_manager`, `install_external_secrets`, `install_external_dns`, `install_ingress_istio`, `install_httpbin` = `true`; `install_argocd`, `install_app_of_apps_infra` = `false`.
+**Ambiente ATIVO** — cluster `wasp-sandbox-vpd54` (RG `wasp-sandbox-vpd54`) provisionado em 2026-08-10 (`terraform apply`, 35 recursos). Toggles em `install_cert_manager`, `install_external_secrets`, `install_external_dns`, `install_ingress_istio`, `install_httpbin`, `install_argocd` = `true`; `install_app_of_apps_infra` = `false`.
 
-ingress-istio + httpbin validados end-to-end antes do destroy (ver `docs/migration-progress.md`): Istio 1.30.3, LB público, cert-manager emitiu os certificados (`READY=True`), external-dns **escreveu** na zona via Workload Identity, e httpbin respondeu **HTTP 200** via Gateway (curl `-k`: cert Let's Encrypt **STAGING**). mTLS SPIFFE ingress→pod confirmado.
+argocd validado end-to-end (ver `docs/migration-progress.md`): chart 10.3.2, 7 pods `Running`, **UI HTTP 200** em `https://argocd.vpd54.sandbox.wasp.silvios.me/` (curl `-k`: cert LE **STAGING**), **SSO azuread ativo** (`/api/v1/settings` → `oidcConfig.name=AzureAD`; clientSecret merged via ExternalSecret). Roteamento vem do chart `istio-gateway` (Gateway `public-ingress-argocd` + VS em `istio-ingress`), não do `argo-cd-config`.
 
-Próximo passo pretendido: reprovisionar (cada apply gera novo `random_string.id` → nomes mudam), religar `install_argocd = true` e validar UI/SSO do ArgoCD (chart 10.3.2) via azuread.
+**Fix aplicado:** `extra-objects.yaml` do módulo argo-cd migrado de `external-secrets.io/v1beta1` → `v1` (ESO 2.9.0 não serve v1beta1).
+
+Próximo passo pretendido: religar `install_app_of_apps_infra = true` e validar as Applications sincronizando no ArgoCD. **Ambiente ainda não destruído** — destruir só após validar app-of-apps.
 
 ## Open Questions / Hypotheses
 
@@ -26,16 +28,19 @@ Próximo passo pretendido: reprovisionar (cada apply gera novo `random_string.id
 
 ## How to Resume
 
+Ambiente `vpd54` já ativo (não reprovisionar — apply gera novo id e recria tudo). Para religar app-of-apps sobre o cluster existente:
+
 ```bash
 cd examples/cluster_argocd_ingress_istio
-# editar main.tf: install_argocd = true
+# editar main.tf: install_app_of_apps_infra = true
 terraform init
-terraform plan -out=/tmp/argocd.tfplan   # NÃO usar apply -auto-approve: classifier exige plan visível
-terraform apply /tmp/argocd.tfplan       # cria random_string.id novo → nome de cluster/RG muda a cada apply
-# nomes derivam do id: az aks list --query "[?contains(name,'<id>')].{name:name,rg:resourceGroup}" -o json
-az aks get-credentials --resource-group <rg> --name <cluster> --admin --overwrite-existing
-kubectl get pods -n argocd
-# validar UI/SSO via https://argocd.<id>.sandbox.wasp.silvios.me (curl -k: cert LE staging)
+terraform plan -out=/tmp/aoa.tfplan   # NÃO usar apply -auto-approve: classifier exige plan visível
+terraform apply /tmp/aoa.tfplan
+# se helm não detectar diff em chart local (mesmos set/values):
+#   terraform apply -replace='module.app_of_apps_infra[0].helm_release.<release>'
+az aks get-credentials --resource-group wasp-sandbox-vpd54 --name wasp-sandbox-vpd54 --admin --overwrite-existing
+kubectl get applications -n argocd   # validar Applications Synced/Healthy
+# UI: https://argocd.vpd54.sandbox.wasp.silvios.me (curl -k: cert LE staging)
 ```
 
 ## Next Steps
@@ -43,8 +48,8 @@ kubectl get pods -n argocd
 1. ✅ external-dns via Workload Identity validado no cluster (auth + leitura da zona; ver `docs/migration-progress.md`).
 2. ✅ ingress-istio religado (Istio 1.30.3); Gateway + 3 certificados cert-manager (`READY=True`) e external-dns **escrevendo** na zona (A record `gateway.vtl26` + CNAMEs/TXT). Ver `docs/migration-progress.md`.
 3. ✅ httpbin religado; HTTP 200 end-to-end via Gateway (cert LE staging, curl `-k`; mTLS SPIFFE ok). Ver `docs/migration-progress.md`.
-4. Religar argocd (chart 10.3.2); validar UI/SSO via azuread. Modelo sugerido: Opus (bump argo-cd 7→10 pode exigir ajuste de configmap/RBAC/CRDs + SSO `instance.client_id`).
-5. Religar app-of-apps-infra; validar.
+4. ✅ argocd religado (chart 10.3.2); UI HTTP 200 + SSO azuread validados. Fix: ExternalSecret v1beta1→v1. Ver `docs/migration-progress.md`.
+5. Religar app-of-apps-infra; validar Applications sincronizando. Ambiente `vpd54` ainda ativo.
 6. Provisionar a stack completa, validar end-to-end e **destruir**.
 7. Só então migrar os outros 4 exemplos (ver Known Broken).
 
