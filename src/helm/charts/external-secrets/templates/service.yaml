@@ -1,8 +1,9 @@
-{{- if .Values.metrics.service.enabled }}
+{{- $shouldRenderStr := include "external-secrets.shouldRenderServiceMonitor" . | trim }}
+{{- if or .Values.metrics.service.enabled (and .Values.serviceMonitor.enabled (eq $shouldRenderStr "true")) -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "external-secrets.fullname" . }}-metrics
+  name: {{ include "external-secrets.componentName" (list . "-metrics") }}
   namespace: {{ template "external-secrets.namespace" . }}
   labels:
     {{- include "external-secrets.labels" . | nindent 4 }}

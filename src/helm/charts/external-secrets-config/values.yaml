@@ -1,9 +1,3 @@
-secret:
-  name: azurerm-service-principal
-  data:
-    armClientId: ARM_CLIENT_ID
-    armClientSecret: ARM_CLIENT_SECRET
-
 clusterSecretStore:
   name: azure-subscription-key-vault
   armTenantId: ARM_TENANT_ID
