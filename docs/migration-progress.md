@@ -4,6 +4,19 @@ Histórico de passos concluídos da migração de `examples/cluster_argocd_ingre
 (azurerm v5 / azuread v3 / helm v3 / AKS 1.34.9). Ver `HANDOFF.md` para o estado atual
 e os próximos passos.
 
+## 2026-08-10 — httpbin religado; HTTP 200 end-to-end via Gateway
+
+- `install_httpbin = true` no cluster `wasp-sandbox-vtl26` (`terraform apply`, 2 recursos:
+  `helm_release.httpbin` + `kubernetes_namespace_v1.httpbin`).
+- Pod httpbin rodando; VirtualServices `mesh` + `public` criados
+  (host `httpbin.vtl26.sandbox.wasp.silvios.me`); cert `ingress-httpbin` `READY=True`.
+- **HTTP 200 end-to-end** por `https://httpbin.vtl26.sandbox.wasp.silvios.me/get`:
+  - cert servido é **Let's Encrypt STAGING** (`(STAGING) Dastardly Durum YR1`) → curl exige
+    `-k` (CA staging não confiável publicamente; esperado, não é bug).
+  - response confirma cadeia completa: Envoy (`X-W1-Gateway: public-ingress-httpbin`),
+    mTLS SPIFFE ingress→pod (`X-Forwarded-Client-Cert` com
+    `spiffe://cluster.local/ns/httpbin/sa/httpbin`), DNS CNAME→A→LB `48.211.204.180`.
+
 ## 2026-08-10 — ingress-istio religado; escrita de DNS + certificados validados
 
 - `install_ingress_istio = true`. Charts Istio revisados: subcharts upstream vendorados
