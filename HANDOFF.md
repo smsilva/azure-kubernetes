@@ -91,6 +91,7 @@ O primeiro apply falhou com `403 AuthorizationFailed` nos 5 `azurerm_role_assign
   - `podLabels.azure\.workload\.identity/use` precisa `type = "string"` no helm_release `set` (senão o helm envia boolean e o k8s rejeita o label).
   - Requer output novo `oidc_issuer_url` em `src/cluster/output.tf`.
   - `azurerm_federated_identity_credential` no azurerm v5 usa `user_assigned_identity_id` (não `parent_id`/`resource_group_name`).
+  - Smoke test versionado: `external-secrets-config` ganhou `templates/external-secret.yaml` (parametrizado em `values.yaml` via `externalSecret.*`) que gera o Secret `external-secrets-smoke-test` a partir da chave `arm-dns-zone-resource-group` do Key Vault. Validado: ExternalSecret `SecretSynced/Ready=True`, Secret `Opaque` com ownerReference para o ExternalSecret.
 - [ ] external-dns (chart 1.15.0 → 1.21.1)
 - [ ] ingress-istio (charts istio 1.30.3 já commitados)
 - [ ] argocd (chart 7.5.2 → 10.3.2 — bump grande) + httpbin
@@ -101,6 +102,11 @@ Ao final: provisionar tudo, validar, **destruir**.
 ### Acesso ao cluster (kubectl)
 `kubelogin` não está instalado → usar admin config:
 `az aks get-credentials --resource-group wasp-sandbox-2g0nh --name wasp-sandbox-2g0nh --admin --overwrite-existing`
+
+### ⚠️ helm provider não detecta mudança só no conteúdo do chart
+Quando apenas o conteúdo de um chart local muda (novo/alterado template) sem alterar os `values`/`set` passados ao `helm_release`, o `terraform apply` reporta "no changes". Forçar a reinstalação:
+`terraform apply -replace='module.<mod>[0].helm_release.<release>'`
+(usado para materializar o `external-secret.yaml` no release `external_secrets_config`).
 
 ---
 

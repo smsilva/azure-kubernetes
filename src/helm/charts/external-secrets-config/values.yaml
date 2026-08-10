@@ -2,3 +2,13 @@ clusterSecretStore:
   name: azure-subscription-key-vault
   armTenantId: ARM_TENANT_ID
   keyVaultName: ARM_KEYVAULT_NAME
+
+externalSecret:
+  enabled: true
+  name: external-secrets-smoke-test
+  namespace: external-secrets
+  refreshInterval: 1h
+  targetSecretName: external-secrets-smoke-test
+  data:
+    - secretKey: arm-dns-zone-resource-group
+      remoteKey: arm-dns-zone-resource-group
