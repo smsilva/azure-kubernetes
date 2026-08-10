@@ -14,11 +14,9 @@ Próximo passo pretendido: reprovisionar (cada apply gera novo `random_string.id
 
 ## Open Questions / Hypotheses
 
-- Bump grande de charts Istio (1.22.2 → 1.30.3, já no repo): pode exigir ajuste de `values`/CRDs em `src/helm/modules/ingress-istio` ao religar.
-- cert-manager precisa emitir o certificado do Gateway do Istio; `certificate_type`/`certificate_server` já cabeados no módulo — validar emissão real.
-- Charts locais só mudam conteúdo de template (mesmos `set`/`values`) → helm provider não detecta diff. Ao religar ingress-istio talvez seja preciso `-replace='module.ingress_istio[0].helm_release.<release>'`.
-- Charts com bump commitado mas NÃO validados: argo-cd 10.3.2, external-dns 1.21.1, ingress-nginx 4.15.1. Bumps grandes (argo-cd 7→10) podem exigir ajuste de `values`/templates/CRDs ao religar.
-- ArgoCD (chart 10.3.2): revisar mudanças de configmap/RBAC/CRDs e o SSO via azuread (`instance.client_id`) ao religar.
+- ArgoCD (chart 10.3.2, bump 7→10): revisar mudanças de configmap/RBAC/CRDs e o SSO via azuread (`instance.client_id`) ao religar. Pode exigir ajuste de `values`/templates.
+- Charts com bump commitado mas NÃO validados: external-dns 1.21.1, ingress-nginx 4.15.1 (só usados por outros exemplos, ainda não migrados).
+- Charts locais que mudam só conteúdo de template (mesmos `set`/`values`) → helm provider não detecta diff. Numa reprovisão do zero não é problema (recria tudo); só forçar `-replace='module.<mod>[0].helm_release.<release>'` se reinstalar num cluster já existente.
 
 ## Known Broken
 
@@ -30,12 +28,14 @@ Próximo passo pretendido: reprovisionar (cada apply gera novo `random_string.id
 
 ```bash
 cd examples/cluster_argocd_ingress_istio
-# editar main.tf: install_ingress_istio = true
+# editar main.tf: install_argocd = true
 terraform init
-terraform apply -auto-approve   # cria random_string.id novo → nome de cluster/RG muda a cada apply
+terraform plan -out=/tmp/argocd.tfplan   # NÃO usar apply -auto-approve: classifier exige plan visível
+terraform apply /tmp/argocd.tfplan       # cria random_string.id novo → nome de cluster/RG muda a cada apply
+# nomes derivam do id: az aks list --query "[?contains(name,'<id>')].{name:name,rg:resourceGroup}" -o json
 az aks get-credentials --resource-group <rg> --name <cluster> --admin --overwrite-existing
-az network dns record-set a list --resource-group wasp-foundation --zone-name sandbox.wasp.silvios.me -o table
-kubectl -n external-dns logs deploy/external-dns --tail=30   # esperado: linha "CREATE" do registro
+kubectl get pods -n argocd
+# validar UI/SSO via https://argocd.<id>.sandbox.wasp.silvios.me (curl -k: cert LE staging)
 ```
 
 ## Next Steps
