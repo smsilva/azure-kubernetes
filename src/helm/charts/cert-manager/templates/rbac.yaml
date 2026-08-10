@@ -39,8 +39,7 @@ roleRef:
   kind: Role
   name: {{ template "cert-manager.fullname" . }}:leaderelection
 subjects:
-  - apiGroup: ""
-    kind: ServiceAccount
+  - kind: ServiceAccount
     name: {{ template "cert-manager.serviceAccountName" . }}
     namespace: {{ include "cert-manager.namespace" . }}
 
@@ -165,6 +164,9 @@ rules:
   - apiGroups: ["acme.cert-manager.io"]
     resources: ["orders/finalizers"]
     verbs: ["update"]
+  - apiGroups: ["cert-manager.io"]
+    resources: ["clusterissuers/finalizers", "issuers/finalizers"]
+    verbs: ["update"]
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "list", "watch"]
@@ -213,8 +215,8 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "list", "watch", "create", "delete", "update"]
-  - apiGroups: [ "gateway.networking.k8s.io" ]
-    resources: [ "httproutes" ]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["httproutes"]
     verbs: ["get", "list", "watch", "create", "delete", "update"]
   # We require the ability to specify a custom hostname when we are creating
   # new ingress resources.
@@ -263,10 +265,10 @@ rules:
     resources: ["ingresses/finalizers"]
     verbs: ["update"]
   - apiGroups: ["gateway.networking.k8s.io"]
-    resources: ["gateways", "httproutes"]
+    resources: ["gateways", "httproutes", "listenersets"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["gateway.networking.k8s.io"]
-    resources: ["gateways/finalizers", "httproutes/finalizers"]
+    resources: ["gateways/finalizers", "httproutes/finalizers", "listenersets/finalizers"]
     verbs: ["update"]
   - apiGroups: [""]
     resources: ["events"]
@@ -468,9 +470,29 @@ rules:
   - apiGroups: ["cert-manager.io"]
     resources: ["certificates/status"]
     verbs: ["update"]
+  {{- /*
+    Challenge and Order resources are not intended to be created by users
+    (GHSA-8rvj-mm4h-c258).
+
+    Challenges: "create" is excluded because a user-created Challenge with
+    attacker-controlled spec.solver can exfiltrate ClusterIssuer credentials
+    cross-namespace. "patch" and "update" are retained because spec is
+    immutable after creation (ValidateChallengeUpdate) so they cannot change
+    solver config, and because users need them to remove stuck finalizers
+    (see cert-manager/cert-manager#3851, cert-manager/cert-manager#3870).
+
+    Orders: "create", "patch", and "update" are excluded because a user
+    who can update an Order can change spec.issuerRef to reference a
+    different ClusterIssuer, then delete the Challenge; the Orders
+    controller recreates the Challenge with the attacker-chosen Issuer's
+    solver config, exfiltrating its credentials.
+  */}}
   - apiGroups: ["acme.cert-manager.io"]
-    resources: ["challenges", "orders"]
-    verbs: ["create", "delete", "deletecollection", "patch", "update"]
+    resources: ["challenges"]
+    verbs: ["delete", "deletecollection", "patch", "update"]
+  - apiGroups: ["acme.cert-manager.io"]
+    resources: ["orders"]
+    verbs: ["delete", "deletecollection"]
 
 ---
 
@@ -524,7 +546,7 @@ subjects:
 {{- end -}}
 
 # Permission to:
-# - Update and sign CertificatSigningeRequests referencing cert-manager.io Issuers and ClusterIssuers
+# - Update and sign CertificateSigningRequests referencing cert-manager.io Issuers and ClusterIssuers
 # - Perform SubjectAccessReviews to test whether users are able to reference Namespaced Issuers
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
