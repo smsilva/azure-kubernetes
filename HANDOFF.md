@@ -6,11 +6,11 @@ Atualizar providers e charts do exemplo `examples/cluster_argocd_ingress_istio` 
 
 ## In Progress
 
-**Ambiente ATIVO** — cluster `wasp-sandbox-vtl26` provisionado em 2026-08-10 (27 recursos) com ingress-istio religado. Toggles em `install_cert_manager`, `install_external_secrets`, `install_external_dns`, `install_ingress_istio` = `true`; `install_httpbin`, `install_argocd`, `install_app_of_apps_infra` = `false`. **Não esquecer de destruir ao pausar.**
+**Ambiente ATIVO** — cluster `wasp-sandbox-vtl26` provisionado em 2026-08-10 com ingress-istio + httpbin religados. Toggles em `install_cert_manager`, `install_external_secrets`, `install_external_dns`, `install_ingress_istio`, `install_httpbin` = `true`; `install_argocd`, `install_app_of_apps_infra` = `false`. **Não esquecer de destruir ao pausar.**
 
-ingress-istio validado end-to-end (ver `docs/migration-progress.md`): Istio 1.30.3 subiu, LB público `48.211.204.180`, cert-manager emitiu os 3 certificados (`READY=True`), e o external-dns **escreveu** na zona via Workload Identity — registro A `gateway.vtl26 → 48.211.204.180` + CNAMEs + TXT (`ProvisioningState: Succeeded`). Escrita de DNS agora provada (antes só leitura).
+ingress-istio + httpbin validados end-to-end (ver `docs/migration-progress.md`): Istio 1.30.3, LB público `48.211.204.180`, cert-manager emitiu os certificados (`READY=True`), external-dns **escreveu** na zona via Workload Identity, e httpbin responde **HTTP 200** por `https://httpbin.vtl26.sandbox.wasp.silvios.me/get` (curl `-k`: cert é Let's Encrypt **STAGING**). mTLS SPIFFE ingress→pod confirmado.
 
-Próximo passo pretendido: religar `install_argocd = true` + `install_httpbin = true`, validar UI/SSO do ArgoCD (chart 10.3.2) e o httpbin atrás do Gateway.
+Próximo passo pretendido: religar `install_argocd = true`, validar UI/SSO do ArgoCD (chart 10.3.2) via azuread.
 
 ## Open Questions / Hypotheses
 
@@ -42,9 +42,10 @@ kubectl -n external-dns logs deploy/external-dns --tail=30   # esperado: linha "
 
 1. ✅ external-dns via Workload Identity validado no cluster (auth + leitura da zona; ver `docs/migration-progress.md`).
 2. ✅ ingress-istio religado (Istio 1.30.3); Gateway + 3 certificados cert-manager (`READY=True`) e external-dns **escrevendo** na zona (A record `gateway.vtl26` + CNAMEs/TXT). Ver `docs/migration-progress.md`.
-3. Religar argocd (chart 10.3.2) + httpbin; validar UI/SSO. Modelo sugerido: Opus (bump argo-cd 7→10 pode exigir ajuste de configmap/RBAC/CRDs + SSO azuread).
-4. Religar app-of-apps-infra; validar.
-5. Provisionar a stack completa, validar end-to-end e **destruir**.
-6. Só então migrar os outros 4 exemplos (ver Known Broken).
+3. ✅ httpbin religado; HTTP 200 end-to-end via Gateway (cert LE staging, curl `-k`; mTLS SPIFFE ok). Ver `docs/migration-progress.md`.
+4. Religar argocd (chart 10.3.2); validar UI/SSO via azuread. Modelo sugerido: Opus (bump argo-cd 7→10 pode exigir ajuste de configmap/RBAC/CRDs + SSO `instance.client_id`).
+5. Religar app-of-apps-infra; validar.
+6. Provisionar a stack completa, validar end-to-end e **destruir**.
+7. Só então migrar os outros 4 exemplos (ver Known Broken).
 
 > Before trusting anything time-sensitive above, run `git status`, `git diff`, and `git log` against the base branch.

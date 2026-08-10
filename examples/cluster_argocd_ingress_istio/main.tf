@@ -6,7 +6,7 @@ locals {
   install_external_secrets    = true
   install_external_dns        = true
   install_ingress_istio       = true
-  install_httpbin             = false
+  install_httpbin             = true
   install_argocd              = false
   install_app_of_apps_infra   = false
   cluster_ingress_type        = "istio"
