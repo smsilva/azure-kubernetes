@@ -1,138 +1,43 @@
-# HANDOFF — Atualização de providers e charts
+# HANDOFF
 
-Estado da migração incremental, começando por `examples/cluster_argocd_ingress_istio`.
-Estratégia: migrar **um exemplo por vez**; provisionar de verdade, validar e destruir antes de migrar o próximo. Ver `CLAUDE.md` para o mapa de versões por exemplo.
+## Why
 
-Última atualização: 2026-08-10
+Atualizar providers e charts do exemplo `examples/cluster_argocd_ingress_istio` (azurerm v5, azuread v3, helm v3, AKS 1.34.9). Estratégia acordada: migrar **um exemplo por vez**, religando cada `install_*` isoladamente, provisionando de verdade, validando no cluster e destruindo antes de seguir. Módulos em `src/` são compartilhados pelos 5 exemplos — editá-los quebra os que ainda estão em provider antigo (aceito temporariamente até migrar cada um). Ver `CLAUDE.md` para o mapa de versões por exemplo e os gotchas.
 
----
+## In Progress
 
-## Etapa atual: `cluster_argocd_ingress_istio`
+cert-manager e external-secrets religados e validados no cluster; external-secrets migrado para Workload Identity. Ambiente **destruído** (`terraform destroy`) para não gerar custo — nenhum RG `wasp-sandbox` remanescente. Toggles `install_cert_manager` e `install_external_secrets` estão `true`; o resto `false`.
 
-### Objetivo imediato
-Subir **apenas o cluster AKS 1.34.9** (todos os `install_*` em `false` no `main.tf`) na conta pessoal, com providers atualizados. `plan`/`apply` a cargo do usuário (backend local).
+Próximo passo pretendido: religar **external-dns** (`install_external_dns = true`) usando Workload Identity com o módulo `src/active-directory/workload-identity` (mesmo padrão do external-secrets), dar acesso à DNS Zone via identidade federada em vez do kubelet SP.
 
-### ✅ Feito
+## Open Questions / Hypotheses
 
-**Providers (`examples/cluster_argocd_ingress_istio/provider.tf`)**
-- `azurerm`: `>= 3.0.0, < 4.0.0` → `>= 5.0.0, < 6.0.0`
-- `azuread`: `>= 2.22.0, < 3.0.0` → `>= 3.0.0, < 4.0.0`
-- `helm`: adicionado pin `>= 3.0.0, < 4.0.0` (antes sem pin → puxava a última e quebrava)
-- `provider "azurerm"`: adicionado `resource_provider_registrations = "legacy"` (v5 mudou o default para `none`)
-- `provider "helm"`: bloco `kubernetes { ... }` → atributo `kubernetes = { ... }` (sintaxe helm v3)
+- external-dns via Workload Identity: precisa de role na DNS Zone (`DNS Zone Contributor`) para a MI federada, substituindo o `azurerm_role_assignment.kubelet_contributor_on_dns_zone` atual (que usa a kubelet identity). Confirmar se o chart external-dns 1.21.1 aceita `serviceAccount.annotations` + podLabel de workload identity como o ESO.
+- Charts com bump commitado mas NÃO validados: argo-cd 10.3.2, external-dns 1.21.1, ingress-nginx 4.15.1. Bumps grandes (argo-cd 7→10) podem exigir ajuste de `values`/templates/CRDs ao religar.
+- ArgoCD (chart 10.3.2): revisar mudanças de configmap/RBAC/CRDs e o SSO via azuread (`instance.client_id`) ao religar.
 
-**Módulo `src/cluster/main.tf` (COMPARTILHADO)**
-- Adicionado bloco `node_provisioning_profile { mode = "Manual" }` — obrigatório no azurerm v5.
+## Known Broken
 
-**Módulo `src/nodepool/main.tf` (COMPARTILHADO)**
-- `enable_auto_scaling` → `auto_scaling_enabled`
-- `enable_node_public_ip` → `node_public_ip_enabled`
-- `enable_host_encryption` → `host_encryption_enabled`
-  (renomeações do azurerm v4)
+- **Outros 4 exemplos** (`cluster_argocd_ingress_azure`, `_nginx`, `cluster_one_nodepool`, `cluster_two_nodepools`) — *intencional*: os módulos compartilhados já estão em azurerm v5/helm v3 e quebram esses exemplos até migrá-los. `two_nodepools` usa `src/nodepool` (já v4+). Ajustes por exemplo: subir provider para v5, adicionar `node_provisioning_profile`, `application_id`→`client_id`, pin helm v3.
+- **Chart `ingress-azure` removido** — *inesperado*: `helm fetch` não retornou o chart na versão buscada e o diretório foi apagado. Usado só pelo exemplo azure. Ao migrar aquele exemplo, refazer fetch de `oci://mcr.microsoft.com/azure-application-gateway/charts/ingress-azure` (ver README) ou remover em definitivo.
 
-**azuread v3 — atributo `application_id` removido → `client_id`**
-- `examples/cluster_argocd_ingress_istio/main.tf:119` (`sso_application_id`)
-- `examples/common/secrets.tf:9` (symlink compartilhado — afeta os 3 exemplos argocd)
+## How to Resume
 
-**Módulos helm migrados para sintaxe v3 (`set = [...]`)**
-- `src/helm/modules/external-dns/main.tf`
-- `src/helm/modules/httpbin/main.tf`
-- `src/helm/modules/ingress-istio/main.tf`
-  (cert-manager, external-secrets, ingress-azure, app-of-apps-infra já tinham sido migrados no commit `64971b1`)
+```bash
+cd examples/cluster_argocd_ingress_istio
+terraform init
+terraform apply -auto-approve   # reconstrói cluster + cert-manager + external-secrets (toggles já true)
+az aks get-credentials --resource-group <rg> --name <cluster> --admin --overwrite-existing
+kubectl get clustersecretstore   # esperado: Valid
+```
 
-**Validação**
-- `terraform init -backend=false && terraform validate` → **Success** (com warnings, ver abaixo).
-- Providers resolvidos: azurerm 5.0.1, azuread 3.9.0, helm 3.2.0, kubernetes 3.2.1.
+## Next Steps
 
-### ⚠️ Efeito colateral — charts locais atualizados
-`./scripts/update-local-helm-charts` foi executado na investigação e **substituiu charts locais** (o script faz `rm -rf` + `helm fetch` quando a versão difere). Mantido a pedido do usuário. Precisam ser **revisados/validados** junto com o provisionamento:
+1. Religar external-dns via Workload Identity (`install_external_dns = true` + módulo `workload-identity` + role na DNS Zone); `apply`; validar registros DNS; commit.
+2. Religar ingress-istio (charts istio 1.30.3 já no repo); validar Gateway/certificados; commit.
+3. Religar argocd (chart 10.3.2) + httpbin; validar UI/SSO; commit.
+4. Religar app-of-apps-infra; validar; commit.
+5. Provisionar a stack completa, validar end-to-end e **destruir**.
+6. Só então migrar os outros 4 exemplos (ver Known Broken).
 
-| Chart | Antes (HEAD) | Agora |
-|---|---|---|
-| argo-cd | 7.5.2 | 10.3.2 |
-| cert-manager | v1.15.3 | v1.21.1 |
-| external-dns | 1.15.0 | 1.21.1 |
-| external-secrets | 0.10.3 | 2.9.0 |
-| ingress-nginx | 4.11.2 | 4.15.1 |
-
-- Bumps grandes (ex.: argo-cd 7→10, external-secrets 0.10→2.9) podem exigir ajustes nos `values`/templates dos módulos e nos CRDs. Validar ao religar cada `install_*`.
-
-### ✅ Charts istio atualizados 1.22.2 → 1.30.3
-Rodado `scripts/update-local-helm-charts-istio` pelo usuário. Subcharts substituídos:
-- `istio-base/charts/base-1.22.2.tgz` → `base-1.30.3.tgz`
-- `istio-discovery/charts/istiod-1.22.2.tgz` → `istiod-1.30.3.tgz`
-- `istio-gateway/charts/gateway-1.22.2.tgz` → `gateway-1.30.3.tgz`
-
-Verificação:
-- `helm template` renderiza os 3 wrappers sem erros nem warnings.
-- APIs usadas nos templates ainda servidas no CRD 1.30.3: `telemetry.istio.io/v1alpha1` (telemetry.yaml), `networking.istio.io/v1alpha3` (gateway.yaml, virtualservice.yaml).
-- `appVersion` dos 3 wrapper `Chart.yaml` atualizado `1.18.2` → `1.30.3` (metadado; a `version:` do wrapper — 0.5.0/0.6.0/0.4.0 — foi mantida).
-
-### ✅ Warnings de deprecação resolvidos
-- `kubernetes_namespace` → `kubernetes_namespace_v1` (recurso + referências):
-  - `src/helm/modules/httpbin/main.tf`
-  - `src/helm/modules/ingress-istio/main.tf`
-- `terraform validate` agora retorna `Success!` sem warnings.
-
-### ✅ Cluster provisionado (apply real)
-`terraform apply` executado na subscription `wasp-sandbox`. Resultado: cluster AKS 1.34.9 + VNet/subnets + 5 role assignments. Output `url_gateway = gateway.2g0nh.sandbox.wasp.silvios.me`.
-- Confirma que a migração azurerm v5 (`node_provisioning_profile`, `auto_scaling_enabled`) funciona no recurso real.
-
-### ⚠️ Permissão do Service Principal (resolvido)
-O primeiro apply falhou com `403 AuthorizationFailed` nos 5 `azurerm_role_assignment` — o SP `terraform-wasp-sandbox` (`2ef8b61a...`) só tinha `Contributor`, faltava `Microsoft.Authorization/roleAssignments/write`.
-- Corrigido concedendo **User Access Administrator @ subscription** via novo script `scripts/sp-grant-user-access-administrator`.
-- Documentado no `README.md` (seção "Service Principal Permissions").
-- Re-apply completou os 5 role assignments (5 added, 0 changed, 0 destroyed).
-
-### Religando módulos um a um (apply + validar + commit)
-- [x] **cert-manager** v1.21.1 — commit `8b1c9b5`. 3 pods Running, 6 CRDs, 7 ClusterIssuers READY.
-- [x] **external-secrets** v0.10.3 → 2.9.0 — migrado para **Azure Workload Identity** (sem client_secret no cluster). ClusterSecretStore `store validated` (Valid) e ExternalSecret de teste `SecretSynced`. Novos recursos: `src/active-directory/workload-identity` (user-assigned MI + federated credential), `azurerm_key_vault_access_policy`. Notas da migração:
-  - ESO 2.9.0 serve o CRD `ClusterSecretStore` apenas em `external-secrets.io/v1` (v1beta1 `served=false`) → config chart migrado para `v1`.
-  - `podLabels.azure\.workload\.identity/use` precisa `type = "string"` no helm_release `set` (senão o helm envia boolean e o k8s rejeita o label).
-  - Requer output novo `oidc_issuer_url` em `src/cluster/output.tf`.
-  - `azurerm_federated_identity_credential` no azurerm v5 usa `user_assigned_identity_id` (não `parent_id`/`resource_group_name`).
-  - Smoke test versionado: `external-secrets-config` ganhou `templates/external-secret.yaml` (parametrizado em `values.yaml` via `externalSecret.*`) que gera o Secret `external-secrets-smoke-test` a partir da chave `arm-dns-zone-resource-group` do Key Vault. Validado: ExternalSecret `SecretSynced/Ready=True`, Secret `Opaque` com ownerReference para o ExternalSecret.
-- [ ] external-dns (chart 1.15.0 → 1.21.1) — **candidato a Workload Identity** (módulo `src/active-directory/workload-identity` pronto; usar mesmo padrão do external-secrets)
-- [ ] ingress-istio (charts istio 1.30.3 já commitados)
-- [ ] argocd (chart 7.5.2 → 10.3.2 — bump grande) + httpbin
-- [ ] app-of-apps-infra
-
-Ao final: provisionar tudo, validar, **destruir**.
-
-### ⏸️ Sessão pausada — ambiente destruído (2026-08-10)
-`terraform destroy -auto-approve` executado para não gerar custo. **18 resources destroyed**; `az group exists wasp-sandbox-2g0nh = false`, nenhum RG `wasp-sandbox` remanescente. Ao retomar: `terraform apply` reconstrói cluster + cert-manager + external-secrets (toggles `true` no `main.tf`), depois seguir religando external-dns.
-
-### ⚠️ Charts com bump commitado mas NÃO validado em cluster
-O `scripts/update-local-helm-charts` atualizou charts que ainda não foram religados/testados. Commitados neste ponto a pedido, mas **pendentes de validação** ao religar cada módulo:
-- argo-cd 7.5.2 → 10.3.2 (bump grande — revisar values/templates/CRDs)
-- external-dns 1.15.0 → 1.21.1
-- ingress-nginx 4.11.2 → 4.15.1 (não usado pelo exemplo istio; pertence ao nginx)
-
-### ⚠️ Chart ingress-azure removido
-O `helm fetch` não retornou o chart `ingress-azure` na versão buscada (repo Microsoft) → o diretório `src/helm/charts/ingress-azure` foi apagado localmente (HEAD tinha 1.7.5). Só é usado pelo exemplo `cluster_argocd_ingress_azure`. Decidir ao migrar aquele exemplo: refazer o fetch da fonte correta (`oci://mcr.microsoft.com/azure-application-gateway/charts/ingress-azure`, ver README) ou remover de vez.
-
-### Acesso ao cluster (kubectl)
-`kubelogin` não está instalado → usar admin config:
-`az aks get-credentials --resource-group wasp-sandbox-2g0nh --name wasp-sandbox-2g0nh --admin --overwrite-existing`
-
-### ⚠️ helm provider não detecta mudança só no conteúdo do chart
-Quando apenas o conteúdo de um chart local muda (novo/alterado template) sem alterar os `values`/`set` passados ao `helm_release`, o `terraform apply` reporta "no changes". Forçar a reinstalação:
-`terraform apply -replace='module.<mod>[0].helm_release.<release>'`
-(usado para materializar o `external-secret.yaml` no release `external_secrets_config`).
-
----
-
-## Pendências dos outros exemplos (fazer DEPOIS do istio)
-
-Os módulos compartilhados já foram alterados para azurerm v5 / helm v3. Isso **quebra** os exemplos ainda em versões antigas. Migrar cada um:
-
-- [ ] `cluster_argocd_ingress_azure` (azurerm v4, helm v3) — precisa subir para v5 e ganhar `node_provisioning_profile`; ajustar `main.tf` `application_id`→`client_id` (linha ~114).
-- [ ] `cluster_argocd_ingress_nginx` (azurerm v3, sem pin helm) — subir azurerm v3→v5, pin helm v3, migrar módulo ingress-nginx se necessário, `application_id`→`client_id` (linha ~103).
-- [ ] `cluster_one_nodepool` (azurerm v3) — subir para v5.
-- [ ] `cluster_two_nodepools` (azurerm v3) — subir para v5; **usa `src/nodepool`** (já migrado para v4+, então este exemplo está quebrado até subir o provider).
-
-### Breaking changes de referência
-- azurerm v4: renomeações de `enable_*`→`*_enabled` em AKS/nodepool; `subscription_id` obrigatório (via `ARM_SUBSCRIPTION_ID`, já setado no ambiente).
-- azurerm v5: `node_provisioning_profile` obrigatório em `azurerm_kubernetes_cluster`; `resource_provider_registrations` default `none` (usar `"legacy"` para manter comportamento antigo).
-- azuread v3: atributo `application_id` de `azuread_application` removido → `client_id`.
-- helm v3: `set {}`/`registry {}`/`kubernetes {}` (blocos) → `set = [...]`/`registries = [...]`/`kubernetes = {...}` (atributos).
+> Before trusting anything time-sensitive above, run `git status`, `git diff`, and `git log` against the base branch.
