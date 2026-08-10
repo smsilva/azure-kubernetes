@@ -6,6 +6,16 @@ Expand the name of the chart.
 {{- end }}
 
 {{/*
+Allow overriding the namespace that chart resources are rendered into
+(e.g. when external-dns is installed as a subchart that should live in a
+dedicated namespace, separate from the umbrella chart's release namespace).
+Falls back to .Release.Namespace when namespaceOverride is not set.
+*/}}
+{{- define "external-dns.namespace" -}}
+{{- default .Release.Namespace .Values.namespaceOverride }}
+{{- end }}
+
+{{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
@@ -73,6 +83,7 @@ The image to use
 
 {{/*
 Provider name, Keeps backward compatibility on provider
+TODO: line eq (typeOf .Values.provider) "string" to be removed in future releases
 */}}
 {{- define "external-dns.providerName" -}}
 {{- if eq (typeOf .Values.provider) "string" }}
@@ -92,4 +103,22 @@ The image to use for optional webhook sidecar
 {{- end }}
 {{- printf "%s:%s" .repository .tag }}
 {{- end }}
+{{- end }}
+
+{{/*
+The pod affinity default label Selector
+*/}}
+{{- define "external-dns.labelSelector" -}}
+labelSelector:
+  matchLabels:
+    {{ include "external-dns.selectorLabels" . | nindent 4 }}
+{{- end }}
+
+{{/*
+Check if any Gateway API sources are enabled
+*/}}
+{{- define "external-dns.hasGatewaySources" -}}
+{{- if or (has "gateway-httproute" .Values.sources) (has "gateway-grpcroute" .Values.sources) (has "gateway-tlsroute" .Values.sources) (has "gateway-tcproute" .Values.sources) (has "gateway-udproute" .Values.sources) -}}
+true
+{{- end -}}
 {{- end }}

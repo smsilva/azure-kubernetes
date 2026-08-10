@@ -1,10 +1,16 @@
+### Added
+
+- Add value `.sourceNamespace` to watch a namespace which is different from the one that external-dns is installed into when `.namespaced` is true. ([#6297](https://github.com/kubernetes-sigs/external-dns/pull/6297)) _@jplitza_
+- Add option to enable Gateway API ListenerSet support. ([#6381](https://github.com/kubernetes-sigs/external-dns/pull/6381)) _@speer_
+- Add support for bool in extraArgs. ([#6179](https://github.com/kubernetes-sigs/external-dns/pull/6179)) _@farodin91_
+- Add value `.namespaceOverride` to render chart resources into a namespace different from the release namespace, for subchart installs that want their own namespace. ([#6389](https://github.com/kubernetes-sigs/external-dns/pull/6389)) _@alliasgher_
+
 ### Changed
 
-- Updated _ExternalDNS_ OCI image version to [v0.15.0](https://github.com/kubernetes-sigs/external-dns/releases/tag/v0.15.0). ([#xxxx](https://github.com/kubernetes-sigs/external-dns/pull/xxxx)) _@stevehipwell_
+- Update _ExternalDNS_ OCI image version to [v0.21.0](https://github.com/kubernetes-sigs/external-dns/releases/tag/v0.21.0). ([#6354](https://github.com/kubernetes-sigs/external-dns/pull/6354)) _@vflaux_
 
 ### Fixed
 
-- Fixed `provider.webhook.resources` behavior to correctly leverage resource limits. ([#4560](https://github.com/kubernetes-sigs/external-dns/pull/4560)) _@crutonjohn_
-- Fixed `provider.webhook.imagePullPolicy` behavior to correctly leverage pull policy. ([#4643](https://github.com/kubernetes-sigs/external-dns/pull/4643)) _@kimsondrup_
-- Fixed to add correct webhook metric port to `Service` and `ServiceMonitor`. ([#4643](https://github.com/kubernetes-sigs/external-dns/pull/4643)) _@kimsondrup_
-- Fixed to no longer require the unauthenticated webhook provider port to be exposed for health probes. ([#4691](https://github.com/kubernetes-sigs/external-dns/pull/4691)) _@kimsondrup_ & _@hatrx_
+- Avoid creating cluster-scoped RBAC for Gateway API sources when running namespaced with `gatewayNamespace` set. Namespace listing permissions are now only added when `gatewayNamespace` is unset. ([#5843](https://github.com/kubernetes-sigs/external-dns/pull/5843)) _@TobyTheHutt_
+- Ensure container arguments are passed in as strings ([#6264](https://github.com/kubernetes-sigs/external-dns/pull/6264)) _@KhooHaoYit_
+- Ensure container arguments are passed in as strings when extraArgs is a map ([#6284](https://github.com/kubernetes-sigs/external-dns/pull/6284)) _@vflaux_

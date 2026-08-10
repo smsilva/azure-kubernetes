@@ -92,12 +92,24 @@ O primeiro apply falhou com `403 AuthorizationFailed` nos 5 `azurerm_role_assign
   - Requer output novo `oidc_issuer_url` em `src/cluster/output.tf`.
   - `azurerm_federated_identity_credential` no azurerm v5 usa `user_assigned_identity_id` (não `parent_id`/`resource_group_name`).
   - Smoke test versionado: `external-secrets-config` ganhou `templates/external-secret.yaml` (parametrizado em `values.yaml` via `externalSecret.*`) que gera o Secret `external-secrets-smoke-test` a partir da chave `arm-dns-zone-resource-group` do Key Vault. Validado: ExternalSecret `SecretSynced/Ready=True`, Secret `Opaque` com ownerReference para o ExternalSecret.
-- [ ] external-dns (chart 1.15.0 → 1.21.1)
+- [ ] external-dns (chart 1.15.0 → 1.21.1) — **candidato a Workload Identity** (módulo `src/active-directory/workload-identity` pronto; usar mesmo padrão do external-secrets)
 - [ ] ingress-istio (charts istio 1.30.3 já commitados)
 - [ ] argocd (chart 7.5.2 → 10.3.2 — bump grande) + httpbin
 - [ ] app-of-apps-infra
 
 Ao final: provisionar tudo, validar, **destruir**.
+
+### ⏸️ Sessão pausada — ambiente destruído (2026-08-10)
+`terraform destroy -auto-approve` executado para não gerar custo. **18 resources destroyed**; `az group exists wasp-sandbox-2g0nh = false`, nenhum RG `wasp-sandbox` remanescente. Ao retomar: `terraform apply` reconstrói cluster + cert-manager + external-secrets (toggles `true` no `main.tf`), depois seguir religando external-dns.
+
+### ⚠️ Charts com bump commitado mas NÃO validado em cluster
+O `scripts/update-local-helm-charts` atualizou charts que ainda não foram religados/testados. Commitados neste ponto a pedido, mas **pendentes de validação** ao religar cada módulo:
+- argo-cd 7.5.2 → 10.3.2 (bump grande — revisar values/templates/CRDs)
+- external-dns 1.15.0 → 1.21.1
+- ingress-nginx 4.11.2 → 4.15.1 (não usado pelo exemplo istio; pertence ao nginx)
+
+### ⚠️ Chart ingress-azure removido
+O `helm fetch` não retornou o chart `ingress-azure` na versão buscada (repo Microsoft) → o diretório `src/helm/charts/ingress-azure` foi apagado localmente (HEAD tinha 1.7.5). Só é usado pelo exemplo `cluster_argocd_ingress_azure`. Decidir ao migrar aquele exemplo: refazer o fetch da fonte correta (`oci://mcr.microsoft.com/azure-application-gateway/charts/ingress-azure`, ver README) ou remover de vez.
 
 ### Acesso ao cluster (kubectl)
 `kubelogin` não está instalado → usar admin config:
