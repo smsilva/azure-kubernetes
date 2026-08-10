@@ -49,6 +49,11 @@ Repositório de módulos Terraform para provisionar AKS com stack GitOps (ArgoCD
 - ESO 2.9.0 serve o CRD apenas em `external-secrets.io/v1` (v1beta1 `served=false`); usar `apiVersion: external-secrets.io/v1` nos manifests do `external-secrets-config`.
 - `src/active-directory/workload-identity` é o módulo reutilizável (user-assigned MI + federated credential); requer o output `oidc_issuer_url` de `src/cluster`.
 
+## external-dns (Workload Identity)
+
+- O provider azure do external-dns escolhe o modo de auth pela flag no `azure.json` (secret `azure-config-file` do chart `external-dns-config`): `useWorkloadIdentityExtension: true` (MI federada) vs `useManagedIdentityExtension: true` (kubelet SP). Não passar `aadClientId/aadClientSecret` no modo Workload Identity — o client-id vem da anotação do SA.
+- MI federada do external-dns precisa de `DNS Zone Contributor` na DNS Zone (não no RG). O `azurerm_role_assignment.kubelet_contributor_on_dns_zone` fica em `examples/common/variables.tf` (compartilhado, sem `count`) e continua ocioso no exemplo istio; remover só ao migrar os demais exemplos.
+
 Ver `HANDOFF.md` para o estado detalhado da migração e pendências.
 
 ## Estratégia de migração (acordada)
