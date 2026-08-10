@@ -75,6 +75,29 @@ terraform plan
 terraform apply
 ```
 
+# Provisioning Time Estimates
+
+Measured on `examples/cluster_argocd_ingress_istio` (azurerm v5 / helm v3 /
+AKS 1.34.9), full stack from scratch (`install_*` all `true`, 35 resources).
+Helm release durations are from Terraform's `Creation complete after`; parallel
+modules overlap, so the total is **not** the sum of the rows.
+
+| Step                                  | Duration | Notes                                              |
+| ------------------------------------- | -------- | -------------------------------------------------- |
+| Resource Group + VNet/subnets         | ~30s     | fast Azure control-plane ops                       |
+| AKS cluster (control plane + nodepool)| ~8–12min | dominant cost; varies with region/load             |
+| cert-manager (helm)                   | ~1min    | includes CRDs                                      |
+| external-secrets (ESO 2.9.0, helm)    | ~1min    | + Workload Identity federated credential           |
+| external-dns (helm)                   | ~30s     |                                                    |
+| ingress-istio (istio-gateway, helm)   | ~40s     | base/istiod/gateway subcharts 1.30.3               |
+| httpbin (helm)                        | ~2m20s   | waits for Gateway + cert readiness (`atomic`)      |
+| argo-cd 10.3.2 (helm)                 | ~2m30s   | `atomic=true`, waits all 7 pods ready              |
+| argo-cd-config (helm)                 | ~3s      | idle on istio (azure/nginx subcharts disabled)     |
+| **Full `terraform apply` (wall-clock)** | **~15–20min** | AKS provisioning dominates; helm stage overlaps |
+
+> Rows with `~min` for AKS/RG are approximate — the captured apply log was
+> truncated to the helm stage. Refine these on the next full run.
+
 # Follow Process
 
 ```bash

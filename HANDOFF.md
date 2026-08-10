@@ -53,4 +53,6 @@ kubectl get applications -n argocd   # validar Applications Synced/Healthy
 6. Provisionar a stack completa, validar end-to-end e **destruir**.
 7. Só então migrar os outros 4 exemplos (ver Known Broken).
 
+> **Capturar tempos no próximo apply completo:** o `README.md` tem a seção *Provisioning Time Estimates* com AKS/RG marcados como aproximados (`~min`) — o log deste apply ficou truncado só na fase helm. Na próxima reprovisão do zero, rode o apply com log completo (ex.: `terraform apply /tmp/plan.tfplan 2>&1 | ts '[%H:%M:%S]' | tee /tmp/apply-full.log`, ou `terraform apply ... -json`) para medir os tempos reais de Resource Group, VNet e AKS control-plane/nodepool, e refinar a tabela do README.
+
 > Before trusting anything time-sensitive above, run `git status`, `git diff`, and `git log` against the base branch.
