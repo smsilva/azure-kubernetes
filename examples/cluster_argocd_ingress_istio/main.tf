@@ -2,7 +2,7 @@ locals {
   cluster_version             = "1.34.9"
   cluster_node_pool_min_count = 1
   cluster_node_pool_max_count = 5
-  install_cert_manager        = false
+  install_cert_manager        = true
   install_external_secrets    = false
   install_external_dns        = false
   install_ingress_istio       = false
