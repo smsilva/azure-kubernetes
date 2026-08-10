@@ -6,13 +6,15 @@ Atualizar providers e charts do exemplo `examples/cluster_argocd_ingress_istio` 
 
 ## In Progress
 
-cert-manager e external-secrets religados e validados no cluster; external-secrets migrado para Workload Identity. Ambiente **destruído** (`terraform destroy`) para não gerar custo — nenhum RG `wasp-sandbox` remanescente. Toggles `install_cert_manager` e `install_external_secrets` estão `true`; o resto `false`.
+cert-manager e external-secrets religados e validados no cluster; external-secrets migrado para Workload Identity. Ambiente **destruído** (`terraform destroy`) para não gerar custo — nenhum RG `wasp-sandbox` remanescente. Toggles `install_cert_manager`, `install_external_secrets` e `install_external_dns` estão `true`; o resto `false`.
 
-Próximo passo pretendido: religar **external-dns** (`install_external_dns = true`) usando Workload Identity com o módulo `src/active-directory/workload-identity` (mesmo padrão do external-secrets), dar acesso à DNS Zone via identidade federada em vez do kubelet SP.
+external-dns **migrado para Workload Identity no código** (não validado no cluster — ambiente ainda destruído). Mudanças: chart `external-dns-config` usa `useWorkloadIdentityExtension` (era `useManagedIdentityExtension`); módulo `external-dns` recebe `identity_client_id` e anota SA + pod label (padrão ESO); exemplo istio ganhou `module.external_dns_workload_identity` + `azurerm_role_assignment.external_dns_contributor_on_dns_zone` (DNS Zone Contributor na MI federada). `terraform validate` OK.
+
+Próximo passo pretendido: reconstruir o cluster (`apply`), validar registros DNS criados pelo external-dns via Workload Identity, depois religar ingress-istio.
 
 ## Open Questions / Hypotheses
 
-- external-dns via Workload Identity: precisa de role na DNS Zone (`DNS Zone Contributor`) para a MI federada, substituindo o `azurerm_role_assignment.kubelet_contributor_on_dns_zone` atual (que usa a kubelet identity). Confirmar se o chart external-dns 1.21.1 aceita `serviceAccount.annotations` + podLabel de workload identity como o ESO.
+- external-dns via Workload Identity: **feito no código** (role `DNS Zone Contributor` na MI federada; chart 1.21.1 confirmado aceitando `serviceAccount.annotations` + `podLabels`). Falta validar no cluster. O `azurerm_role_assignment.kubelet_contributor_on_dns_zone` (em `examples/common/variables.tf`, compartilhado, sem `count`) foi mantido intacto — fica ocioso neste exemplo mas continua aplicando; remover só quando migrar os demais exemplos.
 - Charts com bump commitado mas NÃO validados: argo-cd 10.3.2, external-dns 1.21.1, ingress-nginx 4.15.1. Bumps grandes (argo-cd 7→10) podem exigir ajuste de `values`/templates/CRDs ao religar.
 - ArgoCD (chart 10.3.2): revisar mudanças de configmap/RBAC/CRDs e o SSO via azuread (`instance.client_id`) ao religar.
 
@@ -33,7 +35,7 @@ kubectl get clustersecretstore   # esperado: Valid
 
 ## Next Steps
 
-1. Religar external-dns via Workload Identity (`install_external_dns = true` + módulo `workload-identity` + role na DNS Zone); `apply`; validar registros DNS; commit.
+1. Reconstruir cluster (`apply`) e validar external-dns via Workload Identity criando registros DNS (código já commitado). Charts locais só mudam template → talvez `-replace='module.external_dns[0].helm_release.external_dns_config'` (gotcha CLAUDE.md).
 2. Religar ingress-istio (charts istio 1.30.3 já no repo); validar Gateway/certificados; commit.
 3. Religar argocd (chart 10.3.2) + httpbin; validar UI/SSO; commit.
 4. Religar app-of-apps-infra; validar; commit.
