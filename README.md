@@ -5,6 +5,24 @@
 - Azure Key Vault
 - Azure DNS Zone
 
+## Service Principal Permissions
+
+The Service Principal used by Terraform (`ARM_CLIENT_ID`) needs more than the
+`Contributor` role: the examples create `azurerm_role_assignment` resources
+(kubelet Contributor, AKS Cluster User Role, DNS Zone Contributor), which
+require the `Microsoft.Authorization/roleAssignments/write` permission.
+
+Grant the `User Access Administrator` role at the subscription scope. The
+caller running the command must be `Owner` or `User Access Administrator`.
+
+```bash
+scripts/sp-grant-user-access-administrator \
+  --client-id ${ARM_CLIENT_ID}
+```
+
+Without it, `terraform apply` fails with `403 AuthorizationFailed` on the
+role assignment resources.
+
 ## Assumptions
 
 The examples will assume `subscriptions` names like:

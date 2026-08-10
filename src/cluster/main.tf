@@ -52,4 +52,8 @@ resource "azurerm_kubernetes_cluster" "default" {
     admin_group_object_ids = var.administrators_ids
   }
 
+  node_provisioning_profile {
+    mode = "Manual"
+  }
+
 }
