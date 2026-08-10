@@ -1,0 +1,81 @@
+#!/bin/bash
+set -e
+
+export THIS_SCRIPT_NAME=$0
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  Grants the "User Access Administrator" role to a Service Principal at the
+  subscription scope, so Terraform can create the azurerm_role_assignment
+  resources used by the examples (kubelet Contributor, Cluster User Role,
+  DNS Zone Contributor).
+
+  The caller must be Owner or User Access Administrator on the subscription.
+
+  ${THIS_SCRIPT_NAME} \\
+    --client-id 2ef8b61a-e93b-453b-bb02-96e2394a518a
+
+  ${THIS_SCRIPT_NAME} \\
+    --client-id 2ef8b61a-e93b-453b-bb02-96e2394a518a \\
+    --subscription 636a465c-d6b1-4533-b071-64cea37a2bf6
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  -c | --client-id )
+    shift; ARM_CLIENT_ID=$1
+    ;;
+
+  -s | --subscription )
+    shift; AZURE_SUBSCRIPTION=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${ARM_CLIENT_ID}" ]; then
+  show_usage
+  exit 1
+fi
+
+if [ -z "${AZURE_SUBSCRIPTION}" ]; then
+  AZURE_SUBSCRIPTION=$(az account show \
+    --query id \
+    --output tsv)
+fi
+
+role_name="User Access Administrator"
+scope="/subscriptions/${AZURE_SUBSCRIPTION}"
+
+echo "Service Principal.: ${ARM_CLIENT_ID}"
+echo "Role..............: ${role_name}"
+echo "Scope.............: ${scope}"
+
+existing=$(az role assignment list \
+  --assignee "${ARM_CLIENT_ID}" \
+  --role "${role_name}" \
+  --scope "${scope}" \
+  --query "length(@)" \
+  --output tsv)
+
+if [ "${existing}" != "0" ]; then
+  echo "Already assigned. Nothing to do."
+  exit 0
+fi
+
+az role assignment create \
+  --assignee "${ARM_CLIENT_ID}" \
+  --role "${role_name}" \
+  --scope "${scope}" \
+  --query "{role:roleDefinitionName, principal:principalId, scope:scope}" \
+  --output jsonc

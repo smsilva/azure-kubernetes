@@ -12,20 +12,20 @@ resource "helm_release" "external_dns_config" {
   create_namespace = true
   atomic           = true
 
-  set {
-    name = "tenantId"
-    value = var.tenantId
-  }
-
-  set {
-    name = "subscriptionId"
-    value = var.subscriptionId
-  }
-
-  set {
-    name = "resourceGroup"
-    value = var.resourceGroup
-  }
+  set = [
+    {
+      name  = "tenantId"
+      value = var.tenantId
+    },
+    {
+      name  = "subscriptionId"
+      value = var.subscriptionId
+    },
+    {
+      name  = "resourceGroup"
+      value = var.resourceGroup
+    }
+  ]
 }
 
 resource "helm_release" "external_dns" {
@@ -40,6 +40,6 @@ resource "helm_release" "external_dns" {
   ]
 
   depends_on = [
-    helm_release.external_dns_config,    
+    helm_release.external_dns_config,
   ]
 }
