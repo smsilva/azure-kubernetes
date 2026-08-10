@@ -42,7 +42,8 @@ Repositório de módulos Terraform para provisionar AKS com stack GitOps (ArgoCD
 - Acesso kubectl sem `kubelogin`: usar admin config → `az aks get-credentials --resource-group <rg> --name <cluster> --admin --overwrite-existing`.
 - O SP do Terraform precisa de `User Access Administrator` (não só `Contributor`) para criar os `azurerm_role_assignment` dos exemplos; conceder via `scripts/sp-grant-user-access-administrator --client-id <id>`.
 - Key Vault `waspfoundation*` usa access policy (RBAC desabilitado) → dar acesso a identidades via `azurerm_key_vault_access_policy`, não role assignment.
-- `terraform destroy` emite warning benigno: CRDs do cert-manager são mantidos pela `resource-policy: keep` do chart no `helm uninstall`. Como o cluster inteiro é destruído junto, os CRDs somem com o control plane — nada fica órfão no Azure.
+- `terraform destroy` emite warning benigno: CRDs do cert-manager são mantidos pela `resource-policy: keep` do chart no `helm uninstall`. Como o cluster inteiro é destruído junto, os CRDs somem com o control plane — nada fica órfão no Azure. O mesmo vale para os CRDs do Istio.
+- O ingress-istio serve certificado **Let's Encrypt STAGING** (issuer `(STAGING) …`) → `curl` HTTPS falha na verificação da CA. Testar endpoints com `curl -k`; não é bug. O warning `discarding CNAME record` no external-dns quando há A+CNAME no mesmo host também é benigno.
 
 ## external-secrets (ESO 2.9.0)
 
