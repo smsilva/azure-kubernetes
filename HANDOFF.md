@@ -6,11 +6,11 @@ Atualizar providers e charts do exemplo `examples/cluster_argocd_ingress_istio` 
 
 ## In Progress
 
-**Ambiente ATIVO** — cluster `wasp-sandbox-vtl26` provisionado em 2026-08-10 com ingress-istio + httpbin religados. Toggles em `install_cert_manager`, `install_external_secrets`, `install_external_dns`, `install_ingress_istio`, `install_httpbin` = `true`; `install_argocd`, `install_app_of_apps_infra` = `false`. **Não esquecer de destruir ao pausar.**
+**Ambiente destruído** — cluster `wasp-sandbox-vtl26` provisionado e destruído em 2026-08-10 (`terraform destroy`, 29 recursos; sem AKS/RG/A record `vtl26` remanescentes no Azure). Toggles seguem em `install_cert_manager`, `install_external_secrets`, `install_external_dns`, `install_ingress_istio`, `install_httpbin` = `true`; `install_argocd`, `install_app_of_apps_infra` = `false`.
 
-ingress-istio + httpbin validados end-to-end (ver `docs/migration-progress.md`): Istio 1.30.3, LB público `48.211.204.180`, cert-manager emitiu os certificados (`READY=True`), external-dns **escreveu** na zona via Workload Identity, e httpbin responde **HTTP 200** por `https://httpbin.vtl26.sandbox.wasp.silvios.me/get` (curl `-k`: cert é Let's Encrypt **STAGING**). mTLS SPIFFE ingress→pod confirmado.
+ingress-istio + httpbin validados end-to-end antes do destroy (ver `docs/migration-progress.md`): Istio 1.30.3, LB público, cert-manager emitiu os certificados (`READY=True`), external-dns **escreveu** na zona via Workload Identity, e httpbin respondeu **HTTP 200** via Gateway (curl `-k`: cert Let's Encrypt **STAGING**). mTLS SPIFFE ingress→pod confirmado.
 
-Próximo passo pretendido: religar `install_argocd = true`, validar UI/SSO do ArgoCD (chart 10.3.2) via azuread.
+Próximo passo pretendido: reprovisionar (cada apply gera novo `random_string.id` → nomes mudam), religar `install_argocd = true` e validar UI/SSO do ArgoCD (chart 10.3.2) via azuread.
 
 ## Open Questions / Hypotheses
 
