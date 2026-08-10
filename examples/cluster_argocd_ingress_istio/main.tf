@@ -5,7 +5,7 @@ locals {
   install_cert_manager        = true
   install_external_secrets    = true
   install_external_dns        = true
-  install_ingress_istio       = false
+  install_ingress_istio       = true
   install_httpbin             = false
   install_argocd              = false
   install_app_of_apps_infra   = false
