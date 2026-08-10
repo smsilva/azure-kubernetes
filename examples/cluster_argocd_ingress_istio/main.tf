@@ -4,7 +4,7 @@ locals {
   cluster_node_pool_max_count = 5
   install_cert_manager        = true
   install_external_secrets    = true
-  install_external_dns        = false
+  install_external_dns        = true
   install_ingress_istio       = false
   install_httpbin             = false
   install_argocd              = false
@@ -92,17 +92,38 @@ module "external_secrets" {
   ]
 }
 
+module "external_dns_workload_identity" {
+  count  = local.install_external_dns ? 1 : 0
+  source = "../../src/active-directory/workload-identity"
+
+  name                 = "${local.cluster_name}-external-dns"
+  resource_group       = azurerm_resource_group.default
+  oidc_issuer_url      = module.aks.oidc_issuer_url
+  namespace            = "external-dns"
+  service_account_name = "external-dns"
+}
+
+resource "azurerm_role_assignment" "external_dns_contributor_on_dns_zone" {
+  count = local.install_external_dns ? 1 : 0
+
+  role_definition_name = "DNS Zone Contributor"
+  principal_id         = module.external_dns_workload_identity[0].principal_id
+  scope                = data.azurerm_dns_zone.default.id
+}
+
 module "external_dns" {
   count  = local.install_external_dns ? 1 : 0
   source = "../../src/helm/modules/external-dns"
 
-  domain         = local.dns_zone
-  tenantId       = data.azurerm_client_config.current.tenant_id
-  subscriptionId = data.azurerm_subscription.current.subscription_id
-  resourceGroup  = local.dns_zone_resource_group_name
+  domain             = local.dns_zone
+  tenantId           = data.azurerm_client_config.current.tenant_id
+  subscriptionId     = data.azurerm_subscription.current.subscription_id
+  resourceGroup      = local.dns_zone_resource_group_name
+  identity_client_id = module.external_dns_workload_identity[0].client_id
 
   depends_on = [
-    azurerm_role_assignment.kubelet_contributor_on_dns_zone
+    module.aks,
+    azurerm_role_assignment.external_dns_contributor_on_dns_zone
   ]
 }
 

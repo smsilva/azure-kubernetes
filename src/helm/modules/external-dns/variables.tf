@@ -23,3 +23,7 @@ variable "subscriptionId" {
 variable "resourceGroup" {
   type = string
 }
+
+variable "identity_client_id" {
+  type = string
+}
