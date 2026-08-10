@@ -6,11 +6,11 @@ Atualizar providers e charts do exemplo `examples/cluster_argocd_ingress_istio` 
 
 ## In Progress
 
-**Ambiente destruído** — cluster provisionado e destruído em 2026-08-10 após validar o external-dns. Toggles seguem em `install_cert_manager`, `install_external_secrets`, `install_external_dns` = `true`; `install_ingress_istio`, `install_httpbin`, `install_argocd`, `install_app_of_apps_infra` = `false`.
+**Ambiente ATIVO** — cluster `wasp-sandbox-vtl26` provisionado em 2026-08-10 (27 recursos) com ingress-istio religado. Toggles em `install_cert_manager`, `install_external_secrets`, `install_external_dns`, `install_ingress_istio` = `true`; `install_httpbin`, `install_argocd`, `install_app_of_apps_infra` = `false`. **Não esquecer de destruir ao pausar.**
 
-external-dns via Workload Identity **validado no cluster** (ver `docs/migration-progress.md`): só a autenticação e a **leitura** da zona foram provadas (`Using workload identity extension...` + `All records are already up to date`, sem erro de credencial). Escrita de registro DNS ainda NÃO validada — depende de um Gateway/service com hostname (ingress-istio desligado).
+ingress-istio validado end-to-end (ver `docs/migration-progress.md`): Istio 1.30.3 subiu, LB público `48.211.204.180`, cert-manager emitiu os 3 certificados (`READY=True`), e o external-dns **escreveu** na zona via Workload Identity — registro A `gateway.vtl26 → 48.211.204.180` + CNAMEs + TXT (`ProvisioningState: Succeeded`). Escrita de DNS agora provada (antes só leitura).
 
-Próximo passo pretendido: religar `install_ingress_istio = true`, reconstruir e validar que o external-dns **cria** registro A na zona.
+Próximo passo pretendido: religar `install_argocd = true` + `install_httpbin = true`, validar UI/SSO do ArgoCD (chart 10.3.2) e o httpbin atrás do Gateway.
 
 ## Open Questions / Hypotheses
 
@@ -41,8 +41,8 @@ kubectl -n external-dns logs deploy/external-dns --tail=30   # esperado: linha "
 ## Next Steps
 
 1. ✅ external-dns via Workload Identity validado no cluster (auth + leitura da zona; ver `docs/migration-progress.md`).
-2. Religar ingress-istio no cluster reconstruído; validar Gateway/certificado cert-manager e que o external-dns **cria** o registro DNS. Modelo sugerido: Opus (bump Istio + CRDs pode exigir debugging).
-3. Religar argocd (chart 10.3.2) + httpbin; validar UI/SSO.
+2. ✅ ingress-istio religado (Istio 1.30.3); Gateway + 3 certificados cert-manager (`READY=True`) e external-dns **escrevendo** na zona (A record `gateway.vtl26` + CNAMEs/TXT). Ver `docs/migration-progress.md`.
+3. Religar argocd (chart 10.3.2) + httpbin; validar UI/SSO. Modelo sugerido: Opus (bump argo-cd 7→10 pode exigir ajuste de configmap/RBAC/CRDs + SSO azuread).
 4. Religar app-of-apps-infra; validar.
 5. Provisionar a stack completa, validar end-to-end e **destruir**.
 6. Só então migrar os outros 4 exemplos (ver Known Broken).
