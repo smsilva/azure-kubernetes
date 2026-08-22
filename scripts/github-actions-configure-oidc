@@ -1,0 +1,137 @@
+#!/bin/bash
+set -e
+
+export THIS_SCRIPT_NAME=$0
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  Configures the GitHub side of Azure OIDC federation: creates the deployment
+  environment the federated credential is bound to, and publishes the Azure
+  identity as repository variables.
+
+  Client ID, Tenant ID and Subscription ID are identifiers, not secrets, so
+  they are variables rather than secrets. No client secret is ever published:
+  the script fails when it finds an ARM_CLIENT_SECRET secret in the
+  repository, because leaving it there defeats the whole point.
+
+  Requires the gh CLI, authenticated with admin rights on the repository.
+
+  Idempotent: re-running it overwrites the same environment and variables.
+
+  Options:
+
+    -h,  --help             Show this help
+    -r,  --repository       owner/repo (default: derived from the origin remote)
+    -e,  --environment      Deployment environment name (default: azure-sandbox)
+    -c,  --client-id        Azure Application (client) ID (default: \${ARM_CLIENT_ID})
+    -t,  --tenant-id        Azure Tenant ID (default: \${ARM_TENANT_ID})
+    -s,  --subscription-id  Azure Subscription ID (default: \${ARM_SUBSCRIPTION_ID})
+    -dr, --dry-run          Print what would be done (default: false)
+
+  Examples:
+
+    ${THIS_SCRIPT_NAME}
+
+    ${THIS_SCRIPT_NAME} \\
+      --repository smsilva/azure-kubernetes \\
+      --environment azure-sandbox
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  -r | --repository )
+    shift; repository=$1
+    ;;
+
+  -e | --environment )
+    shift; environment=$1
+    ;;
+
+  -c | --client-id )
+    shift; ARM_CLIENT_ID=$1
+    ;;
+
+  -t | --tenant-id )
+    shift; ARM_TENANT_ID=$1
+    ;;
+
+  -s | --subscription-id )
+    shift; ARM_SUBSCRIPTION_ID=$1
+    ;;
+
+  -dr | --dry-run )
+    if [[ -n "${2}" && "${2}" =~ ^(true|false)$ ]]; then
+      dry_run="${2}"; shift
+    else
+      dry_run=true
+    fi
+    ;;
+
+  * )
+    echo "Invalid option: ${1}"
+    show_usage
+    exit 1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+dry_run="${dry_run:-false}"
+environment="${environment:-azure-sandbox}"
+
+if [ -z "${repository}" ]; then
+  repository=$(gh repo view \
+    --json nameWithOwner \
+    --jq .nameWithOwner)
+fi
+
+echo "Repository........: ${repository}"
+echo "Environment.......: ${environment}"
+echo "Client ID.........: ${ARM_CLIENT_ID?}"
+echo "Tenant ID.........: ${ARM_TENANT_ID?}"
+echo "Subscription ID...: ${ARM_SUBSCRIPTION_ID?}"
+
+if gh secret list --repo "${repository}" | grep --quiet '^ARM_CLIENT_SECRET'; then
+  echo
+  echo "ARM_CLIENT_SECRET is still published as a repository secret."
+  echo "Remove it before relying on federation:"
+  echo
+  echo "  gh secret delete ARM_CLIENT_SECRET --repo ${repository}"
+  echo
+  exit 1
+fi
+
+if [ "${dry_run}" == "true" ]; then
+  echo "Dry Run: would create the environment and set the three variables."
+  exit 0
+fi
+
+gh api \
+  --method PUT \
+  --silent \
+  "repos/${repository}/environments/${environment}"
+
+gh variable set ARM_CLIENT_ID \
+  --repo "${repository}" \
+  --body "${ARM_CLIENT_ID}"
+
+gh variable set ARM_TENANT_ID \
+  --repo "${repository}" \
+  --body "${ARM_TENANT_ID}"
+
+gh variable set ARM_SUBSCRIPTION_ID \
+  --repo "${repository}" \
+  --body "${ARM_SUBSCRIPTION_ID}"
+
+gh variable list \
+  --repo "${repository}"

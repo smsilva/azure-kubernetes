@@ -1,0 +1,163 @@
+#!/bin/bash
+set -e
+
+export THIS_SCRIPT_NAME=$0
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  Bootstraps everything a CI pipeline needs to run Terraform against an
+  environment without holding a single long-lived credential.
+
+  Run this once when founding an environment. It composes three scripts, each
+  usable on its own:
+
+    sp-federated-credential-create  the Azure side: trust the CI OIDC issuer
+    github-actions-configure-oidc   the GitHub side: environment + variables
+    sp-grant-aks-cluster-admin      Entra group membership for cluster access
+
+  Only the GitHub step is platform specific. On another CI platform, skip it
+  with --skip-repository and call sp-federated-credential-create with the
+  --issuer and --subject of that platform.
+
+  Every step is idempotent, so re-running this is safe.
+
+  Options:
+
+    -h,  --help              Show this help
+    -p,  --provider          github | gitlab (default: github)
+    -r,  --repository        owner/repo (default: derived from the origin remote)
+    -e,  --environment       Deployment environment name (default: azure-sandbox)
+    -c,  --client-id         Service Principal Application (client) ID (default: \${ARM_CLIENT_ID})
+    -g,  --group             AKS administrators group (default: aks-administrator)
+         --skip-repository   Skip the GitHub repository configuration
+         --skip-cluster-admin Skip the Entra group membership
+    -dr, --dry-run           Print what would be done (default: false)
+
+  Examples:
+
+    ${THIS_SCRIPT_NAME} --dry-run
+
+    ${THIS_SCRIPT_NAME} \\
+      --repository smsilva/azure-kubernetes \\
+      --environment azure-sandbox
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  -p | --provider )
+    shift; provider=$1
+    ;;
+
+  -r | --repository )
+    shift; repository=$1
+    ;;
+
+  -e | --environment )
+    shift; environment=$1
+    ;;
+
+  -c | --client-id )
+    shift; ARM_CLIENT_ID=$1
+    ;;
+
+  -g | --group )
+    shift; group=$1
+    ;;
+
+  --skip-repository )
+    skip_repository=true
+    ;;
+
+  --skip-cluster-admin )
+    skip_cluster_admin=true
+    ;;
+
+  -dr | --dry-run )
+    if [[ -n "${2}" && "${2}" =~ ^(true|false)$ ]]; then
+      dry_run="${2}"; shift
+    else
+      dry_run=true
+    fi
+    ;;
+
+  * )
+    echo "Invalid option: ${1}"
+    show_usage
+    exit 1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+dry_run="${dry_run:-false}"
+provider="${provider:-github}"
+environment="${environment:-azure-sandbox}"
+group="${group:-aks-administrator}"
+skip_repository="${skip_repository:-false}"
+skip_cluster_admin="${skip_cluster_admin:-false}"
+
+if [ -z "${repository}" ]; then
+  if ! command -v gh > /dev/null; then
+    echo "Missing --repository, and the gh CLI is not available to derive it."
+    exit 1
+  fi
+
+  repository=$(gh repo view \
+    --json nameWithOwner \
+    --jq .nameWithOwner)
+fi
+
+dry_run_option=""
+
+if [ "${dry_run}" == "true" ]; then
+  dry_run_option="--dry-run"
+fi
+
+echo "=== 1/3 Azure: federated identity credential ==="
+
+sp-federated-credential-create \
+  --client-id "${ARM_CLIENT_ID?}" \
+  --provider "${provider}" \
+  --repository "${repository}" \
+  --environment "${environment}" \
+  ${dry_run_option}
+
+echo
+echo "=== 2/3 Repository: environment and variables ==="
+
+if [ "${skip_repository}" == "true" ]; then
+  echo "Skipped."
+else
+  github-actions-configure-oidc \
+    --repository "${repository}" \
+    --environment "${environment}" \
+    ${dry_run_option}
+fi
+
+echo
+echo "=== 3/3 Entra ID: AKS cluster administrators group ==="
+
+if [ "${skip_cluster_admin}" == "true" ]; then
+  echo "Skipped."
+else
+  sp-grant-aks-cluster-admin \
+    --client-id "${ARM_CLIENT_ID}" \
+    --group "${group}" \
+    ${dry_run_option}
+fi
+
+echo
+echo "Done. Prove it end to end with:"
+echo
+echo "  gh workflow run azure-oidc-federation.yml --repo ${repository}"
+echo

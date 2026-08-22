@@ -1,0 +1,124 @@
+#!/bin/bash
+set -e
+
+export THIS_SCRIPT_NAME=$0
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  Adds a Service Principal to the Entra ID group that AKS trusts as cluster
+  administrator.
+
+  src/cluster sets azure_rbac_enabled = true and admin_group_object_ids =
+  var.administrators_ids, so membership in that group grants cluster-admin at
+  cluster creation time: no role assignment, no propagation race. This is what
+  lets Terraform (and kubectl in CI) authenticate through Entra ID instead of
+  the AKS local admin account.
+
+  Group membership travels inside the token. A token issued before this runs
+  does not see the new group: run "az account clear" and log in again, or
+  start a new CI job.
+
+  Idempotent: does nothing when the principal is already a member.
+
+  Options:
+
+    -h,  --help        Show this help
+    -c,  --client-id   Service Principal Application (client) ID (default: \${ARM_CLIENT_ID})
+    -g,  --group       Group display name or object ID (default: aks-administrator)
+    -dr, --dry-run     Print what would be done (default: false)
+
+  Examples:
+
+    ${THIS_SCRIPT_NAME} \\
+      --client-id 2ef8b61a-e93b-453b-bb02-96e2394a518a
+
+    ${THIS_SCRIPT_NAME} \\
+      --client-id 2ef8b61a-e93b-453b-bb02-96e2394a518a \\
+      --group d5075d0a-3704-4ed9-ad62-dc8068c7d0e1
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  -c | --client-id )
+    shift; ARM_CLIENT_ID=$1
+    ;;
+
+  -g | --group )
+    shift; group=$1
+    ;;
+
+  -dr | --dry-run )
+    if [[ -n "${2}" && "${2}" =~ ^(true|false)$ ]]; then
+      dry_run="${2}"; shift
+    else
+      dry_run=true
+    fi
+    ;;
+
+  * )
+    echo "Invalid option: ${1}"
+    show_usage
+    exit 1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+dry_run="${dry_run:-false}"
+group="${group:-aks-administrator}"
+
+if [ -z "${ARM_CLIENT_ID}" ]; then
+  echo "Missing --client-id (or ARM_CLIENT_ID)."
+  show_usage
+  exit 1
+fi
+
+group_id=$(az ad group show \
+  --group "${group}" \
+  --query id \
+  --output tsv)
+
+principal_id=$(az ad sp show \
+  --id "${ARM_CLIENT_ID}" \
+  --query id \
+  --output tsv)
+
+principal_name=$(az ad sp show \
+  --id "${ARM_CLIENT_ID}" \
+  --query displayName \
+  --output tsv)
+
+echo "Service Principal.: ${principal_name} (${principal_id})"
+echo "Group.............: ${group} (${group_id})"
+
+is_member=$(az ad group member check \
+  --group "${group_id}" \
+  --member-id "${principal_id}" \
+  --query value \
+  --output tsv)
+
+if [ "${is_member}" == "true" ]; then
+  echo "Already a member. Nothing to do."
+  exit 0
+fi
+
+if [ "${dry_run}" == "true" ]; then
+  echo "Dry Run: would add the Service Principal to the group."
+  exit 0
+fi
+
+az ad group member add \
+  --group "${group_id}" \
+  --member-id "${principal_id}"
+
+echo "Added. Existing tokens still lack the group claim until they are reissued."

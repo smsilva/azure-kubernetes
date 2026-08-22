@@ -1,3 +1,80 @@
+# CI Bootstrap
+
+Founding an environment means giving a pipeline the right to act on Azure
+without handing it a long-lived credential. These scripts do exactly that, and
+nothing else. All of them are idempotent and accept `--dry-run`.
+
+Run them once per environment:
+
+```bash
+./ci-bootstrap --dry-run
+
+./ci-bootstrap \
+  --repository smsilva/azure-kubernetes \
+  --environment azure-sandbox
+```
+
+See the root [README.md](../README.md), section
+"GitHub Actions OIDC Federation (CI)", for the rationale and for the workflow
+that proves the result.
+
+## Federated Identity Credential
+
+Teaches an App Registration to trust a CI platform's OIDC issuer. The
+`--issuer` and `--subject` pair is the only platform-dependent part of the
+whole setup, so it is exposed directly for anything this repository does not
+know about.
+
+```bash
+./sp-federated-credential-create \
+  --provider github \
+  --repository smsilva/azure-kubernetes \
+  --environment azure-sandbox
+
+./sp-federated-credential-create \
+  --provider github \
+  --repository smsilva/azure-kubernetes \
+  --branch main
+
+./sp-federated-credential-create \
+  --issuer https://vstoken.dev.azure.com/00000000-0000-0000-0000-000000000000 \
+  --subject sc://smsilva/azure-platform/azure-sandbox \
+  --name azure-devops-azure-sandbox
+```
+
+## GitHub Repository Configuration
+
+Creates the deployment environment the credential is bound to and publishes
+the Azure identifiers as repository variables. Fails if an `ARM_CLIENT_SECRET`
+secret still exists.
+
+```bash
+./github-actions-configure-oidc \
+  --repository smsilva/azure-kubernetes \
+  --environment azure-sandbox
+```
+
+## AKS Cluster Administrator
+
+Adds the Service Principal to the Entra ID group listed in
+`admin_group_object_ids`, which is what grants cluster-admin through Entra ID
+instead of the AKS local admin account.
+
+```bash
+./sp-grant-aks-cluster-admin \
+  --client-id ${ARM_CLIENT_ID?}
+```
+
+## Subscription Permissions
+
+Grants `User Access Administrator` at the subscription scope, required by the
+`azurerm_role_assignment` resources the examples create.
+
+```bash
+./sp-grant-user-access-administrator \
+  --client-id ${ARM_CLIENT_ID?}
+```
+
 # Examples
 
 ## AKS Clusters List
