@@ -63,9 +63,3 @@ locals {
     { cidr = "10.245.0.0/28", name = "application_gateway" },
   ]
 }
-
-resource "azurerm_role_assignment" "kubelet_contributor_on_dns_zone" {
-  role_definition_name = "DNS Zone Contributor"
-  principal_id         = module.aks.kubelet_identity_object_id
-  scope                = data.azurerm_dns_zone.default.id
-}
