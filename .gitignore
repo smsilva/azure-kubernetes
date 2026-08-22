@@ -17,3 +17,4 @@ crash.log
 kubectl
 override.tf
 override.tf.json
+HANDOFF.local.md

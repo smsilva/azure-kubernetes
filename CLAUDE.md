@@ -39,6 +39,10 @@ Repositório de módulos Terraform para provisionar AKS com stack GitOps (ArgoCD
 
 - `scripts/update-local-helm-charts` NÃO é só checagem: faz `rm -rf` + `helm fetch --untar` e **substitui** os charts locais quando a versão remota difere. Rodar só quando quiser de fato atualizar.
 - O helm provider não detecta mudança quando só o **conteúdo do chart local** muda (mesmos `values`/`set`). Forçar com `terraform apply -replace='module.<mod>[0].helm_release.<release>'`.
+- **Nunca** usar `-replace` em `module.ingress_istio[0].helm_release.istio_gateway` num cluster em uso: o replace é destroy+create (`helm uninstall`+`install`), recria o Service LoadBalancer, muda o IP público e derruba os três hosts até o external-dns reescrever o A record. Para validar mudança de template no chart, aplicar o objeto renderizado por `helm template` via `kubectl` com `app.kubernetes.io/managed-by: Helm` + annotations `meta.helm.sh/release-{name,namespace}` (assim um upgrade futuro o adota sem erro de ownership).
+- Os templates autorais do chart `istio-gateway` (`gateway.yaml`, `virtualservice.yaml`, `certificate.yaml`) **não** são sobrescritos por `scripts/update-local-helm-charts-istio` — o script só troca os `.tgz` dos subcharts. Editar à vontade.
+- Tudo que fica sob a chave `gateway:` no `values.yaml` do chart `istio-gateway` é repassado ao subchart `istio/gateway`, cujo `values.schema.json` **rejeita propriedades desconhecidas**. Valores próprios do repo precisam de uma chave de topo (ex.: `gatewayVirtualService`).
+- Para provar que o external-dns tem permissão de **escrita** (os logs só dizem `All records are already up to date`, o que prova leitura): criar um `Service` `ExternalName` com a annotation `external-dns.alpha.kubernetes.io/hostname` num host descartável, conferir o CNAME + TXT de ownership na zona e deletar o Service.
 - Acesso kubectl sem `kubelogin`: usar admin config → `az aks get-credentials --resource-group <rg> --name <cluster> --admin --overwrite-existing`.
 - O SP do Terraform precisa de `User Access Administrator` (não só `Contributor`) para criar os `azurerm_role_assignment` dos exemplos; conceder via `scripts/sp-grant-user-access-administrator --client-id <id>`.
 - Key Vault `waspfoundation*` usa access policy (RBAC desabilitado) → dar acesso a identidades via `azurerm_key_vault_access_policy`, não role assignment.
@@ -68,6 +72,7 @@ Migrar **um exemplo por vez**, começando por `cluster_argocd_ingress_istio`. Os
 
 ## Convenções
 
-- Rodar `terraform fmt` antes de commitar.
+- Rodar `terraform fmt` antes de commitar. Cuidado: `terraform fmt -recursive examples` segue os symlinks de `examples/common/` e normaliza o arquivo inteiro — conferir com `git diff -w` antes de commitar junto de mudança funcional.
+- Renderizar templates com a função nativa `templatefile()` dentro de um `locals`. **Não** reintroduzir `data "template_file"`: o provider `hashicorp/template` foi arquivado e não tem build `darwin_arm64`, o que impede `terraform init` em Apple Silicon.
 - Validar com `terraform init -backend=false && terraform validate` (não requer credenciais).
 - `.terraform.lock.hcl` NÃO é versionado (ver `.gitignore`).
