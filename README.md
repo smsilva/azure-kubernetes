@@ -40,70 +40,66 @@ The workflow that proves the setup is
 [`.github/workflows/azure-oidc-federation.yml`](.github/workflows/azure-oidc-federation.yml).
 It only reads: it never runs `terraform apply`.
 
-### 1. Create the deployment environment
+### Bootstrap
 
-The federated credential is bound to an environment rather than a branch, so
-the workflow can be dispatched from any branch and can carry an approval gate.
-
-```bash
-gh api \
-  --method PUT \
-  repos/smsilva/azure-kubernetes/environments/azure-sandbox
-```
-
-### 2. Create the federated credential
+Every step below is a script under [`scripts/`](scripts/), idempotent and with
+`--dry-run`, so founding a new environment is one command and not a checklist
+of console clicks:
 
 ```bash
-az ad app federated-credential create \
-  --id "${ARM_CLIENT_ID}" \
-  --parameters '{
-    "name": "github-actions-azure-sandbox",
-    "issuer": "https://token.actions.githubusercontent.com",
-    "subject": "repo:smsilva/azure-kubernetes:environment:azure-sandbox",
-    "audiences": ["api://AzureADTokenExchange"]
-  }'
+scripts/ci-bootstrap --dry-run
+
+scripts/ci-bootstrap \
+  --repository smsilva/azure-kubernetes \
+  --environment azure-sandbox
 ```
 
-The `subject` must match the run exactly. Use
-`repo:<owner>/<repo>:ref:refs/heads/main` instead if you prefer to bind to a
-branch. Never use a wildcard subject: it would authorize any branch, including
-one pushed by anyone with write access.
+It composes three scripts, each usable on its own:
 
-### 3. Publish the identity as repository variables
+| Script | Side | What it does |
+| --- | --- | --- |
+| [`sp-federated-credential-create`](scripts/sp-federated-credential-create) | Azure | creates the federated identity credential trusting the CI OIDC issuer |
+| [`github-actions-configure-oidc`](scripts/github-actions-configure-oidc) | GitHub | creates the deployment environment and publishes `ARM_CLIENT_ID` / `ARM_TENANT_ID` / `ARM_SUBSCRIPTION_ID` as variables |
+| [`sp-grant-aks-cluster-admin`](scripts/sp-grant-aks-cluster-admin) | Entra ID | adds the Service Principal to the `aks-administrator` group |
 
-These three values are identifiers, not secrets, so they are variables:
+Only the middle one is platform specific. The credential itself is described
+by an **issuer** and a **subject**, which is the whole of what ties the setup
+to a given CI platform:
 
 ```bash
-gh variable set ARM_CLIENT_ID       --body "${ARM_CLIENT_ID}"
-gh variable set ARM_TENANT_ID       --body "${ARM_TENANT_ID}"
-gh variable set ARM_SUBSCRIPTION_ID --body "${ARM_SUBSCRIPTION_ID}"
+scripts/sp-federated-credential-create \
+  --issuer https://vstoken.dev.azure.com/00000000-0000-0000-0000-000000000000 \
+  --subject sc://smsilva/azure-platform/azure-sandbox \
+  --name azure-devops-azure-sandbox
 ```
 
-Do **not** create an `ARM_CLIENT_SECRET` secret. The workflow fails on purpose
-if one is present, because its presence would make the run prove nothing.
+For GitHub the script derives both from `--repository` plus `--environment`
+(or `--branch`), producing
+`repo:smsilva/azure-kubernetes:environment:azure-sandbox`. Binding to an
+environment rather than a branch lets the workflow be dispatched from any
+branch and adds an optional approval gate. Never use a wildcard subject: it
+would authorize any branch, including one pushed by anyone with write access.
 
-### 4. Grant the Service Principal cluster access
+Two things the scripts deliberately refuse to do:
 
-Only needed for the optional `cluster-access` job, and a prerequisite for
-moving the `kubernetes` and `helm` providers off `kube_admin_config`.
+- `github-actions-configure-oidc` fails when an `ARM_CLIENT_SECRET` secret
+  still exists in the repository. Leaving it there defeats the purpose.
+- Nothing publishes a client secret anywhere. The three Azure identifiers are
+  variables, not secrets.
 
-`src/cluster` sets `azure_rbac_enabled = true` and
+### Why the Entra group instead of a role assignment
+
+[`src/cluster`](src/cluster) sets `azure_rbac_enabled = true` and
 `admin_group_object_ids = var.administrators_ids`, which resolves to the
-`aks-administrator` group. Adding the Service Principal to that group grants
-cluster-admin at cluster creation time, with no role assignment and no
-propagation race:
+`aks-administrator` group. Membership grants cluster-admin **at cluster
+creation time**, with no `azurerm_role_assignment` to create and no
+propagation race in the first `apply`.
 
-```bash
-az ad group member add \
-  --group d5075d0a-3704-4ed9-ad62-dc8068c7d0e1 \
-  --member-id "$(az ad sp show --id "${ARM_CLIENT_ID}" --query id --output tsv)"
-```
+Group membership travels inside the token, so a token issued before the
+change does not see the new group: run `az account clear` locally, or simply
+start a new CI job.
 
-Group membership travels inside the token. A token issued before the change
-does not see the new group; run `az account clear` locally, or simply start a
-new CI job.
-
-### 5. Run it
+### Prove it
 
 ```bash
 gh workflow run azure-oidc-federation.yml
