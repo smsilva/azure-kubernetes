@@ -113,8 +113,11 @@ az aks get-credentials \
   --overwrite-existing
 
 # endpoints (staging certificates: -k is required, see Gotchas)
-curl -k -o /dev/null -w '%{http_code}\n' https://$(terraform output -raw url_gateway)
-curl -k -o /dev/null -w '%{http_code}\n' https://argocd.<id>.<dns-zone>
+curl -k -o /dev/null -w '%{http_code}\n' https://httpbin.<id>.<dns-zone>/status/200   # -> 200
+curl -k -o /dev/null -w '%{http_code}\n' https://argocd.<id>.<dns-zone>               # -> 200
+
+# note: the `url_gateway` output host answers 404 by design — it has a Gateway
+# and a certificate, but no VirtualService of its own.
 
 # certificates issued by cert-manager
 kubectl get certificates --all-namespaces
