@@ -23,11 +23,6 @@ resource "azuread_application" "default" {
       "https://oidcdebugger.com/debug",
       "http://localhost/auth/callback",
     ]
-
-    implicit_grant {
-      access_token_issuance_enabled = true
-      id_token_issuance_enabled     = true
-    }
   }
 
   api {
