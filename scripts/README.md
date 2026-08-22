@@ -54,6 +54,22 @@ secret still exists.
   --environment azure-sandbox
 ```
 
+## SSH Deploy Keys for Private Terraform Modules
+
+Gives read-only access to the private Terraform module repositories pulled in
+via `git::ssh` (`azure-network`, `azure-key-vault`). GitHub rejects the same
+public key as a deploy key on more than one repository, so this generates one
+keypair per repository and publishes each private half as its own environment
+secret (`SSH_PRIVATE_KEY_AZURE_NETWORK`, `SSH_PRIVATE_KEY_AZURE_KEY_VAULT`).
+The workflow maps each secret to its repository through a per-host alias in
+`~/.ssh/config`, so the module sources in the `.tf` files stay untouched.
+
+```bash
+./github-actions-configure-ssh-deploy-key \
+  --repository smsilva/azure-kubernetes \
+  --environment azure-sandbox
+```
+
 ## AKS Cluster Administrator
 
 Adds the Service Principal to the Entra ID group listed in

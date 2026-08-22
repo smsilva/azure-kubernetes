@@ -1,0 +1,166 @@
+#!/bin/bash
+set -e
+
+export THIS_SCRIPT_NAME=$0
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  Gives a CI pipeline read access to the private Terraform module
+  repositories pulled in via git::ssh (azure-network, azure-key-vault): for
+  each one it generates a dedicated SSH keypair, registers the public half
+  as a read-only deploy key on that repository, and publishes the private
+  half as an environment secret.
+
+  GitHub rejects the same public key as a deploy key on more than one
+  repository, so this is one keypair per repository, not one shared key.
+  The workflow's ssh-configuration step (see README.md) tells git which key
+  to use for which repository through a per-host alias in ~/.ssh/config, so
+  the module sources in the .tf files stay untouched.
+
+  The keypair is generated once per repository and reused on every re-run,
+  so deploy keys stay stable instead of piling up. Delete the key file to
+  rotate it.
+
+  Requires the gh CLI, authenticated with admin rights on every repository
+  involved.
+
+  Idempotent: re-running it registers the same public keys again (a no-op
+  on GitHub's side) and overwrites the same secrets.
+
+  Options:
+
+    -h,  --help               Show this help
+    -r,  --repository         Repository the secrets are published to, owner/repo (default: derived from the origin remote)
+    -e,  --environment        Deployment environment name (default: azure-sandbox)
+    -m,  --module-repository  owner/repo to grant read access to (repeatable, default: smsilva/azure-network, smsilva/azure-key-vault)
+    -k,  --key-directory      Directory holding the generated keypairs (default: \${HOME}/.ssh)
+    -dr, --dry-run            Print what would be done (default: false)
+
+  Examples:
+
+    ${THIS_SCRIPT_NAME} --dry-run
+
+    ${THIS_SCRIPT_NAME} \\
+      --repository smsilva/azure-kubernetes \\
+      --environment azure-sandbox
+
+EOF
+}
+
+module_repositories=()
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  -r | --repository )
+    shift; repository=$1
+    ;;
+
+  -e | --environment )
+    shift; environment=$1
+    ;;
+
+  -m | --module-repository )
+    shift; module_repositories+=("$1")
+    ;;
+
+  -k | --key-directory )
+    shift; key_directory=$1
+    ;;
+
+  -dr | --dry-run )
+    if [[ -n "${2}" && "${2}" =~ ^(true|false)$ ]]; then
+      dry_run="${2}"; shift
+    else
+      dry_run=true
+    fi
+    ;;
+
+  * )
+    echo "Invalid option: ${1}"
+    show_usage
+    exit 1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+dry_run="${dry_run:-false}"
+environment="${environment:-azure-sandbox}"
+key_directory="${key_directory:-${HOME}/.ssh}"
+
+if [ "${#module_repositories[@]}" -eq 0 ]; then
+  module_repositories=(smsilva/azure-network smsilva/azure-key-vault)
+fi
+
+if [ -z "${repository}" ]; then
+  repository=$(gh repo view \
+    --json nameWithOwner \
+    --jq .nameWithOwner)
+fi
+
+echo "Repository........: ${repository}"
+echo "Environment.......: ${environment}"
+echo "Module repos......: ${module_repositories[*]}"
+echo "Key directory.....: ${key_directory}"
+
+if [ "${dry_run}" == "true" ]; then
+  for module_repository in "${module_repositories[@]}"; do
+    repository_name="${module_repository##*/}"
+    secret_name="SSH_PRIVATE_KEY_$(echo "${repository_name}" | tr '[:lower:]-' '[:upper:]_')"
+    echo "Dry Run: would generate ${key_directory}/azure-kubernetes-ci-deploy-key--${repository_name}"
+    echo "         if missing, register it as a read-only deploy key titled"
+    echo "         \"ci: ${repository}\" on ${module_repository}, and publish it as"
+    echo "         ${secret_name} in ${repository}'s ${environment} environment."
+  done
+  exit 0
+fi
+
+for module_repository in "${module_repositories[@]}"; do
+  repository_name="${module_repository##*/}"
+  key_path="${key_directory}/azure-kubernetes-ci-deploy-key--${repository_name}"
+  title="ci: ${repository}"
+  secret_name="SSH_PRIVATE_KEY_$(echo "${repository_name}" | tr '[:lower:]-' '[:upper:]_')"
+
+  if [ ! -f "${key_path}" ]; then
+    ssh-keygen \
+      -t ed25519 \
+      -N '' \
+      -C "${title}" \
+      -f "${key_path}"
+  fi
+
+  public_key=$(cat "${key_path}.pub")
+
+  existing_key_id=$(gh api "repos/${module_repository}/keys" \
+    --jq ".[] | select(.title == \"${title}\") | .id" \
+    | head -n1)
+
+  if [ -n "${existing_key_id}" ]; then
+    echo "${module_repository}: deploy key already registered (id ${existing_key_id})."
+  else
+    gh api \
+      --method POST \
+      --silent \
+      "repos/${module_repository}/keys" \
+      --field "title=${title}" \
+      --field "key=${public_key}" \
+      --field "read_only=true"
+
+    echo "${module_repository}: deploy key registered."
+  fi
+
+  gh secret set "${secret_name}" \
+    --repo "${repository}" \
+    --env "${environment}" \
+    < "${key_path}"
+
+  echo "${module_repository}: private key published as ${secret_name}."
+done

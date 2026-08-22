@@ -54,13 +54,32 @@ scripts/ci-bootstrap \
   --environment azure-sandbox
 ```
 
-It composes three scripts, each usable on its own:
+It composes four scripts, each usable on its own:
 
 | Script | Side | What it does |
 | --- | --- | --- |
 | [`sp-federated-credential-create`](scripts/sp-federated-credential-create) | Azure | creates the federated identity credential trusting the CI OIDC issuer |
 | [`github-actions-configure-oidc`](scripts/github-actions-configure-oidc) | GitHub | creates the deployment environment and publishes `ARM_CLIENT_ID` / `ARM_TENANT_ID` / `ARM_SUBSCRIPTION_ID` as variables |
+| [`github-actions-configure-ssh-deploy-key`](scripts/github-actions-configure-ssh-deploy-key) | GitHub | generates one SSH keypair per private module repository, registers each as a read-only deploy key, and publishes the private halves as environment secrets |
 | [`sp-grant-aks-cluster-admin`](scripts/sp-grant-aks-cluster-admin) | Entra ID | adds the Service Principal to the `aks-administrator` group |
+
+### Reading private Terraform modules over SSH
+
+`network.tf` and `secrets.tf` pull `vnet` and
+`argocd_app_registration_password` from `git::ssh://git@github.com/smsilva/...`
+— both private repositories. `terraform init` needs SSH access to them, which
+a GitHub-hosted runner does not have by default.
+
+GitHub rejects the same public key as a deploy key on more than one
+repository, so `github-actions-configure-ssh-deploy-key` generates a
+dedicated keypair per module repository and publishes each private half as
+its own environment secret (`SSH_PRIVATE_KEY_AZURE_NETWORK`,
+`SSH_PRIVATE_KEY_AZURE_KEY_VAULT`). The workflow's
+`Configure SSH for the private module repositories` step writes both keys to
+`~/.ssh`, then maps each one to its repository through a per-host alias in
+`~/.ssh/config` plus a `git config url.insteadOf` rewrite — so `.tf` files
+keep the plain `git@github.com:smsilva/...` source and never need to know
+about the alias.
 
 Only the middle one is platform specific. The credential itself is described
 by an **issuer** and a **subject**, which is the whole of what ties the setup
@@ -115,6 +134,7 @@ gh workflow run azure-oidc-federation.yml \
 | `Azure login` + `az account show` | the OIDC exchange succeeded and resolved to the expected Service Principal |
 | `az group list` | the federated token carries real ARM permissions |
 | `kubelogin --version` | the binary needed by the `exec` provider auth is installable in CI |
+| `terraform init` | the deploy keys grant read access to the private `vnet` and `argocd_app_registration_password` modules |
 | `terraform validate` | the example still parses with the pinned provider versions |
 | `kubectl auth can-i '*' '*'` | the Service Principal is cluster-admin through Entra ID, not through the local admin account |
 

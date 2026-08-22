@@ -11,30 +11,34 @@ show_usage() {
   Bootstraps everything a CI pipeline needs to run Terraform against an
   environment without holding a single long-lived credential.
 
-  Run this once when founding an environment. It composes three scripts, each
+  Run this once when founding an environment. It composes four scripts, each
   usable on its own:
 
-    sp-federated-credential-create  the Azure side: trust the CI OIDC issuer
-    github-actions-configure-oidc   the GitHub side: environment + variables
-    sp-grant-aks-cluster-admin      Entra group membership for cluster access
+    sp-federated-credential-create     the Azure side: trust the CI OIDC issuer
+    github-actions-configure-oidc      the GitHub side: environment + variables
+    github-actions-configure-ssh-deploy-key  read access to the private Terraform modules
+    sp-grant-aks-cluster-admin         Entra group membership for cluster access
 
-  Only the GitHub step is platform specific. On another CI platform, skip it
-  with --skip-repository and call sp-federated-credential-create with the
-  --issuer and --subject of that platform.
+  The GitHub and SSH deploy key steps are platform specific. On another CI
+  platform, skip them with --skip-repository and --skip-ssh-deploy-keys, call
+  sp-federated-credential-create with the --issuer and --subject of that
+  platform, and give it read access to the private modules however that
+  platform grants repository-scoped SSH access.
 
   Every step is idempotent, so re-running this is safe.
 
   Options:
 
-    -h,  --help              Show this help
-    -p,  --provider          github | gitlab (default: github)
-    -r,  --repository        owner/repo (default: derived from the origin remote)
-    -e,  --environment       Deployment environment name (default: azure-sandbox)
-    -c,  --client-id         Service Principal Application (client) ID (default: \${ARM_CLIENT_ID})
-    -g,  --group             AKS administrators group (default: aks-administrator)
-         --skip-repository   Skip the GitHub repository configuration
-         --skip-cluster-admin Skip the Entra group membership
-    -dr, --dry-run           Print what would be done (default: false)
+    -h,  --help                 Show this help
+    -p,  --provider              github | gitlab (default: github)
+    -r,  --repository            owner/repo (default: derived from the origin remote)
+    -e,  --environment           Deployment environment name (default: azure-sandbox)
+    -c,  --client-id             Service Principal Application (client) ID (default: \${ARM_CLIENT_ID})
+    -g,  --group                 AKS administrators group (default: aks-administrator)
+         --skip-repository       Skip the GitHub repository configuration
+         --skip-ssh-deploy-keys  Skip the SSH deploy keys for private Terraform modules
+         --skip-cluster-admin    Skip the Entra group membership
+    -dr, --dry-run               Print what would be done (default: false)
 
   Examples:
 
@@ -78,6 +82,10 @@ case $1 in
     skip_repository=true
     ;;
 
+  --skip-ssh-deploy-keys )
+    skip_ssh_deploy_keys=true
+    ;;
+
   --skip-cluster-admin )
     skip_cluster_admin=true
     ;;
@@ -104,6 +112,7 @@ provider="${provider:-github}"
 environment="${environment:-azure-sandbox}"
 group="${group:-aks-administrator}"
 skip_repository="${skip_repository:-false}"
+skip_ssh_deploy_keys="${skip_ssh_deploy_keys:-false}"
 skip_cluster_admin="${skip_cluster_admin:-false}"
 
 if [ -z "${repository}" ]; then
@@ -123,7 +132,7 @@ if [ "${dry_run}" == "true" ]; then
   dry_run_option="--dry-run"
 fi
 
-echo "=== 1/3 Azure: federated identity credential ==="
+echo "=== 1/4 Azure: federated identity credential ==="
 
 sp-federated-credential-create \
   --client-id "${ARM_CLIENT_ID?}" \
@@ -133,7 +142,7 @@ sp-federated-credential-create \
   ${dry_run_option}
 
 echo
-echo "=== 2/3 Repository: environment and variables ==="
+echo "=== 2/4 Repository: environment and variables ==="
 
 if [ "${skip_repository}" == "true" ]; then
   echo "Skipped."
@@ -145,7 +154,19 @@ else
 fi
 
 echo
-echo "=== 3/3 Entra ID: AKS cluster administrators group ==="
+echo "=== 3/4 GitHub: SSH deploy keys for private Terraform modules ==="
+
+if [ "${skip_ssh_deploy_keys}" == "true" ]; then
+  echo "Skipped."
+else
+  github-actions-configure-ssh-deploy-key \
+    --repository "${repository}" \
+    --environment "${environment}" \
+    ${dry_run_option}
+fi
+
+echo
+echo "=== 4/4 Entra ID: AKS cluster administrators group ==="
 
 if [ "${skip_cluster_admin}" == "true" ]; then
   echo "Skipped."

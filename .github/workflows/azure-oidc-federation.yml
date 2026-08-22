@@ -34,6 +34,37 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Configure SSH for the private module repositories
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          echo "${SSH_PRIVATE_KEY_AZURE_NETWORK}" > ~/.ssh/azure-network
+          echo "${SSH_PRIVATE_KEY_AZURE_KEY_VAULT}" > ~/.ssh/azure-key-vault
+          chmod 600 ~/.ssh/azure-network ~/.ssh/azure-key-vault
+
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+          cat >> ~/.ssh/config <<EOF
+          Host github.com-azure-network
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/azure-network
+            IdentitiesOnly yes
+
+          Host github.com-azure-key-vault
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/azure-key-vault
+            IdentitiesOnly yes
+          EOF
+
+          git config --global url."git@github.com-azure-network:smsilva/azure-network".insteadOf "git@github.com:smsilva/azure-network"
+          git config --global url."git@github.com-azure-key-vault:smsilva/azure-key-vault".insteadOf "git@github.com:smsilva/azure-key-vault"
+        env:
+          SSH_PRIVATE_KEY_AZURE_NETWORK: ${{ secrets.SSH_PRIVATE_KEY_AZURE_NETWORK }}
+          SSH_PRIVATE_KEY_AZURE_KEY_VAULT: ${{ secrets.SSH_PRIVATE_KEY_AZURE_KEY_VAULT }}
+
       - name: Refuse to run if a client secret is present
         run: |
           if [ -n "${ARM_CLIENT_SECRET:-}" ]; then
