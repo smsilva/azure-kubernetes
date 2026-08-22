@@ -1,0 +1,122 @@
+# Proves that GitHub Actions can authenticate to Azure through OIDC workload
+# identity federation, with no client secret stored in the repository.
+#
+# Setup steps are documented in the root README.md, section
+# "GitHub Actions OIDC Federation (CI)".
+name: azure-oidc-federation
+
+on:
+  workflow_dispatch:
+    inputs:
+      cluster_name:
+        description: "AKS cluster to test non-admin access against (optional)"
+        required: false
+        default: ""
+      cluster_resource_group:
+        description: "Resource group of that cluster (defaults to cluster_name)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  federation:
+    name: Prove OIDC federation
+    runs-on: ubuntu-latest
+    environment: azure-sandbox
+    env:
+      ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+      ARM_USE_OIDC: "true"
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Refuse to run if a client secret is present
+        run: |
+          if [ -n "${ARM_CLIENT_SECRET:-}" ]; then
+            echo "ARM_CLIENT_SECRET is set: this run would prove nothing." >&2
+            exit 1
+          fi
+          echo "ARM_CLIENT_SECRET is unset."
+
+      - name: Azure login (federated, no client secret)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.ARM_CLIENT_ID }}
+          tenant-id: ${{ vars.ARM_TENANT_ID }}
+          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
+
+      - name: Show which identity the OIDC token resolved to
+        run: |
+          az account show --output table
+          az ad sp show \
+            --id "${ARM_CLIENT_ID}" \
+            --query "{displayName:displayName,objectId:id}" \
+            --output table
+
+      - name: Read Azure with the federated identity
+        run: |
+          az group list --query "[].{name:name,location:location}" --output table
+
+      - name: Install kubectl and kubelogin
+        run: |
+          mkdir -p "${HOME}/.local/bin"
+          az aks install-cli \
+            --install-location "${HOME}/.local/bin/kubectl" \
+            --kubelogin-install-location "${HOME}/.local/bin/kubelogin"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Report kubelogin version
+        run: kubelogin --version
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.8
+
+      - name: Validate the istio example
+        working-directory: examples/cluster_argocd_ingress_istio
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+  cluster-access:
+    name: Prove non-admin cluster access
+    needs: federation
+    if: inputs.cluster_name != ''
+    runs-on: ubuntu-latest
+    environment: azure-sandbox
+    env:
+      ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+      CLUSTER_NAME: ${{ inputs.cluster_name }}
+      CLUSTER_RESOURCE_GROUP: ${{ inputs.cluster_resource_group || inputs.cluster_name }}
+    steps:
+      - name: Azure login (federated, no client secret)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.ARM_CLIENT_ID }}
+          tenant-id: ${{ vars.ARM_TENANT_ID }}
+          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
+
+      - name: Install kubectl and kubelogin
+        run: |
+          mkdir -p "${HOME}/.local/bin"
+          az aks install-cli \
+            --install-location "${HOME}/.local/bin/kubectl" \
+            --kubelogin-install-location "${HOME}/.local/bin/kubelogin"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Get credentials without --admin
+        run: |
+          az aks get-credentials \
+            --resource-group "${CLUSTER_RESOURCE_GROUP}" \
+            --name "${CLUSTER_NAME}" \
+            --overwrite-existing
+          kubelogin convert-kubeconfig --login azurecli
+
+      - name: Confirm cluster-admin through Entra ID group membership
+        run: |
+          kubectl get nodes
+          kubectl auth can-i '*' '*' --all-namespaces
