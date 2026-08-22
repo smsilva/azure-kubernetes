@@ -20,13 +20,13 @@ Usar este repo Azure como **referência funcional** (o que o cluster final preci
 
 ## In Progress
 
-Referência Azure (Terraform) 100% validada end-to-end e ATIVA para servir de espelho. Última ação: `nri-bundle-foundation` do app-of-apps passou a `Synced/Healthy`.
+Referência Azure (Terraform) validada end-to-end. Próximo passo pretendido: iniciar o brainstorming Crossplane+AWS (escolha de provider, cluster de management, IRSA, backend de secrets AWS, DNS Route53).
 
-Próximo passo pretendido: iniciar o brainstorming Crossplane+AWS (escolha de provider, cluster de management, IRSA, backend de secrets AWS, DNS Route53).
+> Existe um segundo workstream em `HANDOFF.local.md` (pessoal, não versionado): review de melhorias do `examples/cluster_argocd_ingress_istio`, com 8 achados ainda em aberto (SSO do ArgoCD aceitando contas Microsoft pessoais, credencial admin no state, redirect HTTP→HTTPS que nunca dispara, entre outros).
 
 ## Estado da referência Azure (cluster `wasp-sandbox-vpd54`)
 
-- **ATIVO** — cluster `wasp-sandbox-vpd54` (RG `wasp-sandbox-vpd54`), 36 recursos, todos os `install_*` = `true`.
+- **DESTRUÍDO** — o cluster `wasp-sandbox-vpd54` não existe mais (verificado 2026-08-22: nenhum AKS na subscription `wasp-sandbox`). O snapshot em `~/trash/resources/aks-poc/` continua sendo a fonte de verdade do estado-alvo. Números abaixo descrevem como ele era.
 - Stack validada: ArgoCD chart 10.3.2 (UI HTTP 200, SSO azuread ok), ingress-istio 1.30.3, cert-manager (3 certs `READY=True`, LE staging), external-dns escrevendo na zona via Workload Identity, httpbin HTTP 200.
 - app-of-apps-infra `Synced`; Applications: `app-of-apps-infra`, `namespaces`, `nri-bundle`, `nri-bundle-foundation` todas `Synced` (`nri-bundle` pode ficar `Progressing` enquanto o DaemonSet New Relic sobe).
 - Fixes desta sessão: (1) `src/helm/modules/argo-cd/templates/extra-objects.yaml` ExternalSecret v1beta1→v1; (2) repo externo `wasp-gitops` branch `dev`, `infrastructure/charts/nri-bundle-foundation/templates/external-secret.yaml` v1alpha1→v1; (3) chave SSH no Key Vault (`argocd-repo-creds-ssh-private-key-base64-encoded`) trocada para `~/.ssh/id_rsa_personal`.
@@ -42,7 +42,8 @@ Próximo passo pretendido: iniciar o brainstorming Crossplane+AWS (escolha de pr
 
 ## Known Broken
 
-- **Ambiente Azure `vpd54` não destruído** — deixado ATIVO de propósito como referência viva. `terraform destroy` quando não for mais necessário.
+- **Ambiente Azure `vpd54`** — já destruído. Um cluster equivalente pode ser recriado em ~9min com `terraform apply` no exemplo istio (ver tempos medidos no `README.md`).
+- **Exemplo `cluster_argocd_ingress_nginx`** — *inesperado*: além do provider desatualizado, não passa `identity_client_id` (variável obrigatória) ao módulo `external-dns`, então falha já no `plan`. O modo kubelet de auth do external-dns não existe mais no repo (o chart `external-dns-config` fixa `useWorkloadIdentityExtension: true`), logo migrar esse exemplo exige criar uma MI federada para ele.
 - **Outros 4 exemplos Terraform Azure** — *intencional*: quebrados pelos módulos compartilhados já em azurerm v5/helm v3. Não usar como referência sem migrar.
 - **Chart `ingress-azure` removido** — *inesperado*: só afeta o exemplo azure Terraform; irrelevante para AWS.
 
@@ -65,13 +66,10 @@ cat ~/trash/resources/aks-poc/CLAUDE.md   # como usar e por quê
 cat ~/trash/resources/aks-poc/README.md   # índice arquivo → equivalente AWS
 ```
 
-Referência viva Azure enquanto durar o cluster `vpd54`:
-
-```bash
-az aks get-credentials --resource-group wasp-sandbox-vpd54 --name wasp-sandbox-vpd54 --admin --overwrite-existing
-kubectl get applications -n argocd
-# UI: https://argocd.vpd54.sandbox.wasp.silvios.me (curl -k: cert LE staging)
-```
+Referência viva Azure: o cluster `vpd54` não existe mais. Para recriar um equivalente
+(~9min), rodar `terraform apply` em `examples/cluster_argocd_ingress_istio` — o exemplo
+tem README próprio com validação e gotchas. Quem estiver com um cluster de pé descreve
+qual é em `HANDOFF.local.md`.
 
 ## Next Steps
 
@@ -80,6 +78,6 @@ kubectl get applications -n argocd
 3. Resolver IRSA (OIDC provider + IAM roles + SA annotations) — pré-requisito de external-secrets e external-dns na AWS.
 4. Escolher backend de secrets AWS (Secrets Manager/SSM) e reapontar o `ClusterSecretStore` do ESO.
 5. Decidir SSO do ArgoCD (azuread OIDC vs. Cognito) e DNS (Route53 + external-dns).
-6. Manter `wasp-sandbox-vpd54` (Azure) como referência até o EKS atingir paridade; então `terraform destroy` no Azure.
+6. Recriar o exemplo istio no Azure sob demanda (~9min) sempre que precisar comparar comportamento com o EKS, em vez de manter um cluster Azure permanente.
 
 > Before trusting anything time-sensitive above, run `git status`, `git diff`, and `git log` against the base branch.
