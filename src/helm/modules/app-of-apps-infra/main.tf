@@ -1,8 +1,7 @@
-data "template_file" "values" {
-  template = file("${path.module}/templates/values.yaml")
-  vars = {
+locals {
+  values = templatefile("${path.module}/templates/values.yaml", {
     environment_cluster_ingress_type = var.environment_cluster_ingress_type
-  }
+  })
 }
 
 resource "helm_release" "app_of_apps_infra" {
@@ -49,6 +48,6 @@ resource "helm_release" "app_of_apps_infra" {
   }]
 
   values = [
-    data.template_file.values.rendered,
+    local.values,
   ]
 }

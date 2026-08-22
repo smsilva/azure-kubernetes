@@ -1,6 +1,6 @@
 output "templates" {
   value = {
-    sso           = data.template_file.sso.rendered
+    sso           = local.sso
     rbac          = local.rbac
     extra_objects = local.extra_objects
   }

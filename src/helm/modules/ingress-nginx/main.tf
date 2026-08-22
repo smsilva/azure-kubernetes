@@ -1,9 +1,8 @@
-data "template_file" "ingress_nginx" {
-  template = file("${path.module}/templates/values.yaml")
-  vars = {
+locals {
+  ingress_nginx_values = templatefile("${path.module}/templates/values.yaml", {
     cname  = var.cname
     domain = var.domain
-  }
+  })
 }
 
 resource "helm_release" "ingress_nginx" {
@@ -14,6 +13,6 @@ resource "helm_release" "ingress_nginx" {
   atomic           = true
 
   values = [
-    data.template_file.ingress_nginx.rendered
+    local.ingress_nginx_values
   ]
 }

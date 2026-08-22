@@ -22,12 +22,11 @@ resource "helm_release" "istio_discovery" {
   ]
 }
 
-data "template_file" "istio_gateway_service_values" {
-  template = file("${path.module}/templates/gateway-service.yaml")
-  vars = {
+locals {
+  istio_gateway_service_values = templatefile("${path.module}/templates/gateway-service.yaml", {
     cname  = var.cname
     domain = var.domain
-  }
+  })
 }
 
 resource "kubernetes_namespace_v1" "istio_ingress" {
@@ -69,11 +68,10 @@ resource "helm_release" "istio_gateway" {
   ]
 
   values = [
-    data.template_file.istio_gateway_service_values.rendered
+    local.istio_gateway_service_values
   ]
 
   depends_on = [
-    data.template_file.istio_gateway_service_values,
     helm_release.istio_discovery
   ]
 }

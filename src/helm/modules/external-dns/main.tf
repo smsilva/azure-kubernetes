@@ -1,8 +1,7 @@
-data "template_file" "external_dns" {
-  template = file("${path.module}/templates/values.yaml")
-  vars = {
+locals {
+  external_dns_values = templatefile("${path.module}/templates/values.yaml", {
     domain = var.domain
-  }
+  })
 }
 
 resource "helm_release" "external_dns_config" {
@@ -36,7 +35,7 @@ resource "helm_release" "external_dns" {
   atomic           = true
 
   values = [
-    data.template_file.external_dns.rendered,
+    local.external_dns_values,
   ]
 
   set = [
