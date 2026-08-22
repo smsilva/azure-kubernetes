@@ -59,8 +59,8 @@ jobs:
             IdentitiesOnly yes
           EOF
 
-          git config --global url."git@github.com-azure-network:smsilva/azure-network".insteadOf "git@github.com:smsilva/azure-network"
-          git config --global url."git@github.com-azure-key-vault:smsilva/azure-key-vault".insteadOf "git@github.com:smsilva/azure-key-vault"
+          git config --global url."ssh://git@github.com-azure-network/smsilva/azure-network".insteadOf "ssh://git@github.com/smsilva/azure-network"
+          git config --global url."ssh://git@github.com-azure-key-vault/smsilva/azure-key-vault".insteadOf "ssh://git@github.com/smsilva/azure-key-vault"
         env:
           SSH_PRIVATE_KEY_AZURE_NETWORK: ${{ secrets.SSH_PRIVATE_KEY_AZURE_NETWORK }}
           SSH_PRIVATE_KEY_AZURE_KEY_VAULT: ${{ secrets.SSH_PRIVATE_KEY_AZURE_KEY_VAULT }}
