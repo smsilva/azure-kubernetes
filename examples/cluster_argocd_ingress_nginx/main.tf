@@ -69,7 +69,7 @@ module "external_dns" {
   resourceGroup  = local.dns_zone_resource_group_name
 
   depends_on = [
-    azurerm_role_assignment.kubelet_contributor_on_dns_zone
+    module.aks
   ]
 }
 
