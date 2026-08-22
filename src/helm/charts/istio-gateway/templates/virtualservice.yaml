@@ -1,3 +1,38 @@
+{{- if .Values.gatewayVirtualService.enabled }}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: gateway-virtual-service-public
+spec:
+  hosts:
+    - gateway.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
+
+  gateways:
+    - public-ingress-gateway
+
+  http:
+    - match:
+        - scheme:
+            exact: http
+          uri:
+            regex: "^/(([^\\.].*)|(\\.[^w].*)|(\\.w[^e].*)|(\\.we[^l].*)|(\\.wel[^l].*)|(\\.well[^\\-].*))"
+      redirect:
+        scheme: https
+        redirectCode: 302 # 302 to not mess with risky permanent redirections since a workaround
+
+    - name: gateway-health
+      headers:
+        request:
+          add:
+            X-A1-origin-1: public-ingress-gateway
+
+      directResponse:
+        status: 200
+        body:
+          string: {{ printf "%s\n" .Values.gatewayVirtualService.body | quote }}
+{{- end }}
+
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
