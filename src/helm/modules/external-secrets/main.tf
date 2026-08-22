@@ -18,12 +18,11 @@ resource "helm_release" "external_secrets" {
   ]
 }
 
-data "template_file" "external_secrets_config_values" {
-  template = file("${path.module}/templates/values.yaml")
-  vars = {
+locals {
+  external_secrets_config_values = templatefile("${path.module}/templates/values.yaml", {
     cluster_secret_store_arm_tenant_id  = var.tenant_id
     cluster_secret_store_key_vault_name = var.key_vault_name
-  }
+  })
 }
 
 resource "helm_release" "external_secrets_config" {
@@ -34,7 +33,7 @@ resource "helm_release" "external_secrets_config" {
   atomic           = true
 
   values = [
-    data.template_file.external_secrets_config_values.rendered,
+    local.external_secrets_config_values,
   ]
 
   depends_on = [
@@ -43,6 +42,6 @@ resource "helm_release" "external_secrets_config" {
 }
 
 output "template" {
-  value     = data.template_file.external_secrets_config_values.rendered
+  value     = local.external_secrets_config_values
   sensitive = true
 }
