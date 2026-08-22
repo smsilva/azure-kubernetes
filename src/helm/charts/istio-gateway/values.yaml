@@ -15,3 +15,12 @@ secret:
 gateway:
   service:
     externalTrafficPolicy: Local
+
+# VirtualService for the root host (gateway.<cname>.<domain>). It answers
+# straight from Envoy, so it stays a valid probe of DNS -> LB -> Envoy -> TLS
+# even when no workload is installed. Disable it to leave the root host mute.
+# Kept at the top level because everything under `gateway:` is passed to the
+# istio/gateway subchart, whose values.schema.json rejects unknown properties.
+gatewayVirtualService:
+  enabled: true
+  body: ok
