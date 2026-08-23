@@ -1,3 +1,5 @@
+.jira/
+.mcp.json
 *_override.tf
 *_override.tf.json
 *.tfstate
@@ -13,10 +15,9 @@
 **/docker_build_temp
 **/examples/**/deploy
 **/test
+CLAUDE.local.md
 crash.log
+HANDOFF.local.md
 kubectl
 override.tf
 override.tf.json
-HANDOFF.local.md
-CLAUDE.local.md
-.jira/

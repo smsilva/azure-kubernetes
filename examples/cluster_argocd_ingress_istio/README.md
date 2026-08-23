@@ -24,7 +24,7 @@ Each block is controlled by an `install_*` flag in [`main.tf`](main.tf).
 | external-dns | `install_external_dns` | `true` | `src/helm/modules/external-dns` | external-dns 0.21.0 writing records into the Azure DNS Zone |
 | ingress-istio | `install_ingress_istio` | `true` | `src/helm/modules/ingress-istio` | Istio 1.30.3 (`istio-base`, `istio-discovery`, `istio-gateway`) + public LB |
 | httpbin | `install_httpbin` | `true` | `src/helm/modules/httpbin` | smoke-test workload behind the Istio Gateway |
-| ArgoCD | `install_argocd` | `true` | `src/helm/modules/argo-cd` + `src/active-directory/app-registration` | ArgoCD chart 10.4.0 (app v3.5.1) with Azure AD SSO |
+| ArgoCD | `install_argocd` | `true` | `src/helm/modules/argo-cd` + `src/active-directory/app-registration` + `src/active-directory/cluster-access-group` | ArgoCD chart 10.4.0 (app v3.5.1) with Azure AD SSO, contributor access via a per-cluster AD group |
 | app-of-apps | `install_app_of_apps_infra` | `false` | `src/helm/modules/app-of-apps-infra` | bootstraps the external GitOps repo `smsilva/wasp-gitops` |
 
 ## Architecture
@@ -155,7 +155,8 @@ kubectl get applications -n argocd
 | `cluster_ingress_type` | [`main.tf`](main.tf) | `istio` here; drives the ArgoCD config subcharts |
 | `cert_manager_issuer_server` | [`../common/variables.tf`](../common/variables.tf) | `staging` or `production` Let's Encrypt |
 | `cluster_resource_group_location` | [`../common/variables.tf`](../common/variables.tf) | defaults to `eastus2` |
-| `argocd_administrators_ids` / `argocd_contributors_ids` | [`../common/variables.tf`](../common/variables.tf) | Azure AD group object IDs mapped to ArgoCD RBAC |
+| `argocd_administrators_ids` | [`../common/variables.tf`](../common/variables.tf) | Azure AD group object ID mapped to ArgoCD `role:admin`; shared by every example |
+| `argocd_extra_contributor_group_ids` | [`variables-cluster-access.tf`](variables-cluster-access.tf) | pre-existing Azure AD group object IDs granted `role:app-contributor` on **this** cluster, referenced from `policy.csv` |
 
 `variables.tf`, `network.tf` and `secrets.tf` in this directory are **symlinks**
 into `examples/common/` and are shared by all examples — edits there affect
@@ -174,6 +175,7 @@ terraform output
 | `url_gateway` | `gateway.<id>.<dns-zone>` — has a `Gateway`/certificate but no `VirtualService`, answers 404 by design |
 | `url_argocd` | `argocd.<id>.<dns-zone>` |
 | `url_httpbin` | `httpbin.<id>.<dns-zone>` |
+| `argocd_access_group_name` | display name of the Azure AD group to add users to for ArgoCD contributor access on this cluster |
 
 ## Gotchas
 

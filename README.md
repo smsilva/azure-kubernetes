@@ -62,6 +62,7 @@ It composes four scripts, each usable on its own:
 | [`github-actions-configure-oidc`](scripts/github-actions-configure-oidc) | GitHub | creates the deployment environment and publishes `ARM_CLIENT_ID` / `ARM_TENANT_ID` / `ARM_SUBSCRIPTION_ID` as variables |
 | [`github-actions-configure-ssh-deploy-key`](scripts/github-actions-configure-ssh-deploy-key) | GitHub | generates one SSH keypair per private module repository, registers each as a read-only deploy key, and publishes the private halves as environment secrets |
 | [`sp-grant-aks-cluster-admin`](scripts/sp-grant-aks-cluster-admin) | Entra ID | adds the Service Principal to the `aks-administrator` group |
+| [`sp-grant-groups-administrator`](scripts/sp-grant-groups-administrator) | Entra ID | grants the Service Principal the `Groups Administrator` directory role, required to create the per-cluster ArgoCD access group |
 
 ### Reading private Terraform modules over SSH
 
@@ -117,6 +118,15 @@ propagation race in the first `apply`.
 Group membership travels inside the token, so a token issued before the
 change does not see the new group: run `az account clear` locally, or simply
 start a new CI job.
+
+That covers **administrators**, who are the same group in every cluster.
+Contributors are not: `cluster_argocd_ingress_istio` creates a group per
+cluster (`aks-cluster-users-<id>`, via
+[`src/active-directory/cluster-access-group`](src/active-directory/cluster-access-group))
+that is destroyed with the cluster. Pre-existing groups can be granted the
+same access by listing their object IDs in the example's
+`local.argocd_extra_contributor_group_ids` — they are referenced from the
+ArgoCD `policy.csv`, never nested into the per-cluster group.
 
 ### Prove it
 
