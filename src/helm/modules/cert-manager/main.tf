@@ -9,6 +9,15 @@ resource "helm_release" "cert_manager" {
     {
       name  = "installCRDs"
       value = "true"
+    },
+    {
+      name  = "serviceAccount.annotations.azure\\.workload\\.identity/client-id"
+      value = var.identity_client_id
+    },
+    {
+      name  = "podLabels.azure\\.workload\\.identity/use"
+      value = "true"
+      type  = "string"
     }
   ]
 }
@@ -24,6 +33,22 @@ resource "helm_release" "cert_manager_issuers" {
     {
       name  = "fqdn"
       value = var.fqdn
+    },
+    {
+      name  = "azureDNS.subscriptionID"
+      value = var.subscription_id
+    },
+    {
+      name  = "azureDNS.resourceGroupName"
+      value = var.dns_zone_resource_group
+    },
+    {
+      name  = "azureDNS.hostedZoneName"
+      value = var.dns_zone_name
+    },
+    {
+      name  = "azureDNS.managedIdentity.clientID"
+      value = var.identity_client_id
     }
   ]
 
