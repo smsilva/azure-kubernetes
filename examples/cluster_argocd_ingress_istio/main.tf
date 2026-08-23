@@ -10,11 +10,20 @@ locals {
   install_argocd              = true
   install_app_of_apps_infra   = false
   cluster_ingress_type        = "istio"
+
+  tags = {
+    project     = local.project
+    environment = local.environment
+    example     = "cluster_argocd_ingress_istio"
+    managed-by  = "terraform"
+    owner       = "smsilva@gmail.com"
+  }
 }
 
 resource "azurerm_resource_group" "default" {
   name     = local.cluster_resource_group_name
   location = local.cluster_resource_group_location
+  tags     = local.tags
 }
 
 module "aks" {
@@ -29,6 +38,7 @@ module "aks" {
   resource_group                         = azurerm_resource_group.default
   subnet                                 = module.vnet.subnets["aks"].instance
   node_pool_only_critical_addons_enabled = false
+  tags                                   = local.tags
 
   depends_on = [
     module.vnet

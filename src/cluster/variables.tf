@@ -80,3 +80,9 @@ variable "sku_tier" {
   type    = string
   default = "Free"
 }
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags to apply to the AKS cluster"
+  default     = {}
+}
