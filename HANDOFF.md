@@ -23,6 +23,16 @@ exemplo istio.
 - 4 exemplos Terraform legado quebrados pelos módulos compartilhados —
   **intencional**, ver `docs/reference/provider-migration.md`.
 
+## Delivered
+
+- Conhecimento operacional movido de `CLAUDE.md` para `docs/reference/<tema>.md`;
+  arquivos de contexto reduzidos a mapa/estado/ponteiros. Convenção de manutenção
+  em `CLAUDE.md` § "Convenções de documentação".
+- Corrigida a descrição do certificado wildcard do Istio: é
+  `*.<cluster-random-id>.<zone>`, não do domínio base. Wildcard TLS cobre um label
+  só, então não existe certificado estável "do domínio base" que sirva aos hosts do
+  cluster.
+
 ## How to Resume
 
 Iniciar o brainstorming Crossplane + AWS (skill `superpowers:brainstorming`), tema:
@@ -44,4 +54,4 @@ cat ~/trash/resources/aks-poc/README.md   # índice arquivo → equivalente AWS
 4. Escolher backend de secrets AWS e reapontar o `ClusterSecretStore`.
 5. Decidir SSO do ArgoCD (azuread OIDC vs. Cognito) e DNS (Route53).
 
-> Antes de confiar em algo time-sensitive acima: `git status`, `git diff`, `git log`.
+Before trusting anything time-sensitive above, run `git status`, `git diff`, and `git log` against the base branch.

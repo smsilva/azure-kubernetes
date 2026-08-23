@@ -64,3 +64,5 @@ mantê-los **curtos**.
   problema acabou, a nota some; se virou comportamento novo, vira uma linha
   descritiva no `docs/reference/` correspondente.
 - Criar arquivo novo em `docs/` **requer aprovação do usuário**.
+- Não usar "gotcha(s)" como rótulo de seção ou diretório — preferir `reference`
+  (docs por tema) e `Caveats` (seção de README).
