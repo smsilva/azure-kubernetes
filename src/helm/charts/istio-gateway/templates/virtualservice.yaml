@@ -12,14 +12,6 @@ spec:
     - public-ingress-gateway
 
   http:
-    - match:
-        - port: 80
-          uri:
-            regex: "^/(([^\\.].*)|(\\.[^w].*)|(\\.w[^e].*)|(\\.we[^l].*)|(\\.wel[^l].*)|(\\.well[^\\-].*)|)"
-      redirect:
-        scheme: https
-        redirectCode: 302 # 302 to not mess with risky permanent redirections since a workaround
-
     - name: gateway-health
       headers:
         request:
@@ -45,14 +37,6 @@ spec:
     - public-ingress-argocd
 
   http:
-    - match:
-        - port: 80
-          uri:
-            regex: "^/(([^\\.].*)|(\\.[^w].*)|(\\.w[^e].*)|(\\.we[^l].*)|(\\.wel[^l].*)|(\\.well[^\\-].*)|)"
-      redirect:
-        scheme: https
-        redirectCode: 302 # 302 to not mess with risky permanent redirections since a workaround
-
     - name: argocd
       headers:
         request:
