@@ -88,6 +88,12 @@
    `helm_release`), em vez de uma edição de membership no portal com efeito
    imediato.
 
+   Esse trade-off é **desejado**, não apenas tolerado: o disparo do
+   Terraform deve migrar para GitOps, e nesse modelo conceder acesso a um
+   time passa a ser um pull request revisado e rastreável — o controle que
+   se quer para uma concessão de privilégio, e que a edição de membership
+   no portal do Azure AD não oferece.
+
    O grupo do cluster (`N`) continua existindo e sendo contributor — serve
    para adicionar **usuários individuais** àquele cluster e como âncora de
    identidade exclusiva do cluster.
