@@ -183,6 +183,11 @@ DNS Zone CNAME Record.:  argocd.${random_string.id}.${local.environment}.${local
 
 Please take a look on [variables.tf](examples/common/variables.tf).
 
+After a successful `apply`, `terraform output` returns the cluster name,
+resource group, and the Gateway/ArgoCD/httpbin URLs — see
+[`outputs.tf`](examples/cluster_argocd_ingress_istio/outputs.tf) in the istio
+example.
+
 ## Environment Variables
 
 | Variable                                            | Description                                           | Example                                                              |

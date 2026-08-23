@@ -51,24 +51,40 @@ flowchart TB
   tf --> app
   eso -- "Workload Identity<br/>(access policy: Get, List)" --> kv
   edns -- "Workload Identity<br/>(DNS Zone Contributor)" --> dns
+  cm -- "Workload Identity<br/>(DNS Zone Contributor)" --> dns
   istio --> lb
   lb --> dns
-  cm -- "HTTP01 via Gateway" --> istio
   argocd --> istio
   httpbin --> istio
   app -- "OIDC client secret<br/>stored in Key Vault" --> kv
   kv -- "ExternalSecret (Merge)" --> argocd
 ```
 
-Two federated identities are created by `src/active-directory/workload-identity`
+Three federated identities are created by `src/active-directory/workload-identity`
 (user-assigned MI + federated credential on the cluster OIDC issuer):
 
 | Identity | Namespace / ServiceAccount | Azure permission |
 | --- | --- | --- |
 | `<cluster>-external-secrets` | `external-secrets` / `external-secrets` | Key Vault access policy: `Get`, `List` |
 | `<cluster>-external-dns` | `external-dns` / `external-dns` | `DNS Zone Contributor` on the DNS Zone |
+| `<cluster>-cert-manager` | `cert-manager` / `cert-manager` | `DNS Zone Contributor` on the DNS Zone |
 
-No client secret for these components ever lands in the cluster.
+No client secret for these components ever lands in the cluster. cert-manager
+solves ACME challenges for the `istio` issuer via `dns01.azureDNS` (not
+HTTP01) using this identity — see [Gotchas](#gotchas). Issuers `azure`/`nginx`
+(used only by the other, unmigrated examples) still solve via HTTP01.
+
+## Terraform providers and cluster access
+
+The `kubernetes`/`helm` providers ([`provider.tf`](provider.tf)) authenticate
+via `kube_config` + an `exec` plugin (`kubelogin get-token --login azurecli`,
+`server-id` = the AKS AAD Server app ID), not `kube_admin_config`. This routes
+through Azure RBAC (`admin_group_object_ids` on the AKS resource) instead of
+bypassing it with the local admin credential. Whoever runs `terraform
+apply`/`plan` — locally via `az login`, or CI via `azure/login@v2` — must
+already be a member of the Azure AD group in
+`argocd_administrators_ids`/`admin_group_object_ids`, and `kubelogin` must be
+on `PATH`.
 
 ## Prerequisites
 
@@ -145,11 +161,34 @@ kubectl get applications -n argocd
 into `examples/common/` and are shared by all examples — edits there affect
 every example.
 
+## Outputs
+
+```bash
+terraform output
+```
+
+| Output | Value |
+| --- | --- |
+| `cluster_name` | AKS cluster name |
+| `cluster_resource_group_name` | Resource group name |
+| `url_gateway` | `gateway.<id>.<dns-zone>` — has a `Gateway`/certificate but no `VirtualService`, answers 404 by design |
+| `url_argocd` | `argocd.<id>.<dns-zone>` |
+| `url_httpbin` | `httpbin.<id>.<dns-zone>` |
+
 ## Gotchas
 
 - **Certificates are Let's Encrypt _staging_** by default (issuer `(STAGING) …`),
   so plain `curl` fails CA verification. Use `curl -k`. Flip
   `cert_manager_issuer_server` to `production` for real certificates.
+- **The certificate is a single wildcard** (`ingress-wildcard`,
+  `*.<id>.<dns-zone>`) issued via `dns01.azureDNS`, but **Gateway SNI routing
+  is not wildcard**: each `Gateway` only accepts TLS for the hosts explicitly
+  listed in its `hosts:`. A new host never registered in any `Gateway` fails
+  the TLS handshake even though the wildcard certificate would cover it —
+  normal Istio behavior, not a bug.
+- **HTTP→HTTPS redirect is `tls.httpsRedirect: true` on the `Gateway`**, not a
+  manual `match`/`redirect` in the VirtualServices (removed once HTTP01 was
+  fully replaced by DNS01 for the `istio` issuer).
 - **ArgoCD's external routing comes from the `istio-gateway` chart** — the
   `Gateway` `public-ingress-argocd` and its `VirtualService` live in the
   `istio-ingress` namespace, not in `argocd`. The `argo-cd-config` release only
@@ -164,6 +203,14 @@ every example.
   CNAME record. Benign.
 - **All `ExternalSecret` manifests must use `external-secrets.io/v1`** — ESO 2.9.0
   no longer serves `v1beta1`/`v1alpha1`.
+- **Tagging the resource group and the AKS cluster in the same `apply` forces a
+  cluster replace**: `src/cluster` reads `location` off
+  `data.azurerm_resource_group.default`, and while the RG has a pending change
+  that data source is "known after apply", making `location` (a `ForceNew`
+  field on the AKS resource) unknown too — this cascades into the
+  `kubernetes`/`helm` providers and recreates every helm release. Apply in two
+  steps instead: `-target=azurerm_resource_group.default` first, then
+  `-target=module.aks` — the AKS update lands in-place.
 - The `terraform destroy` warning about cert-manager and Istio **CRDs being kept**
   is benign: the chart marks them `resource-policy: keep`, and they disappear with
   the control plane.
