@@ -71,7 +71,7 @@ Three federated identities are created by `src/active-directory/workload-identit
 
 No client secret for these components ever lands in the cluster. cert-manager
 solves ACME challenges for the `istio` issuer via `dns01.azureDNS` (not
-HTTP01) using this identity — see [Gotchas](#gotchas). Issuers `azure`/`nginx`
+HTTP01) using this identity — see [Caveats](#caveats). Issuers `azure`/`nginx`
 (used only by the other, unmigrated examples) still solve via HTTP01.
 
 ## Terraform providers and cluster access
@@ -128,7 +128,7 @@ az aks get-credentials \
   --admin \
   --overwrite-existing
 
-# endpoints (staging certificates: -k is required, see Gotchas)
+# endpoints (staging certificates: -k is required, see Caveats)
 curl -k -o /dev/null -w '%{http_code}\n' https://httpbin.<id>.<dns-zone>/status/200   # -> 200
 curl -k -o /dev/null -w '%{http_code}\n' https://argocd.<id>.<dns-zone>               # -> 200
 
@@ -177,7 +177,7 @@ terraform output
 | `url_httpbin` | `httpbin.<id>.<dns-zone>` |
 | `argocd_access_group_name` | display name of the Azure AD group to add users to for ArgoCD contributor access on this cluster |
 
-## Gotchas
+## Caveats
 
 - **Certificates are Let's Encrypt _staging_** by default (issuer `(STAGING) …`),
   so plain `curl` fails CA verification. Use `curl -k`. Flip
