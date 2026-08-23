@@ -1,0 +1,110 @@
+#!/bin/bash
+set -e
+
+export THIS_SCRIPT_NAME=$0
+export THIS_SCRIPT_DIRECTORY=$(dirname $0)
+export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+
+show_usage() {
+  cat <<EOF
+
+  Grants the "Groups Administrator" Entra ID directory role to a Service
+  Principal, so Terraform can create the azuread_group resource backing
+  per-cluster ArgoCD access.
+
+  This is a directory role, not an Azure RBAC role: it is unrelated to the
+  subscription-scoped grant made by sp-grant-user-access-administrator, and
+  both are needed.
+
+  The caller must be Privileged Role Administrator or Global Administrator.
+
+  ${THIS_SCRIPT_NAME} \\
+    --client-id 2ef8b61a-e93b-453b-bb02-96e2394a518a
+
+EOF
+}
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+case $1 in
+  -h | --help )
+    show_usage
+    exit
+    ;;
+
+  -c | --client-id )
+    shift; ARM_CLIENT_ID=$1
+    ;;
+esac; shift; done
+
+if [[ "$1" == '--' ]]; then shift; fi
+
+if [ -z "${ARM_CLIENT_ID}" ]; then
+  show_usage
+  exit 1
+fi
+
+role_name="Groups Administrator"
+graph_url="https://graph.microsoft.com/v1.0"
+
+principal_id=$(az ad sp show \
+  --id "${ARM_CLIENT_ID}" \
+  --query id \
+  --output tsv)
+
+echo "Service Principal.: ${ARM_CLIENT_ID}"
+echo "Object Id.........: ${principal_id}"
+echo "Role..............: ${role_name}"
+
+template_id=$(az rest \
+  --method GET \
+  --url "${graph_url}/directoryRoleTemplates" \
+  --query "value[?displayName=='${role_name}'].id | [0]" \
+  --output tsv)
+
+if [ -z "${template_id}" ]; then
+  echo "Role template not found: ${role_name}"
+  exit 1
+fi
+
+role_id=$(az rest \
+  --method GET \
+  --url "${graph_url}/directoryRoles" \
+  --query "value[?roleTemplateId=='${template_id}'].id | [0]" \
+  --output tsv)
+
+if [ -z "${role_id}" ]; then
+  echo "Role not activated in this tenant yet. Activating."
+
+  role_id=$(az rest \
+    --method POST \
+    --url "${graph_url}/directoryRoles" \
+    --headers "Content-Type=application/json" \
+    --body "{\"roleTemplateId\": \"${template_id}\"}" \
+    --query id \
+    --output tsv)
+fi
+
+echo "Role Id...........: ${role_id}"
+
+# Queried from the principal's side (memberOf), not directoryRoles/{id}/members:
+# the latter has a real read-after-write propagation delay on Microsoft Graph
+# and can report 0 members minutes after a successful grant, causing a
+# duplicate (and rejected) POST below.
+existing=$(az rest \
+  --method GET \
+  --url "${graph_url}/servicePrincipals/${principal_id}/memberOf" \
+  --query "length(value[?id=='${role_id}'])" \
+  --output tsv)
+
+if [ "${existing}" != "0" ]; then
+  echo "Already assigned. Nothing to do."
+  exit 0
+fi
+
+az rest \
+  --method POST \
+  --url "${graph_url}/directoryRoles/${role_id}/members/\$ref" \
+  --headers "Content-Type=application/json" \
+  --body "{\"@odata.id\": \"${graph_url}/directoryObjects/${principal_id}\"}"
+
+echo "Granted."
