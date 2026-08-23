@@ -12,6 +12,15 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-{{ $server.name }}-{{ $issuer.name }}-issuer-account-key
     solvers:
+      {{- if eq (default "http01" $issuer.solver) "dns01" }}
+      - dns01:
+          azureDNS:
+            subscriptionID: {{ $.Values.azureDNS.subscriptionID }}
+            resourceGroupName: {{ $.Values.azureDNS.resourceGroupName }}
+            hostedZoneName: {{ $.Values.azureDNS.hostedZoneName }}
+            managedIdentity:
+              clientID: {{ $.Values.azureDNS.managedIdentity.clientID }}
+      {{- else }}
       - http01:
           ingress:
             class: {{ $issuer.class }}
@@ -22,6 +31,7 @@ spec:
                 annotations:
                   external-dns.alpha.kubernetes.io/ttl: "1m"
                   external-dns.alpha.kubernetes.io/target: {{ $.Values.fqdn | quote }}
+      {{- end }}
 {{- end }}
 {{- end }}
 ---

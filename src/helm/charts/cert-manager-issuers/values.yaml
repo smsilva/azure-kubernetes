@@ -19,3 +19,11 @@ letsencrypt:
 
     - name:  istio
       class: istio
+      solver: dns01
+
+azureDNS:
+  subscriptionID: ""
+  resourceGroupName: ""
+  hostedZoneName: ""
+  managedIdentity:
+    clientID: ""
