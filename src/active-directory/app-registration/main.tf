@@ -10,7 +10,7 @@ resource "azuread_application" "default" {
   display_name            = local.azuread_application_name
   identifier_uris         = ["api://${local.azuread_application_name}"]
   owners                  = [data.azuread_client_config.current.object_id]
-  sign_in_audience        = "AzureADandPersonalMicrosoftAccount"
+  sign_in_audience        = "AzureADMyOrg"
   group_membership_claims = ["All"]
 
   web {
@@ -20,8 +20,6 @@ resource "azuread_application" "default" {
     redirect_uris = [
       "https://argocd.${var.dns_zone}/auth/callback",
       "https://${local.azuread_application_url}/auth/callback",
-      "https://oidcdebugger.com/debug",
-      "http://localhost/auth/callback",
     ]
   }
 
