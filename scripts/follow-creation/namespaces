@@ -1,20 +1,21 @@
 #!/bin/bash
-REGEX="${1}"
-COUNT=${2-1}
-CACHE_FILE=$(mktemp)
+regex="${1?}"
+count="${2:-1}"
+cache_file=$(mktemp)
+trap 'rm -f "${cache_file}"' EXIT
 
-echo "Namespaces (Regex: \"${REGEX}\" ${COUNT})"
+echo "Namespaces (Regex: \"${regex}\" ${count})"
 echo ""
 
 kubectl get namespaces \
 | grep -vE "^default|^kube" \
-| tee "${CACHE_FILE?}"
+| tee "${cache_file?}"
 
-NAMESPACE_COUNT=$(egrep "${REGEX}" "${CACHE_FILE?}" | wc -l)
+namespace_count=$(grep -E "${regex}" "${cache_file?}" | wc -l)
 
-COUNT_TO_COMPARE=$((${COUNT} -1))
+count_to_compare=$((count - 1))
 
-if [ "${NAMESPACE_COUNT}" -gt ${COUNT_TO_COMPARE} ]; then
+if [ "${namespace_count}" -gt "${count_to_compare}" ]; then
   exit 0
 fi
 

@@ -1,30 +1,31 @@
 #!/bin/bash
-REGEX="${1}"
-COUNT=${2-1}
+regex="${1?}"
+count="${2:-1}"
 
-CACHE_FILE=$(mktemp)
+cache_file=$(mktemp)
+trap 'rm -f "${cache_file}"' EXIT
 
-echo "certificates (Regex: \"${REGEX}\" ${COUNT})"
+echo "certificates (Regex: \"${regex}\" ${count})"
 echo ""
 
 kubectl get certificates -A \
-| egrep "NAME|${REGEX}|^ " \
-| tee "${CACHE_FILE?}"
+| grep -E "NAME|${regex}|^ " \
+| tee "${cache_file?}"
 
 echo ""
 
 kubectl get ingress -A \
-| egrep "NAME|${REGEX}|^ " \
-| tee -a "${CACHE_FILE?}"
+| grep -E "NAME|${regex}|^ " \
+| tee -a "${cache_file?}"
 
-CERTITICATES_READY_COUNT=$(
-egrep "${REGEX}.*True" "${CACHE_FILE?}" \
+certificates_ready_count=$(
+grep -E "${regex}.*True" "${cache_file?}" \
 | wc -l
 )
 
-COUNT_TO_COMPARE=$((${COUNT} -1))
+count_to_compare=$((count - 1))
 
-if [ "${CERTITICATES_READY_COUNT}" -gt ${COUNT_TO_COMPARE} ]; then
+if [ "${certificates_ready_count}" -gt "${count_to_compare}" ]; then
   exit 0
 fi
 

@@ -1,17 +1,17 @@
 #!/bin/bash
-HOST_UNDER_TEST=$1
+host_under_test="${1?}"
 
-HTTP_CODE=$(
+http_code=$(
   curl \
     --insecure \
     --silent \
     --output /dev/null \
     --head \
     --write-out "%{http_code}" \
-    https://${HOST_UNDER_TEST?}
+    "https://${host_under_test}"
 )
 
-if [ "${HTTP_CODE}" == "200" ]; then
+if [ "${http_code}" == "200" ]; then
   exit 0
 fi
 

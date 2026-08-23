@@ -1,41 +1,40 @@
 #!/bin/bash
-EXPRESSION=${1}
-
-CACHE_FILE=$(mktemp)
+expression="${1}"
 
 echo "AKS Cluster (waiting for ProvisioningState become Succeeded)"
 echo ""
 
 az aks list --output table \
-| grep -E "Name|^----|${EXPRESSION}" \
-| tee "${CACHE_FILE?}"
+| grep -E "Name|^----|${expression}"
 
-grep \
-  --quiet "${EXPRESSION?}.*Succeeded" "${CACHE_FILE?}"
+cluster_line=$(
+  az aks list \
+    --query "[?contains(name, \`${expression}\`) && provisioningState=='Succeeded'].[name, resourceGroup]" \
+    --output tsv
+)
 
-RESULT=$?
-
-if [ "${RESULT}" == 0 ]; then
-  LINE=$(grep "${EXPRESSION?}.*Succeeded" "${CACHE_FILE?}")
-
-  AKS_CLUSTER_NAME=$(                awk '{ print $1 }' <<< "${LINE}")
-  AKS_CLUSTER_RESOURCE_GROUP_NAME=$( awk '{ print $3 }' <<< "${LINE}")
-
-  echo ""
-  echo "Getting credentials for AKS Cluster ${AKS_CLUSTER_NAME} [Resource Group: ${AKS_CLUSTER_RESOURCE_GROUP_NAME}]..."
-  echo ""
-
-  if ! grep --quiet "^clusters:" ~/.kube/config; then
-    echo "clusters: []" >> ~/.kube/config
-  fi
-
-  az aks get-credentials \
-    --name "${AKS_CLUSTER_NAME?}" \
-    --resource-group "${AKS_CLUSTER_RESOURCE_GROUP_NAME?}" \
-    --overwrite-existing \
-    --admin &> /dev/null
-
-  exit 0
+if [ -z "${cluster_line}" ]; then
+  exit 1
 fi
 
-exit ${RESULT}
+aks_cluster_name=$(awk -F'\t' '{ print $1 }' <<< "${cluster_line}")
+aks_cluster_resource_group_name=$(awk -F'\t' '{ print $2 }' <<< "${cluster_line}")
+
+echo ""
+echo "Getting credentials for AKS Cluster ${aks_cluster_name} [Resource Group: ${aks_cluster_resource_group_name}]..."
+echo ""
+
+if ! grep --quiet "^clusters:" ~/.kube/config; then
+  echo "clusters: []" >> ~/.kube/config
+fi
+
+if ! az aks get-credentials \
+  --name "${aks_cluster_name}" \
+  --resource-group "${aks_cluster_resource_group_name}" \
+  --overwrite-existing \
+  --admin &> /dev/null; then
+  echo "Failed to get credentials for ${aks_cluster_name}"
+  exit 1
+fi
+
+exit 0
