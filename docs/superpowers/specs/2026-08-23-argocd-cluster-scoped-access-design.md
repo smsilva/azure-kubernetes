@@ -50,20 +50,51 @@
    exclusivo do cluster (nome derivado de `local.cluster_random_id`, ex.:
    `aks-cluster-users-<random_id>`), `security_enabled = true`, owner = SP
    do Terraform (`data.azuread_client_config.current.object_id`, mesmo
-   padrão do `app-registration`).
-3. **Parâmetro opcional `existing_member_group_ids`** (`list(string)`,
-   default `[]`): para cada id informado, o módulo cria um
-   `azuread_group_member` aninhando o grupo pré-existente como membro do
-   grupo novo. Se vazio, o grupo novo fica sem membros extras (adicionados
-   manualmente depois). Azure AD propaga a claim `groups` transitivamente,
-   então membros de grupos aninhados também autenticam com o RBAC do grupo
-   novo, sem mudança em `sso.yaml`/`rbac-config.yaml`.
-4. **Output** `object_id` do módulo substitui o valor hardcoded de
-   `argocd_contributors_ids` na instanciação do `argo-cd` helm module
-   dentro de `examples/cluster_argocd_ingress_istio/main.tf` — o grupo novo
-   passa a ser o único contributor daquele cluster, com `role:app-contributor`
-   + `role:readonly`, **exatamente como o role existe hoje**. Sem mudança
-   em `rbac-config.yaml`.
+   padrão do `app-registration`). O módulo faz **só isso** — cria o grupo e
+   exporta o `object_id`. Sem `azuread_group_member`.
+3. **Grupos pré-existentes entram na lista de contributors do RBAC, não
+   como membros aninhados do grupo novo.** O exemplo concatena:
+
+   ```hcl
+   contributors_ids = concat(
+     [module.cluster_access_group.object_id],
+     local.argocd_extra_contributor_group_ids, # default []
+   )
+   ```
+
+   `rbac-config.yaml:8-11` já é um `for` sobre
+   `server_rbac_config_group_contributors` emitindo um par
+   `g, "<id>", role:app-contributor` / `role:readonly` por id, e
+   `contributors_ids` já é `list(string)` — então **nenhuma mudança no
+   módulo `argo-cd` nem no template** é necessária.
+
+   Motivo da escolha (revisão de 2026-08-23), em vez do nesting
+   originalmente aprovado:
+
+   - **Orçamento da claim `groups`**: aninhando, o token de um usuário do
+     grupo pré-existente `G` precisa carregar `G` **e** o grupo do cluster
+     `N` para o RBAC casar — +1 slot por cluster acessado. Listando direto,
+     o RBAC casa em `G`, que já está no token: **+0 slots**,
+     independentemente do número de clusters.
+   - **Some a dependência da expansão transitiva** da claim `groups` —
+     comportamento com ressalvas documentadas (vale para a claim, não para
+     provisionamento SCIM). O design passa a depender apenas de "usuário é
+     membro de `G`, logo `G` está no token".
+   - **Grant auditável em git** (`policy.csv`) em vez de escondido na
+     membership do Azure AD.
+
+   Trade-off aceito: alterar quais grupos têm acesso passa a exigir
+   `terraform apply` (o id atravessa `policy.csv` → values do helm →
+   `helm_release`), em vez de uma edição de membership no portal com efeito
+   imediato.
+
+   O grupo do cluster (`N`) continua existindo e sendo contributor — serve
+   para adicionar **usuários individuais** àquele cluster e como âncora de
+   identidade exclusiva do cluster.
+4. **Nível de privilégio**: os contributors (grupo do cluster + grupos
+   pré-existentes listados) recebem `role:app-contributor` +
+   `role:readonly`, **exatamente como o role existe hoje**. Sem mudança em
+   `rbac-config.yaml`.
 
    Ressalva registrada no brainstorming: `role:app-contributor` **inclui
    `applications, delete, default/*, allow`** (`rbac-config.yaml:4`). O
@@ -76,9 +107,10 @@
    novo (ex.: `role:cluster-user`) em vez de editar `role:app-contributor`,
    para não afetar os exemplos legado.
 5. **Lifecycle**: o grupo novo é destruído junto com o cluster (`terraform
-   destroy`). Grupos pré-existentes aninhados via `existing_member_group_ids`
-   **não são afetados** — só o vínculo de membership (`azuread_group_member`)
-   é removido.
+   destroy`). Grupos pré-existentes listados em
+   `argocd_extra_contributor_group_ids` **não são tocados** em momento
+   algum — o Terraform nunca os cria, altera ou destrói; apenas referencia
+   seus `object_id` no `policy.csv`.
 6. **Fora de escopo**: RBAC por ArgoCD `AppProject` (opção descartada em
    favor do nível "contributor" simples, já suportado); grupo `aks-admin`
    por cluster (descartado, ver decisão 1).
@@ -87,12 +119,11 @@
 
 ### Overage da claim `groups` (>200 grupos)
 
-O nesting da decisão 3 depende da claim `groups` do ID token, que com
-`group_membership_claims = ["All"]` (já configurado em
-`src/active-directory/app-registration/main.tf:14`) inclui grupos aninhados
-transitivamente. Porém o Entra ID limita a claim a **200 grupos por JWT,
-contando os aninhados**. Acima disso o token não traz `groups`, e sim os
-indicadores `_claim_names` / `hasgroups`.
+O RBAC do ArgoCD casa contra a claim `groups` do ID token
+(`group_membership_claims = ["All"]`, já configurado em
+`src/active-directory/app-registration/main.tf:14`). O Entra ID limita essa
+claim a **200 grupos por JWT**. Acima disso o token não traz `groups`, e sim
+os indicadores `_claim_names` / `hasgroups`.
 
 O `oidc.config` do ArgoCD (`src/helm/modules/argo-cd/templates/sso.yaml`)
 pede `requestedIDTokenClaims.groups.essential: true` e **não** usa
@@ -101,15 +132,17 @@ membro de muitos grupos loga com sucesso mas **sem nenhum grupo**, caindo em
 `policy.default: role:empty` — perda de acesso **silenciosa**, sem erro
 visível de autenticação.
 
-Aninhar grupos pré-existentes via `existing_member_group_ids` **aumenta** a
-exposição a esse limite, já que os grupos aninhados contam para a cota.
+A decisão 3 (listar grupos pré-existentes no `policy.csv` em vez de aninhá-los
+no grupo do cluster) foi tomada em parte para **não consumir** esse orçamento:
+o usuário casa pelo grupo que já carrega, sem precisar que o grupo do cluster
+também esteja no token. O custo por cluster adicional é zero. Aninhar teria
+custado +1 slot por cluster acessado.
 
-Mitigação: fora de escopo desta mudança (o ambiente atual está muito longe
-de 200 grupos), mas o comportamento deve ser documentado como gotcha no
-`CLAUDE.md` para que um futuro "usuário não vê nada no ArgoCD" não seja
-diagnosticado como bug de RBAC. Se o limite virar problema real, a saída é
-habilitar `getUserInfo` no ArgoCD ou filtrar a claim por grupos atribuídos
-à aplicação.
+Mitigação residual: fora de escopo (o ambiente atual está muito longe de 200
+grupos), mas o comportamento deve ser documentado como gotcha no `CLAUDE.md`
+para que um futuro "usuário não vê nada no ArgoCD" não seja diagnosticado
+como bug de RBAC. Se o limite virar problema real, a saída é habilitar
+`getUserInfo` no ArgoCD ou filtrar a claim por grupos atribuídos à aplicação.
 
 ### Edição de arquivo compartilhado
 
@@ -127,17 +160,21 @@ Pelo mesmo motivo, o `module "cluster_access_group"` deve ser declarado no
 
 ## Permissão adicional necessária no Service Principal
 
-Criar `azuread_group`/`azuread_group_member` via Terraform exige que o SP
-tenha permissão de escrita em grupos no Azure AD — hoje o SP só tem
-`User Access Administrator` na subscription (role Azure RBAC, escopo de
-recursos Azure) e permissões de Microsoft Graph para `azuread_application`
-(app registration). Grupos são um recurso de diretório separado; será
-necessário conceder ao SP a role de diretório **Groups Administrator** (ou
-a permissão de aplicativo do Microsoft Graph `Group.ReadWrite.All` com
-admin consent) — análogo ao papel de `scripts/sp-grant-user-access-administrator`,
-mas para o diretório Azure AD em vez da subscription Azure. O mecanismo
-exato (role de diretório via `az rest`/Microsoft Graph API vs. permissão de
-aplicativo) fica para a fase de implementação.
+Criar `azuread_group` via Terraform exige que o SP tenha permissão de
+escrita em grupos no Azure AD — hoje o SP só tem `User Access Administrator`
+na subscription (role Azure RBAC, escopo de recursos Azure) e permissões de
+Microsoft Graph para `azuread_application` (app registration). Grupos são um
+recurso de diretório separado; será necessário conceder ao SP a role de
+diretório **Groups Administrator** (ou a permissão de aplicativo do
+Microsoft Graph `Group.ReadWrite.All` com admin consent) — análogo ao papel
+de `scripts/sp-grant-user-access-administrator`, mas para o diretório Azure
+AD em vez da subscription Azure. O mecanismo exato (role de diretório via
+`az rest`/Microsoft Graph API vs. permissão de aplicativo) fica para a fase
+de implementação.
+
+Nota: como a decisão 3 dispensou o `azuread_group_member`, **não** é
+necessária a permissão `GroupMember.ReadWrite.All` — o Terraform só cria o
+grupo do cluster, nunca gerencia membership de grupos existentes.
 
 ## Documentação a atualizar
 
@@ -149,8 +186,10 @@ aplicativo) fica para a fase de implementação.
 - **`examples/cluster_argocd_ingress_istio/README.md`**: tabela de
   variáveis (linha ~158) — `argocd_contributors_ids` deixa de vir de
   `../common/variables.tf` (só `argocd_administrators_ids` continua vindo
-  de lá); documentar o novo módulo `cluster-access-group` e o parâmetro
-  `existing_member_group_ids`.
+  de lá); documentar o novo módulo `cluster-access-group` e o local
+  `argocd_extra_contributor_group_ids`, deixando explícito que grupos
+  pré-existentes recebem acesso por **referência no `policy.csv`**, não por
+  membership no grupo do cluster.
 
 ## Testes / validação
 
@@ -165,7 +204,11 @@ aplicativo) fica para a fase de implementação.
     configuração do ArgoCD (settings/repos/clusters), que é exclusivo de
     `role:admin`.
   - Conta membro de um grupo pré-existente informado em
-    `existing_member_group_ids` tem o mesmo comportamento acima (herda via
-    nesting).
+    `argocd_extra_contributor_group_ids` tem o mesmo comportamento acima
+    (casa direto pelo `object_id` do próprio grupo no `policy.csv`, sem
+    depender de expansão transitiva).
+  - Conferir no `policy.csv` renderizado (`kubectl -n argocd get cm
+    argocd-rbac-cm -o yaml`) que há um par `role:app-contributor` /
+    `role:readonly` por id — o do grupo do cluster mais um por grupo extra.
   - Conta fora de qualquer grupo cai em `role:empty` (nega tudo).
   - Conta do grupo `aks-admin` continua com acesso total, sem mudança.
