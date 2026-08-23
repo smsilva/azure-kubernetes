@@ -43,14 +43,38 @@ module "argocd_app_registration" {
   dns_zone = local.dns_zone
 }
 
+module "cert_manager_workload_identity" {
+  count  = local.install_cert_manager ? 1 : 0
+  source = "../../src/active-directory/workload-identity"
+
+  name                 = "${local.cluster_name}-cert-manager"
+  resource_group       = azurerm_resource_group.default
+  oidc_issuer_url      = module.aks.oidc_issuer_url
+  namespace            = "cert-manager"
+  service_account_name = "cert-manager"
+}
+
+resource "azurerm_role_assignment" "cert_manager_dns_contributor_on_dns_zone" {
+  count = local.install_cert_manager ? 1 : 0
+
+  role_definition_name = "DNS Zone Contributor"
+  principal_id         = module.cert_manager_workload_identity[0].principal_id
+  scope                = data.azurerm_dns_zone.default.id
+}
+
 module "cert_manager" {
   count  = local.install_cert_manager ? 1 : 0
   source = "../../src/helm/modules/cert-manager"
 
-  fqdn = local.cert_manager_fqdn
+  fqdn                    = local.cert_manager_fqdn
+  identity_client_id      = module.cert_manager_workload_identity[0].client_id
+  subscription_id         = data.azurerm_subscription.current.subscription_id
+  dns_zone_resource_group = local.dns_zone_resource_group_name
+  dns_zone_name           = local.dns_zone
 
   depends_on = [
-    module.aks
+    module.aks,
+    azurerm_role_assignment.cert_manager_dns_contributor_on_dns_zone
   ]
 }
 
