@@ -53,6 +53,14 @@ module "argocd_app_registration" {
   dns_zone = local.dns_zone
 }
 
+module "cluster_access_group" {
+  count  = local.install_argocd ? 1 : 0
+  source = "../../src/active-directory/cluster-access-group"
+
+  name        = local.argocd_cluster_access_group_name
+  description = "ArgoCD contributor access to AKS cluster ${local.cluster_name}. Created and destroyed with the cluster."
+}
+
 module "cert_manager_workload_identity" {
   count  = local.install_cert_manager ? 1 : 0
   source = "../../src/active-directory/workload-identity"
@@ -192,12 +200,15 @@ module "argo_cd" {
   count  = local.install_argocd ? 1 : 0
   source = "../../src/helm/modules/argo-cd"
 
-  cname                       = local.argocd_host_base_name
-  domain                      = local.dns_zone
-  tenant_id                   = data.azurerm_client_config.current.tenant_id
-  sso_application_id          = module.argocd_app_registration[0].instance.client_id
-  administrators_ids          = local.argocd_administrators_ids
-  contributors_ids            = local.argocd_contributors_ids
+  cname              = local.argocd_host_base_name
+  domain             = local.dns_zone
+  tenant_id          = data.azurerm_client_config.current.tenant_id
+  sso_application_id = module.argocd_app_registration[0].instance.client_id
+  administrators_ids = local.argocd_administrators_ids
+  contributors_ids = concat(
+    [module.cluster_access_group[0].object_id],
+    local.argocd_extra_contributor_group_ids,
+  )
   environment_id              = local.cluster_random_id
   cluster_name                = local.cluster_name
   cluster_ingress_type        = local.cluster_ingress_type
@@ -207,6 +218,7 @@ module "argo_cd" {
   depends_on = [
     module.argocd_app_registration,
     module.cert_manager,
+    module.cluster_access_group,
     module.external_dns,
     module.external_secrets,
     module.ingress_istio,
