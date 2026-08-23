@@ -22,18 +22,12 @@ resource "random_string" "id" {
   special     = false
 }
 
-module "variables" {
-  source = "../../src/variables"
-  script = "azure"
-}
-
 locals {
   project                                  = "wasp"
   domain                                   = "silvios.me"
   arm_subscription_id_first_8_digits       = substr(data.azurerm_client_config.current.subscription_id, 0, 8)
   arm_subscription_name                    = data.azurerm_subscription.current.display_name
   environment                              = replace(local.arm_subscription_name, "${local.project}-", "")
-  arm_client_secret                        = module.variables.arm_client_secret
   dns_zone                                 = "${local.environment}" == "production" ? "${local.project}.${local.domain}" : "${local.environment}.${local.project}.${local.domain}"
   dns_zone_resource_group_name             = "${local.project}-foundation"
   key_vault_name                           = "${local.project}foundation${local.arm_subscription_id_first_8_digits}"
