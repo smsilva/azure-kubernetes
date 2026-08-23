@@ -3,7 +3,8 @@
 - **Severidade:** 🟠 média
 - **Onde:** `src/helm/charts/istio-gateway/templates/virtualservice.yaml` (e o
   VirtualService equivalente do httpbin)
-- **Status:** aberto
+- **Status:** ✅ resolvido — PR [#5](https://github.com/smsilva/azure-kubernetes/pull/5),
+  commit `1bd9a41`
 
 ## O problema
 
@@ -24,16 +25,23 @@ HTTP-para-HTTPS transparente do jeito que `scheme: {exact: http}` pressupõe).
 Resultado: a regra de redirect nunca é avaliada como verdadeira, e o tráfego
 HTTP cai direto na regra de roteamento normal — servido em claro, com 200.
 
-## A correção (hipótese, não testada)
+## A correção (aplicada e validada)
 
 Trocar o match de `scheme: {exact: http}` por `port: 80`: como o Gateway já
 separa os listeners HTTP (80) e HTTPS (443), casar pela porta de entrada é o
 sinal correto e disponível nesse ponto do pipeline, ao contrário do scheme.
 
-Precisa ser aplicado em **dois lugares**: o VirtualService gerado pelo
-`istio-gateway` (`gatewayVirtualService` em `values.yaml`) e o VirtualService
-próprio do `httpbin` (que tem seu próprio redirect, fora do chart
-`istio-gateway`).
+Aplicado nos **dois lugares**: o VirtualService gerado pelo `istio-gateway`
+(`gatewayVirtualService` em `values.yaml`) e o VirtualService próprio do
+`httpbin` (que tem seu próprio redirect, fora do chart `istio-gateway`).
+
+**Achado adicional durante a validação:** a regex de exclusão do ACME
+(`^/(([^\.].*)|...)`) exigia pelo menos 1 caractere após a `/` inicial, então
+a **raiz** (`/`) nunca casava com a inclusão e caía direto na rota normal —
+`argocd`/`httpbin` continuavam servindo a app em HTTP puro em `/` mesmo com a
+troca `scheme→port`. Corrigido acrescentando uma alternativa vazia à regex
+(`|)"` no fim da alternação), sem tocar na exceção do
+`/.well-known/acme-challenge/`.
 
 ## O que NÃO fazer
 
@@ -43,19 +51,18 @@ depende de conseguir servir `/.well-known/acme-challenge/...` em HTTP puro
 para provar controle do domínio. Um redirect incondicional no Gateway
 quebraria a renovação dos três certificados.
 
-## Como validar
+## Como foi validado
 
-1. Aplicar a troca do match nos dois VirtualServices.
-2. Provisionar um cluster (ou usar um vivo, se houver) e confirmar:
-   - `curl -I http://<host>` retorna `301`/`302` para `https://<host>`.
-   - `curl http://<host>/.well-known/acme-challenge/<token-de-teste>`
-     **continua** servido em HTTP puro (sem redirect) — sem isso a renovação
-     HTTP01 quebra silenciosamente na próxima expiração de certificado.
-3. Repetir para os três hosts (`gateway`, `argocd`, `httpbin`), já que o
-   VirtualService do httpbin é definido separadamente do resto.
+Aplicado via `helm upgrade` normal contra o cluster vivo `wasp-sandbox-29awz`
+(não `terraform apply -replace` no `helm_release.istio_gateway` — troca de
+template não exige recreate, e um replace nesse recurso recria o Service
+LoadBalancer, muda o IP público e derruba os três hosts até o external-dns
+reescrever o A record; ver `CLAUDE.md`, seção "Gotchas operacionais").
 
-Aplicar via `helm upgrade` normal (não usar `terraform apply -replace` no
-`helm_release.istio_gateway` — troca de template não exige recreate, e um
-replace nesse recurso recria o Service LoadBalancer, muda o IP público e
-derruba os três hosts até o external-dns reescrever o A record; ver
-`CLAUDE.md`, seção "Gotchas operacionais").
+Confirmado nos três hosts (`gateway`, `argocd`, `httpbin`):
+
+- `curl -I http://<host>` (raiz e subpaths) → `302` para `https://<host>`.
+- `curl http://<host>/.well-known/acme-challenge/<token-de-teste>` →
+  continua servido em HTTP puro (200/404), nunca `3xx` — renovação HTTP01
+  preservada.
+- `curl -k https://<host>` → continua `200` normalmente.
