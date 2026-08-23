@@ -84,7 +84,7 @@ done
 echo ""
 
 # argo-cd Certificate check
-while ! check-certificates "argocd" 1; do
+while ! check-certificates "ingress-wildcard" 1; do
   sleep 15; clear;
 done
 echo ""
