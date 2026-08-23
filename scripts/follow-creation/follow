@@ -1,96 +1,94 @@
 #!/bin/bash
-export THIS_SCRIPT_DIRECTORY=$(dirname $0)
-export PATH=${PATH}:${THIS_SCRIPT_DIRECTORY}
+this_script_directory="${0%/*}"
+PATH="${PATH}:${this_script_directory}"
 
-ENVIRONMENT_ID="$1"
+environment_id="${1}"
 
-if [ -z "${ENVIRONMENT_ID}" ]; then
+if [ -z "${environment_id}" ]; then
   echo "Please inform Environment ID."
   exit 1
 fi
 
 export EXECUTION_CACHE_FILE=$(mktemp)
+trap 'rm -f "${EXECUTION_CACHE_FILE}"' EXIT
 
-# Resource Group
-while ! resource-groups "${ENVIRONMENT_ID?}"; do
-  sleep 10; clear
-done
+wait_until() {
+  local description="${1}"; shift
+  local sleep_seconds="${1}"; shift
+  local max_attempts="${1}"; shift
+  local clear_screen="${1}"; shift
+
+  local attempt=1
+
+  while ! "$@"; do
+    if [ "${attempt}" -ge "${max_attempts}" ]; then
+      echo "Timed out waiting for: ${description} (${attempt} attempts, ${sleep_seconds}s interval)"
+      exit 1
+    fi
+
+    attempt=$((attempt + 1))
+    sleep "${sleep_seconds}"
+
+    if [ "${clear_screen}" == "true" ]; then
+      clear
+    fi
+  done
+}
+
+wait_until "Resource Group" 10 30 true \
+  resource-groups "${environment_id}"
 echo ""
 
-# AKS
-while ! aks "${ENVIRONMENT_ID?}"; do
-  sleep 30; clear
-done
+wait_until "AKS" 30 60 true \
+  aks "${environment_id}"
 echo ""
 
-# Namespaces
-while ! namespaces "cert-manager|external-secrets" 2; do
-  sleep 10; clear
-done
+wait_until "Namespaces cert-manager|external-secrets" 10 30 true \
+  namespaces "cert-manager|external-secrets" 2
 echo ""
 
-# ClusterIssuer
-while ! check-cluster-issuers "selfsigned" 1; do
-  sleep 10; clear
-done
+wait_until "ClusterIssuer selfsigned" 10 30 true \
+  check-cluster-issuers "selfsigned" 1
 echo ""
 
-# ClusterIssuers Let's Encrypt
-while ! check-cluster-issuers "letsencrypt" 6; do
-  sleep 10; clear
-done
+wait_until "ClusterIssuers Let's Encrypt" 10 60 true \
+  check-cluster-issuers "letsencrypt" 6
 echo ""
 
-# Namespaces
-while ! namespaces "external-secrets" 1; do
-  sleep 10; clear
-done
+wait_until "Namespaces external-secrets" 10 30 true \
+  namespaces "external-secrets" 1
 echo ""
 
-# external-secrets ClusterSecretStore
-while ! external-secrets-secret-store; do
-  sleep 10; clear
-done
+wait_until "external-secrets ClusterSecretStore" 10 30 true \
+  external-secrets-secret-store
 echo ""
 
-# Namespaces
-while ! namespaces "ingress" 1; do
-  sleep 10; clear
-done
+wait_until "Namespaces ingress" 10 30 true \
+  namespaces "ingress" 1
 echo ""
 
-# Namespaces
-while ! namespaces "argocd" 1; do
-  sleep 10; clear
-done
+wait_until "Namespaces argocd" 10 30 true \
+  namespaces "argocd" 1
 echo ""
 
-# argo-cd pods running
-while ! argocd-pods-running 7; do
-  sleep 20;
-done
+wait_until "argo-cd pods running" 20 45 false \
+  argocd-pods-running 7
 echo ""
 
-# external-secrets ExternalSecret
-while ! external-secrets 5; do
-  sleep 10; clear
-done
+wait_until "external-secrets ExternalSecret" 10 30 true \
+  external-secrets 5
 echo ""
 
-# argo-cd DNS check
-while ! check-dns "$(argocd-host)"; do
-  sleep 15;
-done
+argocd_host="$(argocd-host)"
+
+wait_until "argo-cd DNS check" 15 40 false \
+  check-dns "${argocd_host}"
 echo ""
 
-# argo-cd Certificate check
-while ! check-certificates "ingress-wildcard" 1; do
-  sleep 15; clear;
-done
+wait_until "argo-cd Certificate check" 15 40 true \
+  check-certificates "ingress-wildcard" 1
 echo ""
 
-# argo-cd curl check
-while ! check-curl-wait "$(argocd-host)"; do
-  sleep 15;
-done
+wait_until "argo-cd curl check" 15 40 false \
+  check-curl-wait "${argocd_host}"
 echo ""

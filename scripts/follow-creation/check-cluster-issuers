@@ -1,24 +1,25 @@
 #!/bin/bash
-REGEX="${1}"
-COUNT=${2-1}
+regex="${1?}"
+count="${2:-1}"
 
-CACHE_FILE=$(mktemp)
+cache_file=$(mktemp)
+trap 'rm -f "${cache_file}"' EXIT
 
-echo "cluster-issuers (Regex: \"${REGEX}\" ${COUNT})"
+echo "cluster-issuers (Regex: \"${regex}\" ${count})"
 echo ""
 
 kubectl get ClusterIssuer \
-| egrep "NAME|${REGEX}|^ " \
-| tee "${CACHE_FILE?}"
+| grep -E "NAME|${regex}|^ " \
+| tee "${cache_file?}"
 
-CLUSTER_ISSUERS_READY_COUNT=$(
-egrep "${REGEX}.*True" "${CACHE_FILE?}" \
+cluster_issuers_ready_count=$(
+grep -E "${regex}.*True" "${cache_file?}" \
 | wc -l
 )
 
-COUNT_TO_COMPARE=$((${COUNT} -1))
+count_to_compare=$((count - 1))
 
-if [ "${CLUSTER_ISSUERS_READY_COUNT}" -gt ${COUNT_TO_COMPARE} ]; then
+if [ "${cluster_issuers_ready_count}" -gt "${count_to_compare}" ]; then
   exit 0
 fi
 

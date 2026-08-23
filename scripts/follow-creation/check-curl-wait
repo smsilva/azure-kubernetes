@@ -1,29 +1,34 @@
 #!/bin/bash
-HOST_UNDER_TEST=${1}
+this_script_directory="${0%/*}"
+PATH="${this_script_directory}:${PATH}"
 
-RECORD_CHECK_CURL="curl_check:${HOST_UNDER_TEST}:"
+host_under_test="${1}"
 
-printf "curl-check (%s) " ${HOST_UNDER_TEST}
+: "${EXECUTION_CACHE_FILE:=$(mktemp)}"
 
-if [ -z "${HOST_UNDER_TEST}" ]; then
+record_check_curl="curl_check:${host_under_test}:"
+
+printf "curl-check (%s) " "${host_under_test}"
+
+if [ -z "${host_under_test}" ]; then
   exit 1
 fi
 
 check_if_host_return_200() {
-  check-curl ${HOST_UNDER_TEST?}
+  check-curl "${host_under_test?}"
 
-  echo "${RECORD_CHECK_CURL}: $?"
+  echo "${record_check_curl}: $?"
 }
 
-check_if_host_return_200 >> ${EXECUTION_CACHE_FILE}
+check_if_host_return_200 >> "${EXECUTION_CACHE_FILE}"
 
-RECORD_CHECK_CURL_SUCCESS_COUNT=$(grep -E "${RECORD_CHECK_CURL}: 0" ${EXECUTION_CACHE_FILE} | wc -l)
-RECORD_CHECK_CURL_FAILURE_COUNT=$(grep -E "${RECORD_CHECK_CURL}: 1" ${EXECUTION_CACHE_FILE} | wc -l)
+record_check_curl_success_count=$(grep -E "${record_check_curl}: 0" "${EXECUTION_CACHE_FILE}" | wc -l)
+record_check_curl_failure_count=$(grep -E "${record_check_curl}: 1" "${EXECUTION_CACHE_FILE}" | wc -l)
 
-printf "[ok=%s fail=%s] " ${RECORD_CHECK_CURL_SUCCESS_COUNT} ${RECORD_CHECK_CURL_FAILURE_COUNT}
+printf "[ok=%s fail=%s] " "${record_check_curl_success_count}" "${record_check_curl_failure_count}"
 echo ""
 
-if [ "${RECORD_CHECK_CURL_SUCCESS_COUNT}" -gt 2 ]; then
+if [ "${record_check_curl_success_count}" -gt 2 ]; then
   exit 0
 fi
 

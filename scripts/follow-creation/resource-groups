@@ -1,17 +1,18 @@
 #!/bin/bash
-EXPRESSION="$1"
+expression="${1?}"
 
-CACHE_FILE=$(mktemp)
+cache_file=$(mktemp)
+trap 'rm -f "${cache_file}"' EXIT
 
-echo "Resource Groups [${EXPRESSION}]"
+echo "Resource Groups [${expression}]"
 echo ""
 
 az group list \
   --output table \
-| grep -E "Name|^----|${EXPRESSION}" \
-| tee "${CACHE_FILE?}"
+| grep -E "Name|^----|${expression}" \
+| tee "${cache_file?}"
 
 grep \
-  --quiet "${EXPRESSION}-nrg.*Succeeded" "${CACHE_FILE?}"
+  --quiet "${expression}-nrg.*Succeeded" "${cache_file?}"
 
 exit $?
