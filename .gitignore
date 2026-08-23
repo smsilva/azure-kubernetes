@@ -18,3 +18,5 @@ kubectl
 override.tf
 override.tf.json
 HANDOFF.local.md
+CLAUDE.local.md
+.jira/
