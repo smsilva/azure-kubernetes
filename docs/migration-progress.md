@@ -1,78 +1,95 @@
 # Migration progress log
 
-Histórico de passos concluídos da migração de `examples/cluster_argocd_ingress_istio`
-(azurerm v5 / azuread v3 / helm v3 / AKS 1.34.9). Ver `HANDOFF.md` para o estado atual
-e os próximos passos.
+History of completed steps in the migration of
+`examples/cluster_argocd_ingress_istio` (azurerm v5 / azuread v3 / helm v3 /
+AKS 1.34.9). See `HANDOFF.md` for the current state and next steps.
 
-## 2026-08-10 — argocd religado; UI + SSO azuread validados
+## 2026-08-10 — argocd re-enabled; UI + azuread SSO validated
 
-- `install_argocd = true`. Cluster `wasp-sandbox-vpd54` provisionado do zero
-  (`terraform apply`, **35 recursos**, 0 erros). Chart argo-cd **10.3.2** (bump 7→10)
-  subiu com `atomic=true` — os 7 pods `Running 1/1`, sem restarts
+- `install_argocd = true`. Cluster `wasp-sandbox-vpd54` provisioned from scratch
+  (`terraform apply`, **35 resources**, 0 errors). The argo-cd chart **10.3.2**
+  (bump 7→10) came up with `atomic=true` — all 7 pods `Running 1/1`, no restarts
   (`application-controller`, `applicationset-controller`, `dex-server`,
   `notifications-controller`, `redis`, `repo-server`, `server`).
-- **Fix necessário antes do apply:** os 5 `ExternalSecret` em
-  `src/helm/modules/argo-cd/templates/extra-objects.yaml` usavam
-  `external-secrets.io/v1beta1`, que o ESO 2.9.0 não serve (`unsafeServeV1Beta1: false`).
-  Migrados para `external-secrets.io/v1` (schema idêntico: `spec.data`/`secretKey`/
-  `remoteRef`/`target`/`secretStoreRef`). Todos os 5 `SecretSynced`/`READY=True`.
-- **SSO azuread end-to-end:** `argocd_app_registration` criou a app azuread; o clientSecret
-  foi gravado no Key Vault e o ExternalSecret `argocd-secret-merge-oidc-azuread` fez o
-  **merge** em `argocd-secret` (`oidc.azuread.clientSecret` presente). `argocd-cm.oidc.config`
-  com `name: AzureAD` + `clientID` da app + issuer do tenant. A API
-  `/api/v1/settings` retorna `oidcConfig.name=AzureAD` → login SSO servido pelo argocd-server.
-- **Roteamento istio:** o chart `argo-cd-config` só tem subcharts `ingress-azure`/
-  `ingress-nginx` (ambos `enabled: false` no exemplo istio → corretamente ocioso). O
-  roteamento externo vem do chart `istio-gateway` (parte do ingress-istio): Gateway
-  `public-ingress-argocd` + VirtualService `argocd-virtual-service-public`
-  (host `argocd.vpd54.sandbox.wasp.silvios.me` → `argocd-server.argocd.svc:80`), ambos no
-  namespace `istio-ingress`.
-- **HTTP 200 end-to-end** por `https://argocd.vpd54.sandbox.wasp.silvios.me/`:
-  `<title>Argo CD</title>`. Cert servido é **Let's Encrypt STAGING**
-  (`(STAGING) Ersatz Emmer YR2`) → curl exige `-k`. Cert `ingress-argocd` `READY=True`,
-  A record `argocd.vpd54` escrito pelo external-dns (`Succeeded`).
+- **Fix required before the apply:** the 5 `ExternalSecret`s in
+  `src/helm/modules/argo-cd/templates/extra-objects.yaml` used
+  `external-secrets.io/v1beta1`, which ESO 2.9.0 does not serve
+  (`unsafeServeV1Beta1: false`). Migrated to `external-secrets.io/v1` (identical
+  schema: `spec.data`/`secretKey`/`remoteRef`/`target`/`secretStoreRef`). All 5
+  are `SecretSynced`/`READY=True`.
+- **azuread SSO end-to-end:** `argocd_app_registration` created the azuread app;
+  the clientSecret was written to the Key Vault and the
+  `argocd-secret-merge-oidc-azuread` ExternalSecret **merged** it into
+  `argocd-secret` (`oidc.azuread.clientSecret` present). `argocd-cm.oidc.config`
+  carries `name: AzureAD` + the app's `clientID` + the tenant issuer. The
+  `/api/v1/settings` API returns `oidcConfig.name=AzureAD` → SSO login served by
+  argocd-server.
+- **istio routing:** the `argo-cd-config` chart only has the
+  `ingress-azure`/`ingress-nginx` subcharts (both `enabled: false` in the istio
+  example → correctly idle). External routing comes from the `istio-gateway`
+  chart (part of ingress-istio): Gateway `public-ingress-argocd` +
+  VirtualService `argocd-virtual-service-public` (host
+  `argocd.vpd54.sandbox.wasp.silvios.me` → `argocd-server.argocd.svc:80`), both
+  in the `istio-ingress` namespace.
+- **HTTP 200 end-to-end** on `https://argocd.vpd54.sandbox.wasp.silvios.me/`:
+  `<title>Argo CD</title>`. The served certificate is **Let's Encrypt STAGING**
+  (`(STAGING) Ersatz Emmer YR2`) → curl requires `-k`. Certificate
+  `ingress-argocd` `READY=True`, A record `argocd.vpd54` written by external-dns
+  (`Succeeded`).
 
-## 2026-08-10 — httpbin religado; HTTP 200 end-to-end via Gateway
+## 2026-08-10 — httpbin re-enabled; HTTP 200 end-to-end through the Gateway
 
-- `install_httpbin = true` no cluster `wasp-sandbox-vtl26` (`terraform apply`, 2 recursos:
-  `helm_release.httpbin` + `kubernetes_namespace_v1.httpbin`).
-- Pod httpbin rodando; VirtualServices `mesh` + `public` criados
-  (host `httpbin.vtl26.sandbox.wasp.silvios.me`); cert `ingress-httpbin` `READY=True`.
-- **HTTP 200 end-to-end** por `https://httpbin.vtl26.sandbox.wasp.silvios.me/get`:
-  - cert servido é **Let's Encrypt STAGING** (`(STAGING) Dastardly Durum YR1`) → curl exige
-    `-k` (CA staging não confiável publicamente; esperado, não é bug).
-  - response confirma cadeia completa: Envoy (`X-W1-Gateway: public-ingress-httpbin`),
-    mTLS SPIFFE ingress→pod (`X-Forwarded-Client-Cert` com
-    `spiffe://cluster.local/ns/httpbin/sa/httpbin`), DNS CNAME→A→LB `48.211.204.180`.
+- `install_httpbin = true` on cluster `wasp-sandbox-vtl26` (`terraform apply`, 2
+  resources: `helm_release.httpbin` + `kubernetes_namespace_v1.httpbin`).
+- httpbin pod running; `mesh` + `public` VirtualServices created (host
+  `httpbin.vtl26.sandbox.wasp.silvios.me`); certificate `ingress-httpbin`
+  `READY=True`.
+- **HTTP 200 end-to-end** on `https://httpbin.vtl26.sandbox.wasp.silvios.me/get`:
+  - the served certificate is **Let's Encrypt STAGING** (`(STAGING) Dastardly
+    Durum YR1`) → curl requires `-k` (the staging CA is not publicly trusted;
+    expected, not a bug).
+  - the response confirms the full chain: Envoy
+    (`X-W1-Gateway: public-ingress-httpbin`), SPIFFE mTLS ingress→pod
+    (`X-Forwarded-Client-Cert` with
+    `spiffe://cluster.local/ns/httpbin/sa/httpbin`), DNS CNAME→A→LB
+    `48.211.204.180`.
 
-## 2026-08-10 — ingress-istio religado; escrita de DNS + certificados validados
+## 2026-08-10 — ingress-istio re-enabled; DNS writes + certificates validated
 
-- `install_ingress_istio = true`. Charts Istio revisados: subcharts upstream vendorados
-  (`base`/`istiod`/`gateway`) já em **1.30.3**, versão mais recente do repo Istio — nada a
-  bumpar no wrapper `src/helm/modules/ingress-istio`.
-- Cluster `wasp-sandbox-vtl26` provisionado (`terraform apply`, 27 recursos). Istio subiu:
-  `istio-base`, `istio-discovery`, `istio-gateway` + namespace `istio-ingress`.
-- LoadBalancer `istio-ingress` com EXTERNAL-IP público `48.211.204.180`.
-- **cert-manager emitiu os 3 certificados** (`ingress-gateway`, `ingress-argocd`,
-  `ingress-httpbin`) → todos `READY=True`. 3 Gateways Istio criados.
-- **external-dns escreveu na zona** (antes só leitura estava provada): via Workload Identity,
-  criou o registro A `gateway.vtl26 → 48.211.204.180` (log `Updating A record...` +
-  `az network dns record-set a list` → `ProvisioningState: Succeeded`), CNAMEs
-  `argocd.vtl26`/`httpbin.vtl26` e TXT de ownership. Cadeia SA anotado → token federado →
-  Azure DNS write **validada end-to-end**.
+- `install_ingress_istio = true`. Istio charts reviewed: the vendored upstream
+  subcharts (`base`/`istiod`/`gateway`) are already at **1.30.3**, the latest
+  version in the Istio repo — nothing to bump in the
+  `src/helm/modules/ingress-istio` wrapper.
+- Cluster `wasp-sandbox-vtl26` provisioned (`terraform apply`, 27 resources).
+  Istio came up: `istio-base`, `istio-discovery`, `istio-gateway` + the
+  `istio-ingress` namespace.
+- LoadBalancer `istio-ingress` with public EXTERNAL-IP `48.211.204.180`.
+- **cert-manager issued all 3 certificates** (`ingress-gateway`,
+  `ingress-argocd`, `ingress-httpbin`) → all `READY=True`. 3 Istio Gateways
+  created.
+- **external-dns wrote to the zone** (only reads had been proven before): through
+  Workload Identity it created the A record `gateway.vtl26 → 48.211.204.180`
+  (log `Updating A record...` + `az network dns record-set a list` →
+  `ProvisioningState: Succeeded`), the `argocd.vtl26`/`httpbin.vtl26` CNAMEs, and
+  the ownership TXT. The chain annotated SA → federated token → Azure DNS write is
+  **validated end-to-end**.
 
-## 2026-08-10 — external-dns via Workload Identity validado no cluster
+## 2026-08-10 — external-dns via Workload Identity validated on the cluster
 
-- Cluster `wasp-sandbox-02mzu` provisionado (`terraform apply`, 23 recursos). Toggles
-  ativos: `install_cert_manager`, `install_external_secrets`, `install_external_dns`.
-- external-dns autenticou via **Workload Identity** (confirmado nos logs):
-  `Using workload identity extension to retrieve access token for Azure API.`
-  seguido de `All records are already up to date` a cada ciclo de 1min, sem erro de
-  credencial.
-- SA `external-dns/external-dns` anotado com `azure.workload.identity/client-id`
-  (`0e6fc972-0a44-436f-b678-b274bd3661f9`); pod com label `azure.workload.identity/use=true`.
-- Role `DNS Zone Contributor` da MI federada na DNS Zone `sandbox.wasp.silvios.me`
-  funcionando — external-dns lê a zona sem `AuthorizationFailed`.
-- Sem registros a criar ainda (ingress-istio desligado, nenhum service/ingress com
-  hostname). O ciclo de reconciliação sem erro já prova a cadeia
-  SA anotado → token federado → API do Azure DNS.
+- Cluster `wasp-sandbox-02mzu` provisioned (`terraform apply`, 23 resources).
+  Active toggles: `install_cert_manager`, `install_external_secrets`,
+  `install_external_dns`.
+- external-dns authenticated through **Workload Identity** (confirmed in the
+  logs): `Using workload identity extension to retrieve access token for Azure
+  API.` followed by `All records are already up to date` on every 1-minute cycle,
+  with no credential error.
+- SA `external-dns/external-dns` annotated with
+  `azure.workload.identity/client-id`
+  (`0e6fc972-0a44-436f-b678-b274bd3661f9`); pod labeled
+  `azure.workload.identity/use=true`.
+- The federated MI's `DNS Zone Contributor` role on the DNS Zone
+  `sandbox.wasp.silvios.me` works — external-dns reads the zone without
+  `AuthorizationFailed`.
+- No records to create yet (ingress-istio disabled, no service/ingress with a
+  hostname). An error-free reconciliation cycle already proves the chain
+  annotated SA → federated token → Azure DNS API.

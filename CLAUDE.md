@@ -34,6 +34,10 @@ estratégia de migração)
 | ArgoCD: SSO, RBAC, app-of-apps | `docs/reference/argocd.md` |
 | external-secrets, external-dns | `docs/reference/workload-identity.md` |
 | Terraform/Azure, permissões, CI | `docs/reference/terraform-azure.md` |
+| CI: OIDC federation, bootstrap | `docs/ci-oidc-federation.md` |
+| Tempos de provisionamento | `docs/provisioning-time.md` |
+
+Docs em `docs/` são escritos em **inglês** (`CLAUDE.md`/`HANDOFF*.md` seguem em pt-BR).
 
 Estado da migração e próximos passos: `HANDOFF.md` (e `HANDOFF.local.md`, local).
 
