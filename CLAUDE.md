@@ -63,8 +63,16 @@ Repositório de módulos Terraform para provisionar AKS com stack GitOps (ArgoCD
 
 - O provider azure do external-dns escolhe o modo de auth pela flag no `azure.json` (secret `azure-config-file` do chart `external-dns-config`): `useWorkloadIdentityExtension: true` (MI federada) vs `useManagedIdentityExtension: true` (kubelet SP). Não passar `aadClientId/aadClientSecret` no modo Workload Identity — o client-id vem da anotação do SA.
 - MI federada do external-dns precisa de `DNS Zone Contributor` na DNS Zone (não no RG). O antigo `azurerm_role_assignment.kubelet_contributor_on_dns_zone` foi **removido** (2026-08-22): `identity_client_id` é obrigatório no módulo e o chart `external-dns-config` fixa `useWorkloadIdentityExtension: true`, então o modo kubelet não existe mais em nenhum exemplo. Não reintroduzir — a kubelet identity é alcançável via IMDS por qualquer pod do nó, o que daria escrita na zona DNS a um workload comprometido.
+- Consequência da mudança acima: `cluster_argocd_ingress_azure` e `cluster_argocd_ingress_nginx` falham em `terraform validate` (`identity_client_id` required, mas esses exemplos ainda passam `client_id`/`client_secret` pré-Workload-Identity para `external_secrets`/`external_dns`). É esperado — fazem parte dos "4 exemplos legado" ainda não migrados, não uma regressão nova.
 
 Ver `HANDOFF.md` para o estado detalhado da migração e pendências.
+
+## CI: acesso SSH a módulos privados (git::ssh)
+
+- `network.tf`/`secrets.tf` puxam `vnet` e `argocd_app_registration_password` via `git::ssh://git@github.com/smsilva/{azure-network,azure-key-vault}.git` — repos privados. Um runner GitHub Actions não tem acesso por padrão.
+- GitHub **rejeita** a mesma chave pública como deploy key em mais de um repositório (`422 key is already in use`). Solução: uma chave por repo módulo (`scripts/github-actions-configure-ssh-deploy-key`), mapeada por alias de host em `~/.ssh/config` + `git config url."ssh://git@github.com-<repo>/...".insteadOf "ssh://git@github.com/..."`.
+- O `insteadOf` precisa casar a URL **exata** que o `git` recebe. O detector de módulo git do Terraform gera `ssh://git@github.com/owner/repo` (forma URL completa), não a forma SCP-like `git@github.com:owner/repo` — usar a forma errada faz o `insteadOf` nunca casar, silenciosamente (o clone cai de volta na identidade default).
+- `local.arm_client_secret`/`module "variables"` (`src/variables`) só são usados por `cluster_argocd_ingress_azure` e `cluster_argocd_ingress_nginx` — vivem em arquivos próprios desses dois exemplos, não em `examples/common/variables.tf` (istio não paga o custo do `data "external"` a cada plan).
 
 ## Estratégia de migração (acordada)
 
