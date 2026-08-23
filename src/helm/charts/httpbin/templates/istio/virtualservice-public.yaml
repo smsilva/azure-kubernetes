@@ -12,10 +12,9 @@ spec:
 
   http:
     - match:
-        - scheme:
-            exact: http
+        - port: 80
           uri:
-            regex: "^/(([^\\.].*)|(\\.[^w].*)|(\\.w[^e].*)|(\\.we[^l].*)|(\\.wel[^l].*)|(\\.well[^\\-].*))"
+            regex: "^/(([^\\.].*)|(\\.[^w].*)|(\\.w[^e].*)|(\\.we[^l].*)|(\\.wel[^l].*)|(\\.well[^\\-].*)|)"
       redirect:
         scheme: https
         redirectCode: 302 # 302 to not mess with risky permanent redirections since a workaround
