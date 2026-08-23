@@ -23,7 +23,7 @@ Repositório de módulos Terraform para provisionar AKS com stack GitOps (ArgoCD
 |---|---|---|---|
 | `cluster_argocd_ingress_istio` | **>= 5.0** | **>= 3.0** | migração em andamento |
 | `cluster_argocd_ingress_azure` | >= 4.0 | >= 3.0 | migração parcial anterior |
-| `cluster_argocd_ingress_nginx` | >= 3.0 | (sem pin) | legado |
+| `cluster_argocd_ingress_nginx` | >= 3.0 | (sem pin) | legado permanente — nginx ingress controller foi descontinuado, este exemplo **não será migrado** |
 | `cluster_one_nodepool` | >= 3.0 | — | legado |
 | `cluster_two_nodepools` | >= 3.0 | — | legado (usa `src/nodepool`) |
 
@@ -77,6 +77,8 @@ Ver `HANDOFF.md` para o estado detalhado da migração e pendências.
 ## Estratégia de migração (acordada)
 
 Migrar **um exemplo por vez**, começando por `cluster_argocd_ingress_istio`. Os demais exemplos permanecem em versões antigas (e podem ficar temporariamente quebrados quanto aos módulos compartilhados) até que o exemplo em foco seja **provisionado de verdade, validado e destruído**. Só então migrar os próximos.
+
+`cluster_argocd_ingress_nginx` é exceção: fica como **legado permanente**, fora da fila de migração — o nginx ingress controller foi descontinuado, então não há razão para atualizá-lo.
 
 ## Convenções
 
