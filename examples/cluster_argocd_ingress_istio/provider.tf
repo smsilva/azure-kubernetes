@@ -43,16 +43,34 @@ provider "azurerm" {
 
 provider "azuread" {}
 
+locals {
+  kubelogin_exec_args = [
+    "get-token",
+    "--login", "azurecli",
+    "--server-id", "6dae42f8-4368-4678-94ff-3960e28e3630",
+  ]
+}
+
 provider "kubernetes" {
-  host                   = module.aks.instance.kube_admin_config.0.host
-  token                  = module.aks.instance.kube_admin_config.0.password
-  cluster_ca_certificate = base64decode(module.aks.instance.kube_admin_config.0.cluster_ca_certificate)
+  host                   = module.aks.instance.kube_config.0.host
+  cluster_ca_certificate = base64decode(module.aks.instance.kube_config.0.cluster_ca_certificate)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "kubelogin"
+    args        = local.kubelogin_exec_args
+  }
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = module.aks.instance.kube_admin_config.0.host
-    token                  = module.aks.instance.kube_admin_config.0.password
-    cluster_ca_certificate = base64decode(module.aks.instance.kube_admin_config.0.cluster_ca_certificate)
+    host                   = module.aks.instance.kube_config.0.host
+    cluster_ca_certificate = base64decode(module.aks.instance.kube_config.0.cluster_ca_certificate)
+
+    exec = {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "kubelogin"
+      args        = local.kubelogin_exec_args
+    }
   }
 }

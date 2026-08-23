@@ -2,7 +2,7 @@
 
 - **Severidade:** 🟠 média
 - **Onde:** `examples/cluster_argocd_ingress_istio/provider.tf:30,38`
-- **Status:** aberto
+- **Status:** RESOLVIDO (2026-08-23)
 
 ## O problema
 
@@ -82,3 +82,31 @@ tira a credencial admin do state.
    `kubernetes_namespace_v1`/`helm_release`.
 4. Confirmar que `kube_admin_config`/senha não aparecem mais em
    `terraform show`/no state.
+
+## Resolução (2026-08-23)
+
+Aplicado exatamente como proposto acima, com `--login azurecli` (não `spn`):
+o modo `spn` exigiria `ARM_CLIENT_SECRET`, que não existe no workflow de CI
+(`azure-oidc-federation.yml` usa `ARM_USE_OIDC=true` sem secret). `azurecli`
+reaproveita a sessão já autenticada — `az login` do usuário localmente,
+`azure/login@v2` federado em CI — sem `if` de ambiente no `provider.tf`.
+
+Validação contra o cluster vivo (`wasp-sandbox-0a2oc`):
+- SP do Terraform (`ARM_CLIENT_ID`) confirmado membro do grupo
+  `d5075d0a-3704-4ed9-ad62-dc8068c7d0e1` (`adminGroupObjectIDs` do cluster,
+  `enableAzureRbac: true`) — não tinha role assignment dedicada, mas a
+  membership no grupo AAD-admin do AKS já concede acesso equivalente a
+  cluster-admin via Azure RBAC, sem necessidade de
+  `Azure Kubernetes Service RBAC Cluster Admin` explícita.
+- Usuário `az login` local (`smsilva@gmail.com`) também confirmado membro do
+  mesmo grupo — `--login azurecli` funciona local e em CI sem diferença de
+  privilégio.
+- `kubectl get nodes` via `kubelogin convert-kubeconfig -l spn` (teste manual
+  fora do Terraform) e `terraform plan` (via `exec`/`azurecli`) ambos OK.
+- `terraform plan` contra o cluster vivo → `No changes` (todos os
+  `helm_release`/recursos `kubernetes_*` lidos com sucesso via a nova auth).
+- `kube_admin_config`/senha continuam no state como atributo do recurso
+  `azurerm_kubernetes_cluster` (a Azure sempre expõe isso, a menos que
+  `disable_local_accounts = true`), mas os providers `kubernetes`/`helm` não
+  fazem mais referência a eles — a superfície de uso foi eliminada, não o
+  atributo do recurso em si.
