@@ -22,7 +22,7 @@ Usar este repo Azure como **referência funcional** (o que o cluster final preci
 
 Referência Azure (Terraform) validada end-to-end. Próximo passo pretendido: iniciar o brainstorming Crossplane+AWS (escolha de provider, cluster de management, IRSA, backend de secrets AWS, DNS Route53).
 
-> Existe um segundo workstream em `HANDOFF.local.md` (pessoal, não versionado): review de melhorias do `examples/cluster_argocd_ingress_istio`, com 8 achados ainda em aberto (SSO do ArgoCD aceitando contas Microsoft pessoais, credencial admin no state, redirect HTTP→HTTPS que nunca dispara, entre outros).
+> Existe um segundo workstream em `HANDOFF.local.md` (pessoal, não versionado): review de melhorias do `examples/cluster_argocd_ingress_istio`, com 3 achados ainda em aberto (credencial admin no state, redirect HTTP→HTTPS que nunca dispara, tags/outputs/toggles). SSO do ArgoCD já corrigido (não aceita mais contas Microsoft pessoais).
 
 ## Estado da referência Azure (cluster `wasp-sandbox-vpd54`)
 
