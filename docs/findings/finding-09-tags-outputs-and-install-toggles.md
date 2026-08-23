@@ -2,8 +2,8 @@
 
 - **Severidade:** 🟡 baixa
 - **Onde:** `examples/cluster_argocd_ingress_istio/main.tf`, `outputs.tf`
-- **Status:** parcialmente resolvido (tags aplicadas; toggles mantidos como
-  `locals` por decisão do usuário; outputs ainda em aberto)
+- **Status:** RESOLVIDO (tags aplicadas; toggles mantidos como `locals` por
+  decisão do usuário; outputs completados)
 
 Três lacunas de DX/higiene, sem risco de segurança, agrupadas por serem do
 mesmo tipo (dívida de qualidade em vez de defeito funcional):
@@ -38,17 +38,20 @@ o processo.
 Decisão do usuário: não promover para `variable` por ora. Os toggles
 continuam como `locals` fixos no `main.tf`.
 
-## `outputs.tf` só devolve `url_gateway`
+## `outputs.tf` só devolvia `url_gateway` — RESOLVIDO
 
-Depois de um `apply`, não há como pegar o nome do cluster, o resource group,
-a URL do ArgoCD ou do httpbin sem ler o state manualmente ou voltar ao
-`locals`. Correção: adicionar outputs para `cluster_name`,
-`cluster_resource_group_name`, `url_argocd`, `url_httpbin` (quando os
-módulos correspondentes estiverem ligados).
+Adicionados `cluster_name`, `cluster_resource_group_name`, `url_argocd`,
+`url_httpbin` em `outputs.tf`, seguindo o mesmo padrão de
+`"<host>.${local.cluster_random_id}.${local.dns_zone}"` já usado por
+`url_gateway`. Validado ao vivo contra `wasp-sandbox-0a2oc`: `terraform plan`
+mostrou só os 4 outputs novos (`0 to add/change/destroy` de recursos);
+`terraform apply` do plano gravou os outputs no state sem tocar
+infraestrutura.
 
 ## Como validar
 
 Tags: `terraform validate`/`plan` mostram a mudança certa, mas **aplicar
 exige duas etapas** (RG, depois AKS — ver gotcha acima) para não forçar
-replace do cluster. Outputs (ainda em aberto): não altera infraestrutura
-existente, só `terraform validate`/`plan` bastam quando implementado.
+replace do cluster. Outputs: `terraform plan` mostra só `Changes to Outputs`
+(nenhum recurso); `terraform apply` do plano é seguro mesmo contra o cluster
+vivo.
