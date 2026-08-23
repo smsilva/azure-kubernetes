@@ -15,7 +15,7 @@ spec:
       hosts:
         - "gateway.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
       tls:
-        httpsRedirect: false # The HTTPS redirections will be handled in the VirtualService layer to not conflict with certificates renewing.
+        httpsRedirect: true
 
     - port:
         number: 443
@@ -25,7 +25,7 @@ spec:
         - "gateway.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
       tls:
         mode: SIMPLE
-        credentialName: {{ $.Values.secret.prefix }}gateway
+        credentialName: {{ $.Values.secret.prefix }}wildcard
 
 {{- range $cname := .Values.certificate.list }}
 ---
@@ -45,7 +45,7 @@ spec:
       hosts:
         - "{{ $cname }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
       tls:
-        httpsRedirect: false # The HTTPS redirections will be handled in the VirtualService layer to not conflict with certificates renewing.
+        httpsRedirect: true
 
     - port:
         number: 443
@@ -55,5 +55,5 @@ spec:
         - "{{ $cname }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
       tls:
         mode: SIMPLE
-        credentialName: {{ $.Values.secret.prefix }}{{ $cname }}
+        credentialName: {{ $.Values.secret.prefix }}wildcard
 {{- end }}

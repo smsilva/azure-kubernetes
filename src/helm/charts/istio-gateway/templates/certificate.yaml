@@ -2,34 +2,15 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ingress-gateway
+  name: ingress-wildcard
 spec:
-  commonName: gateway.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
-  
-  dnsNames:
-    - gateway.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
+  commonName: "*.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
 
-  secretName: {{ $.Values.secret.prefix }}gateway
+  dnsNames:
+    - "*.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}"
+
+  secretName: {{ $.Values.secret.prefix }}wildcard
 
   issuerRef:
     kind: ClusterIssuer
     name: {{ $.Values.certificate.type }}-{{ $.Values.certificate.server }}-istio
-
-{{- range $cname := .Values.certificate.list }}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: ingress-{{ $cname }}
-spec:
-  commonName: {{ $cname }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
-  
-  dnsNames:
-    - {{ $cname }}.{{ $.Values.dns.cname }}.{{ $.Values.dns.domain }}
-
-  secretName: {{ $.Values.secret.prefix }}{{ $cname }}
-
-  issuerRef:
-    kind: ClusterIssuer
-    name: {{ $.Values.certificate.type }}-{{ $.Values.certificate.server }}-istio
-{{- end }}
