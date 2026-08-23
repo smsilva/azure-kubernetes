@@ -1,43 +1,46 @@
-# ArgoCD (exemplo `cluster_argocd_ingress_istio`)
+# ArgoCD (`cluster_argocd_ingress_istio` example)
 
-## SSO azuread
+## azuread SSO
 
-O clientSecret é gravado no Key Vault por `argocd_app_registration_password` e
-injetado em `argocd-secret` via ExternalSecret `argocd-secret-merge-oidc-azuread`
-(`creationPolicy: Merge`). Validar com `GET /api/v1/settings` →
-`oidcConfig.name=AzureAD`.
+The clientSecret is written to the Key Vault by
+`argocd_app_registration_password` and injected into `argocd-secret` through the
+`argocd-secret-merge-oidc-azuread` ExternalSecret (`creationPolicy: Merge`).
+Validate with `GET /api/v1/settings` → `oidcConfig.name=AzureAD`.
 
-## Acesso / RBAC
+## Access / RBAC
 
-Contributor vem de um `azuread_group` criado por cluster
-(`aks-cluster-users-<random_id>`, módulo `src/active-directory/cluster-access-group`),
-destruído junto com o cluster. Grupos AD pré-existentes ganham o mesmo acesso sendo
-**listados** em `local.argocd_extra_contributor_group_ids`
-(`examples/cluster_argocd_ingress_istio/variables-cluster-access.tf`) → viram entradas
-no `policy.csv`.
+Contributor access comes from an `azuread_group` created per cluster
+(`aks-cluster-users-<random_id>`, module
+`src/active-directory/cluster-access-group`), destroyed along with the cluster.
+Pre-existing AD groups get the same access by being **listed** in
+`local.argocd_extra_contributor_group_ids`
+(`examples/cluster_argocd_ingress_istio/variables-cluster-access.tf`) → they
+become entries in `policy.csv`.
 
-**Não** aninhar grupos no grupo do cluster: gastaria um slot da cota de 200 grupos do
-JWT e dependeria de expansão transitiva da claim.
+Do **not** nest groups inside the cluster group: it would spend a slot of the
+JWT's 200-group quota and depend on transitive expansion of the claim.
 
-Requer `Groups Administrator` no SP do Terraform (`scripts/sp-grant-groups-administrator`).
-Atenção: a checagem de idempotência do script consulta `servicePrincipals/{id}/memberOf`
-(lado do principal), não `directoryRoles/{id}/members` — este último tem atraso real de
-propagação no Microsoft Graph (confirmado ao vivo: grant funcionou, mas `members` ainda
-não listava o SP um minuto depois, causando um `POST` duplicado rejeitado).
+Requires `Groups Administrator` on the Terraform SP
+(`scripts/sp-grant-groups-administrator`). Note: the script's idempotency check
+queries `servicePrincipals/{id}/memberOf` (principal side), not
+`directoryRoles/{id}/members` — the latter has real propagation delay in
+Microsoft Graph (confirmed live: the grant worked, but `members` still did not
+list the SP a minute later, causing a rejected duplicate `POST`).
 
-### Usuário loga mas "não vê nada"
+### User logs in but "sees nothing"
 
-Cai em `policy.default: role:empty`. Antes de investigar RBAC, checar se o token trouxe
-a claim `groups`. O Entra corta a claim acima de **200 grupos** e manda
-`_claim_names`/`hasgroups` no lugar; o `oidc.config` em
-`src/helm/modules/argo-cd/templates/sso.yaml` não usa `getUserInfo` como fallback, então
-a perda de acesso é silenciosa. Saída: habilitar `getUserInfo` ou filtrar a claim por
-grupos atribuídos à aplicação.
+Falls through to `policy.default: role:empty`. Before investigating RBAC, check
+whether the token carried the `groups` claim. Entra truncates the claim above
+**200 groups** and sends `_claim_names`/`hasgroups` instead; the `oidc.config`
+in `src/helm/modules/argo-cd/templates/sso.yaml` does not use `getUserInfo` as a
+fallback, so the loss of access is silent. Way out: enable `getUserInfo` or
+filter the claim to groups assigned to the application.
 
 ## App-of-apps
 
-Aponta para o repo externo `git@github.com:smsilva/wasp-gitops.git` (branch `dev`, path
-`infrastructure/charts/applications`) via SSH. A chave é
-`secret/argocd-repo-creds-ssh-private-key-base64-encoded` no Key Vault (base64 SEM
-quebras: `base64 -w0`), injetada por ExternalSecret `argocd-repo-creds-github`. Ao trocar
-a chave SSH local, atualizar esse secret no AKV senão o sync falha na auth do GitHub.
+Points at the external repo `git@github.com:smsilva/wasp-gitops.git` (branch
+`dev`, path `infrastructure/charts/applications`) over SSH. The key is
+`secret/argocd-repo-creds-ssh-private-key-base64-encoded` in the Key Vault
+(base64 WITHOUT line breaks: `base64 -w0`), injected by the
+`argocd-repo-creds-github` ExternalSecret. When rotating the local SSH key,
+update that secret in AKV or the sync fails on GitHub auth.

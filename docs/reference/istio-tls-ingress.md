@@ -1,63 +1,52 @@
-# Istio ingress + TLS (exemplo `cluster_argocd_ingress_istio`)
+# Istio ingress + TLS (`cluster_argocd_ingress_istio` example)
 
-## Como o certificado é emitido hoje
+## How the certificate is issued today
 
-`src/helm/charts/istio-gateway/templates/certificate.yaml` emite **um único**
-`Certificate` `ingress-wildcard`:
+`src/helm/charts/istio-gateway/templates/certificate.yaml` issues a **single**
+`ingress-wildcard` `Certificate`:
 
-- host: `*.<cluster-random-id>.<dns-zone>` (ex.: `*.vpd54.sandbox.wasp.silvios.me`)
-- secret: `ingress-tls-wildcard`, no namespace `istio-ingress`
-- issuer: `ClusterIssuer letsencrypt-staging-istio`, `dns01.azureDNS` via Workload
-  Identity federada (`DNS Zone Contributor` na DNS Zone — mesmo padrão do external-dns)
+- host: `*.<cluster-random-id>.<dns-zone>` (e.g. `*.vpd54.sandbox.wasp.silvios.me`)
+- secret: `ingress-tls-wildcard`, in the `istio-ingress` namespace
+- issuer: `ClusterIssuer letsencrypt-staging-istio`, `dns01.azureDNS` through
+  federated Workload Identity (`DNS Zone Contributor` on the DNS Zone — same
+  pattern as external-dns)
 
-Todos os `Gateway` (`public-ingress-gateway`, `public-ingress-argocd`,
-`public-ingress-httpbin`) usam esse secret como `credentialName` e têm
-`tls.httpsRedirect: true` no listener HTTP.
+Every `Gateway` (`public-ingress-gateway`, `public-ingress-argocd`,
+`public-ingress-httpbin`) uses that secret as `credentialName` and sets
+`tls.httpsRedirect: true` on the HTTP listener.
 
-O `<cluster-random-id>` vem de `random_string.id` (`examples/common/variables.tf`)
-e é **regenerado a cada apply**.
+The `<cluster-random-id>` comes from `random_string.id`
+(`examples/common/variables.tf`) and is **regenerated on every apply**, so each
+new cluster issues its own certificate.
 
-## Cuidados
+## Caveats
 
-- **O certificado é wildcard, o roteamento SNI não.** Cada `Gateway` só aceita SNI
-  para os hosts listados em `hosts:`. Um host novo não cadastrado em nenhum Gateway
-  falha o handshake TLS mesmo coberto pelo wildcard. Comportamento normal do Istio.
-- **Wildcard cobre um label só.** `*.sandbox.wasp.silvios.me` NÃO cobre
-  `argocd.vpd54.sandbox.wasp.silvios.me`; `*.*.` não é emitido pela Let's Encrypt.
-  Não existe um certificado estável "do domínio base" que sirva aos hosts do cluster.
-- Certificado é **Let's Encrypt STAGING** → `curl` HTTPS falha na verificação da CA.
-  Testar com `curl -k`; não é bug.
-- Roteamento externo do ArgoCD vem do chart `istio-gateway` (Gateway
-  `public-ingress-argocd` + VirtualService no namespace `istio-ingress`), NÃO do
-  `argo-cd-config`. Não procurar VS/Gateway do argocd no namespace `argocd`.
-- **Nunca** usar `-replace` em `module.ingress_istio[0].helm_release.istio_gateway`
-  num cluster em uso: destroy+create recria o Service LoadBalancer, muda o IP público
-  e derruba os três hosts até o external-dns reescrever o A record. Para validar
-  mudança de template, aplicar o objeto de `helm template` via `kubectl` com
-  `app.kubernetes.io/managed-by: Helm` + annotations `meta.helm.sh/release-{name,namespace}`
-  (um upgrade futuro o adota sem erro de ownership).
-- Os templates autorais do chart (`gateway.yaml`, `virtualservice.yaml`,
-  `certificate.yaml`) **não** são sobrescritos por `scripts/update-local-helm-charts-istio`
-  — o script só troca os `.tgz` dos subcharts.
-- Tudo sob a chave `gateway:` do `values.yaml` é repassado ao subchart `istio/gateway`,
-  cujo `values.schema.json` rejeita propriedades desconhecidas. Valores próprios do
-  repo precisam de chave de topo (ex.: `gatewayVirtualService`).
-
-## Aberto: reaproveitar o certificado entre recriações
-
-**Problema.** A private key/secret TLS só existe dentro do cluster. Cada recriação
-reemite do zero e gasta orçamento ACME sem necessidade.
-
-**Direção acordada (não implementada).** Opt-in por parâmetro: informar as chaves do
-Key Vault foundation que guardam cert + key em base64. Se informadas, o `Secret` TLS
-é semeado no provisionamento e o cert-manager adota o material existente em vez de
-emitir; se omitidas, o fluxo atual (emissão normal) continua valendo.
-
-Só rende economia quando o host se repete — ou seja, quando o `random_string.id` for
-reaproveitado. Modelo escolhido: **random como default, com id fixável por variável**
-para quem quiser reusar o certificado.
-
-**Pendente de análise:** renovação. Certificado Let's Encrypt vale 90 dias e o
-cert-manager renova em ~2/3 da vida; um material persistido além dessa janela dispara
-reemissão na restauração de qualquer forma, e o certificado renovado precisaria voltar
-ao Key Vault para o ciclo se sustentar.
+- **The certificate is wildcard, SNI routing is not.** Each `Gateway` only
+  accepts SNI for the hosts listed in its `hosts:`. A new host not registered in
+  any Gateway fails the TLS handshake even when covered by the wildcard. Normal
+  Istio behavior.
+- **A wildcard covers a single label.** `*.sandbox.wasp.silvios.me` does NOT
+  cover `argocd.vpd54.sandbox.wasp.silvios.me`; `*.*.` is not issued by Let's
+  Encrypt. There is no stable "base domain" certificate that would serve the
+  cluster's hosts.
+- The certificate is **Let's Encrypt STAGING** → HTTPS `curl` fails CA
+  verification. Test with `curl -k`; it is not a bug.
+- External routing for ArgoCD comes from the `istio-gateway` chart (Gateway
+  `public-ingress-argocd` + VirtualService in the `istio-ingress` namespace), NOT
+  from `argo-cd-config`. Do not look for the argocd VS/Gateway in the `argocd`
+  namespace.
+- **Never** use `-replace` on `module.ingress_istio[0].helm_release.istio_gateway`
+  in a cluster in use: destroy+create recreates the LoadBalancer Service, changes
+  the public IP, and takes down all three hosts until external-dns rewrites the A
+  record. To validate a template change, apply the object from `helm template`
+  with `kubectl`, carrying `app.kubernetes.io/managed-by: Helm` + the
+  `meta.helm.sh/release-{name,namespace}` annotations (a later upgrade adopts it
+  without an ownership error).
+- The chart's own templates (`gateway.yaml`, `virtualservice.yaml`,
+  `certificate.yaml`) are **not** overwritten by
+  `scripts/update-local-helm-charts-istio` — the script only swaps the subcharts'
+  `.tgz`.
+- Everything under the `gateway:` key of `values.yaml` is passed through to the
+  `istio/gateway` subchart, whose `values.schema.json` rejects unknown
+  properties. Values owned by this repo need a top-level key (e.g.
+  `gatewayVirtualService`).
